@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -221,7 +222,9 @@ export default function SubmitProductPage() {
                         <Label htmlFor="description" className="text-sm font-semibold flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" /> Description *
                         </Label>
-                        <Textarea id="description" value={form.description} onChange={(e) => updateField("description", e.target.value)} required rows={5} placeholder="Tell us about your product, key features, and target audience..." className="mt-2 rounded-xl resize-none" />
+                        <div className="mt-2">
+                          <RichTextEditor value={form.description} onChange={(html) => updateField("description", html)} placeholder="Tell us about your product, key features, and target audience..." />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
