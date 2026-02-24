@@ -67,6 +67,11 @@ export function PublicHeader() {
               Sign In
             </Button>
           </Link>
+          <Link to="/submit-product">
+            <Button size="sm" className="bg-primary text-primary-foreground rounded-lg font-semibold px-4 text-sm">
+              Submit Product
+            </Button>
+          </Link>
           <button
             className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}

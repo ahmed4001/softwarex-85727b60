@@ -18,6 +18,7 @@ const ComparePage = lazy(() => import("./pages/ComparePage"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SubmitProductPage = lazy(() => import("./pages/SubmitProductPage"));
 
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
@@ -50,7 +51,7 @@ const App = () => (
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                
+                <Route path="/submit-product" element={<SubmitProductPage />} />
               </Route>
 
               {/* Admin routes */}
