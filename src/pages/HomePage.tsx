@@ -167,12 +167,13 @@ export default function HomePage() {
   const { data: stats } = useQuery({
     queryKey: ["site-stats"],
     queryFn: async () => {
-      const [products, reviews, categories] = await Promise.all([
+      const [products, reviews, categories, profiles] = await Promise.all([
         supabase.from("products").select("id", { count: "exact", head: true }),
         supabase.from("reviews").select("id", { count: "exact", head: true }),
         supabase.from("categories").select("id", { count: "exact", head: true }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
       ]);
-      return { products: products.count || 0, reviews: reviews.count || 0, categories: categories.count || 0 };
+      return { products: products.count || 0, reviews: reviews.count || 0, categories: categories.count || 0, users: profiles.count || 0 };
     },
   });
 

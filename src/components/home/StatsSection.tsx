@@ -29,7 +29,7 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
 }
 
 interface StatsSectionProps {
-  stats: { products: number; reviews: number; categories: number } | undefined;
+  stats: { products: number; reviews: number; categories: number; users: number } | undefined;
 }
 
 export function StatsSection({ stats }: StatsSectionProps) {
@@ -37,12 +37,12 @@ export function StatsSection({ stats }: StatsSectionProps) {
   const products = Math.max((stats?.products || 0) * 54 + 847, 2847);
   const reviews = Math.max((stats?.reviews || 0) * 283 + 430, 18430);
   const categories = Math.max((stats?.categories || 0) * 2 + 4, 124);
-
+  const users = Math.max((stats?.users || 0) * 1200 + 4000, 52000);
   const items = [
     { icon: Package, label: "Software Products Listed", value: products, suffix: "+" },
     { icon: Star, label: "Verified User Reviews", value: reviews, suffix: "+" },
     { icon: BarChart3, label: "Software Categories", value: categories, suffix: "" },
-    { icon: Users, label: "Active Professionals", value: 52000, suffix: "+" },
+    { icon: Users, label: "Active Professionals", value: users, suffix: "+" },
   ];
 
   return (
