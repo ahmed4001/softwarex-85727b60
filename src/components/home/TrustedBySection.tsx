@@ -1,5 +1,6 @@
 const brands = [
   "Stripe", "Notion", "Slack", "Figma", "Linear", "Vercel",
+  "Shopify", "Atlassian", "HubSpot", "Zendesk", "Intercom", "Airtable",
 ];
 
 export function TrustedBySection() {
