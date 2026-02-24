@@ -165,10 +165,10 @@ export default function ProductDetailPage() {
           <TabsContent value="reviews" className="space-y-5">
             {reviews?.map((r: any) => (
               <ReviewCard
-                key={r.id} title={r.title} body={r.body} pros={r.pros} cons={r.cons}
+                key={r.id} id={r.id} title={r.title} body={r.body} pros={r.pros} cons={r.cons}
                 overall_rating={r.overall_rating} reviewer_name={r.profiles?.name}
                 reviewer_role={r.reviewer_role} company_size={r.company_size}
-                helpful_count={r.helpful_count} verified_reviewer={r.verified_reviewer}
+                verified_reviewer={r.verified_reviewer}
                 created_at={r.created_at}
               />
             ))}
