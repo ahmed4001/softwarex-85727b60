@@ -15,5 +15,8 @@ verify_jwt = false
 [functions.bulk-generate-reviews]
 verify_jwt = false
 
+[functions.brevo-api]
+verify_jwt = false
+
 [functions.bulk-generate-comparisons]
 verify_jwt = false
