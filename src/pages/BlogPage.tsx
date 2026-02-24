@@ -1,12 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
-import { CalendarDays, Eye, Clock } from "lucide-react";
+import { CalendarDays, Eye, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+
+const PAGE_SIZE = 10;
 
 export default function BlogPage() {
   const { t } = useTranslation();
@@ -64,6 +67,16 @@ export default function BlogPage() {
     return result;
   }, [posts, activeTag, activeCategory]);
 
+  const [page, setPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil((filteredPosts?.length ?? 0) / PAGE_SIZE));
+  const paginatedPosts = useMemo(() => {
+    if (!filteredPosts) return [];
+    return filteredPosts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  }, [filteredPosts, page]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(0); }, [activeTag, activeCategory]);
+
   const setFilter = (key: "tag" | "category", value: string) => {
     const params = new URLSearchParams(searchParams);
     if (value) {
@@ -107,7 +120,7 @@ export default function BlogPage() {
           {/* Main content */}
           <div className="flex-1 min-w-0">
             <div className="grid md:grid-cols-2 gap-6">
-              {filteredPosts?.map((post) => {
+              {paginatedPosts.map((post) => {
                 const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
                 return (
                   <Link key={post.id} to={`/blog/${post.slug}`} className="product-card group block">
@@ -136,6 +149,30 @@ export default function BlogPage() {
                 );
               })}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-10">
+                <Button variant="outline" size="icon" className="rounded-xl" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  if (totalPages <= 7 || i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1) {
+                    return (
+                      <Button key={i} variant={i === page ? "default" : "outline"} size="icon" className="rounded-xl h-9 w-9 text-sm" onClick={() => setPage(i)}>
+                        {i + 1}
+                      </Button>
+                    );
+                  }
+                  if (i === 1 && page > 3) return <span key={i} className="text-muted-foreground px-1">…</span>;
+                  if (i === totalPages - 2 && page < totalPages - 4) return <span key={i} className="text-muted-foreground px-1">…</span>;
+                  return null;
+                })}
+                <Button variant="outline" size="icon" className="rounded-xl" disabled={page >= totalPages - 1} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
 
             {!isLoading && (!posts || posts.length === 0) && (
               <div className="text-center py-16 text-muted-foreground">{t("blog.noPosts")}</div>
