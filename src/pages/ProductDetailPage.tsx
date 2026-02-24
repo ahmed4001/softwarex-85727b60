@@ -167,6 +167,7 @@ export default function ProductDetailPage() {
               <ReviewCard
                 key={r.id} id={r.id} title={r.title} body={r.body} pros={r.pros} cons={r.cons}
                 overall_rating={r.overall_rating} reviewer_name={r.profiles?.name}
+                reviewer_user_id={r.user_id}
                 reviewer_role={r.reviewer_role} company_size={r.company_size}
                 verified_reviewer={r.verified_reviewer}
                 created_at={r.created_at}

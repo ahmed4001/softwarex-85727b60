@@ -10,6 +10,7 @@ const navLinks = [
   { to: "/", label: "Home" },
   { to: "/categories", label: "Categories" },
   { to: "/compare", label: "Compare" },
+  { to: "/leaderboard", label: "Leaderboard" },
   { to: "/blog", label: "Blog" },
 ];
 

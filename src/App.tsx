@@ -20,6 +20,7 @@ const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SubmitProductPage = lazy(() => import("./pages/SubmitProductPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/submit-product" element={<SubmitProductPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
               </Route>
 
               {/* Admin routes */}

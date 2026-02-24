@@ -134,6 +134,48 @@ export type Database = {
           },
         ]
       }
+      badges: {
+        Row: {
+          color: string
+          created_at: string
+          criteria_threshold: number
+          criteria_type: string
+          description: string | null
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          tier: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          criteria_threshold?: number
+          criteria_type: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          tier?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          criteria_threshold?: number
+          criteria_type?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          tier?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -933,6 +975,35 @@ export type Database = {
           value?: Json | null
         }
         Relationships: []
+      }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          badge_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

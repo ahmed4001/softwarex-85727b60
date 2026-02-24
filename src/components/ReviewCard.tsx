@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
 import { useReviewVotes } from "@/hooks/useReviewVotes";
 import { useReviewComments } from "@/hooks/useReviewComments";
+import { useUserBadges } from "@/hooks/useBadges";
+import { BadgeRow } from "@/components/BadgeDisplay";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,15 +20,17 @@ interface ReviewCardProps {
   cons?: string;
   overall_rating: number;
   reviewer_name?: string;
+  reviewer_user_id?: string;
   reviewer_role?: string;
   company_size?: string;
   verified_reviewer?: boolean;
   created_at: string;
 }
 
-export function ReviewCard({ id, title, body, pros, cons, overall_rating, reviewer_name, reviewer_role, company_size, verified_reviewer, created_at }: ReviewCardProps) {
+export function ReviewCard({ id, title, body, pros, cons, overall_rating, reviewer_name, reviewer_user_id, reviewer_role, company_size, verified_reviewer, created_at }: ReviewCardProps) {
   const { user } = useAuth();
   const { up, down, userVote, vote, isVoting } = useReviewVotes(id);
+  const { data: reviewerBadges = [] } = useUserBadges(reviewer_user_id);
   const { topLevel, replies, addComment, deleteComment, isAdding } = useReviewComments(id);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -87,6 +91,7 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, review
           </div>
           <div>
             <span className="font-semibold text-foreground">{reviewer_name || "Anonymous"}</span>
+            {reviewerBadges.length > 0 && <BadgeRow badges={reviewerBadges} max={3} size="xs" />}
             {reviewer_role && <span className="opacity-60"> · {reviewer_role}</span>}
             {company_size && <span className="opacity-60"> · {company_size}</span>}
           </div>
