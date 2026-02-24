@@ -58,8 +58,8 @@ export default function SubmitProductPage() {
       toast.error("Product name is required (max 200 characters)");
       return false;
     }
-    if (!form.description.trim() || form.description.length > 5000) {
-      toast.error("Description is required (max 5000 characters)");
+    if (!form.description.trim()) {
+      toast.error("Description is required");
       return false;
     }
     return true;
@@ -221,8 +221,7 @@ export default function SubmitProductPage() {
                         <Label htmlFor="description" className="text-sm font-semibold flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" /> Description *
                         </Label>
-                        <Textarea id="description" value={form.description} onChange={(e) => updateField("description", e.target.value)} required maxLength={5000} rows={5} placeholder="Tell us about your product, key features, and target audience..." className="mt-2 rounded-xl resize-none" />
-                        <p className="text-xs text-muted-foreground mt-1">{form.description.length}/5000</p>
+                        <Textarea id="description" value={form.description} onChange={(e) => updateField("description", e.target.value)} required rows={5} placeholder="Tell us about your product, key features, and target audience..." className="mt-2 rounded-xl resize-none" />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
