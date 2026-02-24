@@ -4,30 +4,30 @@ import { ArrowRight, TrendingUp } from "lucide-react";
 
 const showcaseCategories = [
   {
-    name: "CRM Software",
+    name: "Best CRM Software",
     slug: "crm",
-    description: "Manage customer relationships, track deals, and grow revenue with the right CRM.",
+    description: "Manage customer relationships, track sales pipelines, and grow revenue. Compare top CRM platforms like Salesforce, HubSpot, and Pipedrive.",
     tools: ["Salesforce", "HubSpot", "Pipedrive", "Zoho CRM"],
     count: "45+",
   },
   {
-    name: "Project Management",
+    name: "Best Project Management Tools",
     slug: "project-management",
-    description: "Plan, track, and deliver projects on time with tools your whole team will love.",
+    description: "Plan, track, and deliver projects on time. Compare leading project management software including Asana, Monday.com, and ClickUp.",
     tools: ["Asana", "Monday.com", "ClickUp", "Jira"],
     count: "38+",
   },
   {
-    name: "Marketing Automation",
+    name: "Best Marketing Automation Platforms",
     slug: "marketing-automation",
-    description: "Automate campaigns, nurture leads, and measure ROI across every channel.",
+    description: "Automate email campaigns, nurture leads, and measure marketing ROI. Compare top automation tools like Mailchimp and ActiveCampaign.",
     tools: ["Mailchimp", "ActiveCampaign", "Marketo", "Klaviyo"],
     count: "32+",
   },
   {
-    name: "Analytics & BI",
+    name: "Best Analytics & BI Software",
     slug: "analytics",
-    description: "Turn data into decisions with dashboards, reports, and real-time insights.",
+    description: "Turn business data into actionable insights with dashboards, reports, and real-time analytics. Compare Tableau, Looker, and Mixpanel.",
     tools: ["Tableau", "Looker", "Mixpanel", "Amplitude"],
     count: "28+",
   },
@@ -35,26 +35,26 @@ const showcaseCategories = [
 
 export function TopCategoriesShowcase() {
   return (
-    <section className="py-20 md:py-24 bg-muted/30">
+    <section className="py-20 md:py-24 bg-muted/30" aria-labelledby="trending-categories-heading">
       <div className="container">
-        <motion.div
+        <motion.header
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <p className="text-sm font-semibold text-primary mb-2">Trending</p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
-            Most explored categories
+          <p className="text-sm font-semibold text-primary mb-2">Trending Software Categories</p>
+          <h2 id="trending-categories-heading" className="text-3xl md:text-4xl font-extrabold text-foreground">
+            Most Researched Software Categories in 2026
           </h2>
-          <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Dive deeper into the most popular software categories our users are researching right now.
+          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
+            Explore the most popular business software categories our users are actively researching, reviewing, and comparing right now.
           </p>
-        </motion.div>
+        </motion.header>
 
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {showcaseCategories.map((cat, i) => (
-            <motion.div
+            <motion.article
               key={cat.slug}
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -64,22 +64,23 @@ export function TopCategoriesShowcase() {
               <Link
                 to={`/category/${cat.slug}`}
                 className="glass-card p-6 group block"
+                aria-label={`Explore ${cat.name} — ${cat.count} products reviewed`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
                       {cat.name}
                     </h3>
-                    <span className="text-xs text-muted-foreground">{cat.count} products</span>
+                    <span className="text-xs text-muted-foreground">{cat.count} products reviewed</span>
                   </div>
-                  <div className="h-9 w-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
+                  <div className="h-9 w-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0" aria-hidden="true">
                     <TrendingUp className="h-4 w-4 text-primary" />
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                   {cat.description}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5" aria-label="Top tools in this category">
                   {cat.tools.map((tool) => (
                     <span
                       key={tool}
@@ -93,7 +94,7 @@ export function TopCategoriesShowcase() {
                   Explore category <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </Link>
-            </motion.div>
+            </motion.article>
           ))}
         </div>
       </div>

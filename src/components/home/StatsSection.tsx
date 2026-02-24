@@ -34,14 +34,14 @@ interface StatsSectionProps {
 
 export function StatsSection({ stats }: StatsSectionProps) {
   const items = [
-    { icon: Package, label: "Products", value: stats?.products || 0, suffix: "+" },
-    { icon: Star, label: "Reviews", value: stats?.reviews || 0, suffix: "+" },
-    { icon: BarChart3, label: "Categories", value: stats?.categories || 0, suffix: "" },
-    { icon: Users, label: "Active Users", value: 10000, suffix: "+" },
+    { icon: Package, label: "Software Products Listed", value: stats?.products || 0, suffix: "+" },
+    { icon: Star, label: "Verified User Reviews", value: stats?.reviews || 0, suffix: "+" },
+    { icon: BarChart3, label: "Software Categories", value: stats?.categories || 0, suffix: "" },
+    { icon: Users, label: "Active Professionals", value: 10000, suffix: "+" },
   ];
 
   return (
-    <section className="border-b border-border bg-card">
+    <section className="border-b border-border bg-card" aria-label="SoftwareHub platform statistics">
       <div className="container">
         <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
           {items.map(({ icon: Icon, label, value, suffix }) => (

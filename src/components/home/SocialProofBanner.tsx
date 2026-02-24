@@ -2,15 +2,15 @@ import { motion } from "framer-motion";
 import { Star, TrendingUp, Users, MessageSquare } from "lucide-react";
 
 const proofs = [
-  { icon: Star, text: "4.9/5 average rating from users", highlight: "4.9/5" },
-  { icon: Users, text: "10,000+ professionals trust us", highlight: "10,000+" },
-  { icon: MessageSquare, text: "50,000+ verified reviews", highlight: "50,000+" },
-  { icon: TrendingUp, text: "Growing 40% month-over-month", highlight: "40%" },
+  { icon: Star, text: "average user rating", highlight: "4.9/5" },
+  { icon: Users, text: "professionals trust SoftwareHub", highlight: "10,000+" },
+  { icon: MessageSquare, text: "verified software reviews", highlight: "50,000+" },
+  { icon: TrendingUp, text: "month-over-month growth", highlight: "40%" },
 ];
 
 export function SocialProofBanner() {
   return (
-    <section className="py-12 bg-foreground">
+    <section className="py-12 bg-foreground" aria-label="Platform trust metrics">
       <div className="container">
         <motion.div
           initial={{ opacity: 0 }}
@@ -27,13 +27,13 @@ export function SocialProofBanner() {
               transition={{ delay: i * 0.08 }}
               className="flex items-center gap-3"
             >
-              <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0" aria-hidden="true">
                 <p.icon className="h-4.5 w-4.5 text-primary" />
               </div>
               <p className="text-sm text-white/60 leading-snug">
                 <span className="text-white font-bold">{p.highlight}</span>
                 <br />
-                <span className="text-xs">{p.text.replace(p.highlight, "").trim()}</span>
+                <span className="text-xs">{p.text}</span>
               </p>
             </motion.div>
           ))}
