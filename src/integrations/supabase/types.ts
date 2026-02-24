@@ -788,6 +788,7 @@ export type Database = {
           job_title: string | null
           last_login_at: string | null
           name: string | null
+          preferred_language: string | null
           review_count: number | null
           user_id: string
         }
@@ -807,6 +808,7 @@ export type Database = {
           job_title?: string | null
           last_login_at?: string | null
           name?: string | null
+          preferred_language?: string | null
           review_count?: number | null
           user_id: string
         }
@@ -826,6 +828,7 @@ export type Database = {
           job_title?: string | null
           last_login_at?: string | null
           name?: string | null
+          preferred_language?: string | null
           review_count?: number | null
           user_id?: string
         }
