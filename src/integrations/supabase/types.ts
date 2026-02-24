@@ -254,6 +254,101 @@ export type Database = {
         }
         Relationships: []
       }
+      brevo_accounts: {
+        Row: {
+          api_key: string
+          created_at: string
+          credits_reset_at: string | null
+          credits_used_today: number | null
+          daily_credit_limit: number | null
+          id: string
+          is_active: boolean
+          last_synced_at: string | null
+          name: string
+          total_emails_sent: number | null
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          credits_reset_at?: string | null
+          credits_used_today?: number | null
+          daily_credit_limit?: number | null
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          name: string
+          total_emails_sent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          credits_reset_at?: string | null
+          credits_used_today?: number | null
+          daily_credit_limit?: number | null
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          name?: string
+          total_emails_sent?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      brevo_campaigns: {
+        Row: {
+          brevo_account_id: string
+          brevo_campaign_id: string | null
+          created_at: string
+          html_content: string | null
+          id: string
+          recipients_count: number | null
+          sender_email: string
+          sender_name: string
+          sent_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          brevo_account_id: string
+          brevo_campaign_id?: string | null
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          recipients_count?: number | null
+          sender_email: string
+          sender_name?: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          brevo_account_id?: string
+          brevo_campaign_id?: string | null
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          recipients_count?: number | null
+          sender_email?: string
+          sender_name?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brevo_campaigns_brevo_account_id_fkey"
+            columns: ["brevo_account_id"]
+            isOneToOne: false
+            referencedRelation: "brevo_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           banner_image: string | null

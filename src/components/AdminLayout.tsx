@@ -54,6 +54,7 @@ const sidebarItems = [
   { label: "Seed Data", icon: Database, to: "/admin/seed" },
   { label: "AI Import", icon: Sparkles, to: "/admin/ai-import" },
   { label: "Translations", icon: Globe, to: "/admin/translations" },
+  { label: "Brevo Email", icon: Mail, to: "/admin/brevo" },
 ];
 
 function SidebarItem({ item, collapsed }: { item: any; collapsed: boolean }) {
