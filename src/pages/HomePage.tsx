@@ -16,6 +16,14 @@ import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { CTASection } from "@/components/home/CTASection";
+import { PopularComparisonsSection } from "@/components/home/PopularComparisonsSection";
+import { FeaturesGridSection } from "@/components/home/FeaturesGridSection";
+import { FAQSection } from "@/components/home/FAQSection";
+import { RecentlyAddedSection } from "@/components/home/RecentlyAddedSection";
+import { BlogPreviewSection } from "@/components/home/BlogPreviewSection";
+import { TopCategoriesShowcase } from "@/components/home/TopCategoriesShowcase";
+import { SocialProofBanner } from "@/components/home/SocialProofBanner";
+import { VendorCTASection } from "@/components/home/VendorCTASection";
 
 export default function HomePage() {
   const { data: categories } = useQuery({
@@ -116,6 +124,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      <PopularComparisonsSection />
+
       <div className="section-gradient-divider" />
 
       {/* Top Rated */}
@@ -135,9 +145,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      <SocialProofBanner />
+
+      <RecentlyAddedSection />
+
+      <TopCategoriesShowcase />
+
+      <FeaturesGridSection />
+
       <HowItWorksSection />
+
       <TestimonialsSection />
+
+      <BlogPreviewSection />
+
+      <VendorCTASection />
+
       <CTASection />
+
+      <FAQSection />
+
       <NewsletterSection />
     </>
   );
