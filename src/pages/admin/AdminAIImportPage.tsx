@@ -15,12 +15,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import G2DiscoveryPanel from "@/components/admin/G2DiscoveryPanel";
 import CapterraDiscoveryPanel from "@/components/admin/CapterraDiscoveryPanel";
 import ComparisonContentPanel from "@/components/admin/ComparisonContentPanel";
+import ProductHuntDiscoveryPanel from "@/components/admin/ProductHuntDiscoveryPanel";
 import {
   Sparkles, Package, Star, Wand2, Loader2, CheckCircle2,
   AlertCircle, Download, Trash2, ChevronDown, ChevronUp,
   Zap, Globe, Building2, Calendar, DollarSign, Layers,
   ThumbsUp, ThumbsDown, BrainCircuit, ArrowRight,
-  Upload, Image, Search, RefreshCw,
+  Upload, Image, Search, RefreshCw, Rocket,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────
@@ -1670,6 +1671,10 @@ export default function AdminAIImportPage() {
           <span className="text-xs">G2 & Capterra</span>
         </Badge>
         <Badge variant="outline" className="gap-1.5 px-3 py-1 bg-card">
+          <Rocket className="h-3.5 w-3.5 text-[#DA552F]" />
+          <span className="text-xs">Product Hunt</span>
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 px-3 py-1 bg-card">
           <Globe className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs">Clearbit Logos</span>
         </Badge>
@@ -1724,6 +1729,12 @@ export default function AdminAIImportPage() {
           >
             <Layers className="h-4 w-4" /> Comparisons
           </TabsTrigger>
+          <TabsTrigger
+            value="producthunt"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
+          >
+            <Rocket className="h-4 w-4" /> Product Hunt
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="bulk" className="mt-6">
@@ -1743,6 +1754,9 @@ export default function AdminAIImportPage() {
         </TabsContent>
         <TabsContent value="enrich" className="mt-6">
           <EnrichProductsTab />
+        </TabsContent>
+        <TabsContent value="producthunt" className="mt-6">
+          <ProductHuntDiscoveryPanel />
         </TabsContent>
         <TabsContent value="comparisons" className="mt-6">
           <ComparisonContentPanel />

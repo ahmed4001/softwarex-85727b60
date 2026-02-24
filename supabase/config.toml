@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.bulk-generate-comparisons]
 verify_jwt = false
+
+[functions.discover-producthunt]
+verify_jwt = false
