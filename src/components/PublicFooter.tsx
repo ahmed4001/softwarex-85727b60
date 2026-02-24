@@ -1,44 +1,73 @@
 import { Link } from "react-router-dom";
 
+const footerSections = [
+  {
+    title: "SoftwareHub",
+    links: [
+      { to: "/category/all", label: "Browse Software" },
+      { to: "/blog", label: "Learning Hub" },
+      { to: "/category/all", label: "Software Reviews" },
+      { to: "/register", label: "Add Your Product" },
+      { to: "/search", label: "Research Hub" },
+      { to: "/compare", label: "Compare Software" },
+      { to: "/category/all", label: "Best Software Companies" },
+    ],
+  },
+  {
+    title: "Top Categories",
+    links: [
+      { to: "/category/ai-chatbots", label: "AI Chatbots Software" },
+      { to: "/category/crm", label: "CRM Software" },
+      { to: "/category/project-management", label: "Project Management" },
+      { to: "/category/expense-management", label: "Expense Management" },
+      { to: "/category/video-conferencing", label: "Video Conferencing" },
+      { to: "/category/e-commerce", label: "E-Commerce Platforms" },
+      { to: "/category/accounting", label: "Accounting Software" },
+      { to: "/category/erp", label: "ERP Systems" },
+      { to: "/category/marketing-automation", label: "Marketing Automation" },
+      { to: "/category/all", label: "All Categories" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { to: "/page/about", label: "About" },
+      { to: "/page/contact", label: "Contact" },
+      { to: "/blog", label: "News" },
+      { to: "/page/about", label: "Careers" },
+    ],
+  },
+  {
+    title: "Policies",
+    links: [
+      { to: "/page/community-guidelines", label: "Community Guidelines" },
+      { to: "/page/terms", label: "Terms of Use" },
+      { to: "/page/privacy", label: "Privacy Policy" },
+      { to: "/page/trust", label: "Trust & Security" },
+    ],
+  },
+];
+
 export function PublicFooter() {
   return (
-    <footer className="border-t border-border bg-card">
+    <footer className="bg-foreground text-white/70">
       <div className="container py-16">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-          <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-sm font-bold text-primary-foreground">S</span>
-              </div>
-              <span className="text-base font-bold text-foreground">SoftwareHub</span>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              The best place to discover, compare, and review business software. Real reviews from real users.
-            </p>
-          </div>
-          
-          {[
-            { title: "Browse", links: [
-              { to: "/category/all", label: "All Categories" },
-              { to: "/compare", label: "Compare" },
-              { to: "/blog", label: "Blog" },
-              { to: "/search", label: "Search" },
-            ]},
-            { title: "Company", links: [
-              { to: "/page/about", label: "About" },
-              { to: "/page/contact", label: "Contact" },
-              { to: "/submit-product", label: "List Your Product" },
-            ]},
-            { title: "Legal", links: [
-              { to: "/page/privacy", label: "Privacy Policy" },
-              { to: "/page/terms", label: "Terms of Service" },
-            ]},
-          ].map((section) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+          {footerSections.map((section) => (
             <div key={section.title}>
-              <h4 className="font-semibold text-foreground mb-4 text-sm">{section.title}</h4>
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-4 w-4 rounded bg-primary flex items-center justify-center flex-shrink-0">
+                  <span className="text-[8px] font-bold text-white">★</span>
+                </div>
+                <h4 className="font-bold text-white text-sm">{section.title}</h4>
+              </div>
               <div className="space-y-2.5">
-                {section.links.map((l) => (
-                  <Link key={l.to} to={l.to} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {section.links.map((l, i) => (
+                  <Link
+                    key={`${l.label}-${i}`}
+                    to={l.to}
+                    className="block text-sm text-white/50 hover:text-white transition-colors"
+                  >
                     {l.label}
                   </Link>
                 ))}
@@ -46,8 +75,8 @@ export function PublicFooter() {
             </div>
           ))}
         </div>
-        
-        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+
+        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
           <span>© {new Date().getFullYear()} SoftwareHub. All rights reserved.</span>
         </div>
       </div>

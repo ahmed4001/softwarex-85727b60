@@ -24,6 +24,8 @@ import { BlogPreviewSection } from "@/components/home/BlogPreviewSection";
 import { TopCategoriesShowcase } from "@/components/home/TopCategoriesShowcase";
 import { SocialProofBanner } from "@/components/home/SocialProofBanner";
 import { VendorCTASection } from "@/components/home/VendorCTASection";
+import { MostPopularCategoriesSection } from "@/components/home/MostPopularCategoriesSection";
+import { ResearchDirectorySection } from "@/components/home/ResearchDirectorySection";
 
 export default function HomePage() {
   const { data: categories } = useQuery({
@@ -85,8 +87,13 @@ export default function HomePage() {
       <StatsSection stats={stats} />
       <TrustedBySection />
 
+      {/* Most Popular Categories - G2 style */}
+      <MostPopularCategoriesSection />
+
+      <div className="section-gradient-divider" />
+
       {/* Categories */}
-      <section className="py-20">
+      <section className="py-20 bg-muted/30">
         <div className="container">
           <SectionHeader
             label="Explore"
@@ -108,7 +115,7 @@ export default function HomePage() {
       <div className="section-gradient-divider" />
 
       {/* Featured */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20">
         <div className="container">
           <SectionHeader label="Featured" title="Hand-picked software" subtitle="Curated by our team of experts" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -129,7 +136,7 @@ export default function HomePage() {
       <div className="section-gradient-divider" />
 
       {/* Top Rated */}
-      <section className="py-20">
+      <section className="py-20 bg-muted/30">
         <div className="container">
           <SectionHeader label="Top Rated" title="Highest rated software" subtitle="Loved by our community" linkTo="/category/all" />
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -160,6 +167,9 @@ export default function HomePage() {
       <BlogPreviewSection />
 
       <VendorCTASection />
+
+      {/* Research Directory - G2 style */}
+      <ResearchDirectorySection />
 
       <CTASection />
 
