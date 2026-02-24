@@ -185,6 +185,7 @@ export default function ProductDetailPage() {
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className="bg-muted/50 p-1 rounded-xl">
             <TabsTrigger value="overview" className="rounded-lg font-medium">{t("productDetail.overview")}</TabsTrigger>
+            <TabsTrigger value="screenshots" className="rounded-lg font-medium">Screenshots</TabsTrigger>
             <TabsTrigger value="reviews" className="rounded-lg font-medium">{t("productDetail.reviews", { count: product.total_reviews })}</TabsTrigger>
             <TabsTrigger value="pricing" className="rounded-lg font-medium">{t("productDetail.pricing")}</TabsTrigger>
             <TabsTrigger value="alternatives" className="rounded-lg font-medium">{t("productDetail.alternatives")}</TabsTrigger>
@@ -219,9 +220,16 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="screenshots">
             {(() => {
               const screenshots = Array.isArray(product.screenshots) ? product.screenshots.filter((s): s is string => typeof s === "string" && s.length > 0) : [];
-              return <ScreenshotGallery screenshots={screenshots} productName={product.name} />;
+              return screenshots.length > 0 ? (
+                <ScreenshotGallery screenshots={screenshots} productName={product.name} />
+              ) : (
+                <div className="glass-card p-12 text-center text-muted-foreground">No screenshots available yet.</div>
+              );
             })()}
           </TabsContent>
 
