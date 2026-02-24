@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import G2DiscoveryPanel from "@/components/admin/G2DiscoveryPanel";
 import CapterraDiscoveryPanel from "@/components/admin/CapterraDiscoveryPanel";
+import ComparisonContentPanel from "@/components/admin/ComparisonContentPanel";
 import {
   Sparkles, Package, Star, Wand2, Loader2, CheckCircle2,
   AlertCircle, Download, Trash2, ChevronDown, ChevronUp,
@@ -1717,6 +1718,12 @@ export default function AdminAIImportPage() {
           >
             <Wand2 className="h-4 w-4" /> Enrich
           </TabsTrigger>
+          <TabsTrigger
+            value="comparisons"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
+          >
+            <Layers className="h-4 w-4" /> Comparisons
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="bulk" className="mt-6">
@@ -1736,6 +1743,9 @@ export default function AdminAIImportPage() {
         </TabsContent>
         <TabsContent value="enrich" className="mt-6">
           <EnrichProductsTab />
+        </TabsContent>
+        <TabsContent value="comparisons" className="mt-6">
+          <ComparisonContentPanel />
         </TabsContent>
       </Tabs>
     </div>
