@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, SkipForward, Loader2, Play, Zap, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle2, XCircle, SkipForward, Loader2, Play, Zap, BarChart3, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import G2DiscoveryPanel from "@/components/admin/G2DiscoveryPanel";
 
 interface ScrapeResult {
   name: string;
@@ -113,9 +115,25 @@ export default function AdminSeedPage() {
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">Seed Products Database</h1>
         <p className="text-muted-foreground mt-1">
-          Scrape real product data from websites and G2 reviews using Firecrawl.
+          Populate your database with real product data from G2 and product websites.
         </p>
       </div>
+
+      <Tabs defaultValue="discovery" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="discovery" className="gap-2">
+            <Globe className="h-4 w-4" /> G2 Discovery
+          </TabsTrigger>
+          <TabsTrigger value="seed" className="gap-2">
+            <Play className="h-4 w-4" /> Seed List
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="discovery">
+          <G2DiscoveryPanel />
+        </TabsContent>
+
+        <TabsContent value="seed" className="space-y-6">
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -279,6 +297,8 @@ export default function AdminSeedPage() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
