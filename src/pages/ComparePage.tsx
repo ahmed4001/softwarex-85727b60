@@ -1,21 +1,36 @@
 import { SeoHead } from "@/components/SeoHead";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SearchBar } from "@/components/SearchBar";
 import { StarRating } from "@/components/StarRating";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { X, Plus, Check, Minus, ArrowRight, Calculator, BarChart3, Layers, Crown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Link, useSearchParams } from "react-router-dom";
+
+const MAX_PRODUCTS = 4;
 
 export default function ComparePage() {
-  const [productIds, setProductIds] = useState<string[]>([]);
+  const [searchParams] = useSearchParams();
+  const initialIds = searchParams.get("products")?.split(",").filter(Boolean) || [];
+  const [productIds, setProductIds] = useState<string[]>(initialIds);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [teamSize, setTeamSize] = useState([10]);
+  const [months, setMonths] = useState([12]);
 
   const { data: products } = useQuery({
     queryKey: ["compare-products", productIds],
     queryFn: async () => {
       if (productIds.length === 0) return [];
-      const { data } = await supabase.from("products").select("*").in("id", productIds);
+      const { data } = await supabase
+        .from("products")
+        .select("*, categories!products_category_id_fkey(name)")
+        .in("id", productIds);
       return data || [];
     },
     enabled: productIds.length > 0,
@@ -24,79 +39,371 @@ export default function ComparePage() {
   const { data: allProducts } = useQuery({
     queryKey: ["all-products-for-compare"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, slug, logo_url, avg_rating").eq("is_active", true).order("name").limit(100);
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, slug, logo_url, avg_rating, tagline")
+        .eq("is_active", true)
+        .order("name")
+        .limit(200);
       return data || [];
     },
   });
 
+  const filteredSearch = useMemo(() => {
+    if (!allProducts || !searchQuery.trim()) return allProducts || [];
+    const q = searchQuery.toLowerCase();
+    return allProducts.filter(
+      (p) => !productIds.includes(p.id) && (p.name.toLowerCase().includes(q) || p.tagline?.toLowerCase().includes(q))
+    );
+  }, [allProducts, searchQuery, productIds]);
+
+  const addProduct = (id: string) => {
+    if (productIds.length < MAX_PRODUCTS && !productIds.includes(id)) {
+      setProductIds([...productIds, id]);
+      setSearchQuery("");
+      setShowSearch(false);
+    }
+  };
+
+  const removeProduct = (id: string) => setProductIds(productIds.filter((pid) => pid !== id));
+
+  // Collect all unique features across selected products
+  const allFeatures = useMemo(() => {
+    if (!products) return [];
+    const featureSet = new Set<string>();
+    products.forEach((p) => {
+      const features = Array.isArray(p.features) ? p.features : [];
+      features.forEach((f: string) => featureSet.add(f));
+    });
+    return [...featureSet].sort();
+  }, [products]);
+
+  // Find the best product
+  const bestProduct = useMemo(() => {
+    if (!products || products.length === 0) return null;
+    return products.reduce((best, p) => (Number(p.avg_rating) > Number(best.avg_rating) ? p : best));
+  }, [products]);
+
   return (
     <>
-      <SeoHead title="Compare Software" description="Compare software side by side" />
-      <div className="container py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Compare Software</h1>
-        <p className="text-muted-foreground mb-6">Select up to 3 products to compare side by side.</p>
+      <SeoHead title="Compare Software Side-by-Side — SoftwareHub" description="Compare up to 4 software products side-by-side. Feature matrix, pricing calculator, and rating breakdown." />
 
-        {/* Product selector */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {products?.map((p) => (
-            <Badge key={p.id} variant="secondary" className="gap-1 pr-1">
-              {p.name}
-              <button onClick={() => setProductIds(ids => ids.filter(id => id !== p.id))}><X className="h-3 w-3" /></button>
-            </Badge>
-          ))}
-          {productIds.length < 3 && (
-            <select
-              className="text-sm border border-border rounded-lg px-3 py-1.5 bg-card"
-              onChange={(e) => { if (e.target.value && !productIds.includes(e.target.value)) setProductIds([...productIds, e.target.value]); e.target.value = ""; }}
-              value=""
-            >
-              <option value="">+ Add product</option>
-              {allProducts?.filter(p => !productIds.includes(p.id)).map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          )}
+      <div className="container py-8 max-w-6xl">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2">Compare Software Side-by-Side</h1>
+          <p className="text-muted-foreground">Select up to {MAX_PRODUCTS} products to compare features, pricing, and ratings.</p>
+        </motion.div>
+
+        {/* Product Selector */}
+        <div className="glass-card p-6 mb-8">
+          <div className="flex flex-wrap items-center gap-3">
+            {products?.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2 pr-2"
+              >
+                <div className="h-8 w-8 rounded-lg bg-card flex items-center justify-center overflow-hidden">
+                  {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
+                </div>
+                <span className="text-sm font-semibold text-foreground">{p.name}</span>
+                <button onClick={() => removeProduct(p.id)} className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
+            ))}
+
+            {productIds.length < MAX_PRODUCTS && (
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSearch(!showSearch)}
+                  className="gap-1.5 rounded-xl border-dashed"
+                >
+                  <Plus className="h-4 w-4" /> Add Product
+                </Button>
+
+                <AnimatePresence>
+                  {showSearch && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      className="absolute top-full left-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-lg z-20 overflow-hidden"
+                    >
+                      <div className="p-3 border-b border-border">
+                        <Input
+                          placeholder="Search products..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          autoFocus
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        {filteredSearch.slice(0, 20).map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => addProduct(p.id)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                              {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">{p.tagline}</p>
+                            </div>
+                          </button>
+                        ))}
+                        {filteredSearch.length === 0 && (
+                          <p className="text-xs text-muted-foreground text-center py-4">No products found</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         </div>
 
-        {products && products.length > 0 ? (
-          <div className="product-card overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Feature</th>
-                  {products.map(p => (
-                    <th key={p.id} className="text-center py-3 px-4">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
-                          {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover rounded-xl" /> : <span className="font-bold text-primary">{p.name.charAt(0)}</span>}
-                        </div>
-                        <span className="text-sm font-semibold">{p.name}</span>
+        {/* Comparison Content */}
+        {products && products.length >= 2 ? (
+          <div className="space-y-8">
+            {/* Overview Cards */}
+            <section>
+              <SectionLabel icon={<BarChart3 className="h-4 w-4" />} label="Overview" />
+              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
+                {products.map((p) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn("glass-card p-5 text-center relative", bestProduct?.id === p.id && "ring-2 ring-primary/30")}
+                  >
+                    {bestProduct?.id === p.id && (
+                      <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                        <Crown className="h-3 w-3" /> BEST RATED
                       </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { label: "Rating", render: (p: any) => <StarRating rating={Number(p.avg_rating)} size="sm" showValue /> },
-                  { label: "Reviews", render: (p: any) => <span>{p.total_reviews}</span> },
-                  { label: "Pricing", render: (p: any) => <Badge variant="outline" className="capitalize">{p.pricing_model}</Badge> },
-                  { label: "Starting Price", render: (p: any) => <span>{p.starting_price ? `$${p.starting_price}/mo` : "—"}</span> },
-                  { label: "Company Size", render: (p: any) => <span>{p.company_size || "—"}</span> },
-                  { label: "Founded", render: (p: any) => <span>{p.founded_year || "—"}</span> },
-                ].map((row) => (
-                  <tr key={row.label} className="border-b border-border">
-                    <td className="py-3 px-4 text-sm font-medium text-muted-foreground">{row.label}</td>
-                    {products.map(p => <td key={p.id} className="py-3 px-4 text-center text-sm">{row.render(p)}</td>)}
-                  </tr>
+                    )}
+                    <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center overflow-hidden mx-auto mb-3">
+                      {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xl font-bold text-primary">{p.name.charAt(0)}</span>}
+                    </div>
+                    <h3 className="font-bold text-foreground mb-1">{p.name}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{p.tagline}</p>
+                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                      <StarRating rating={Number(p.avg_rating)} size="sm" />
+                      <span className="text-sm font-bold">{Number(p.avg_rating).toFixed(1)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{p.total_reviews} reviews</p>
+                    <Link to={`/product/${p.slug}`}>
+                      <Button variant="ghost" size="sm" className="mt-3 text-xs gap-1">
+                        View Details <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </Link>
+                  </motion.div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </section>
+
+            {/* Comparison Table */}
+            <section>
+              <SectionLabel icon={<Layers className="h-4 w-4" />} label="Detailed Comparison" />
+              <div className="glass-card overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-48">Attribute</th>
+                      {products.map((p) => (
+                        <th key={p.id} className="text-center py-3 px-4 text-sm font-semibold text-foreground">{p.name}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <CompareRow label="Rating" products={products} render={(p) => (
+                      <div className="flex items-center justify-center gap-1.5">
+                        <StarRating rating={Number(p.avg_rating)} size="sm" />
+                        <span className="font-bold text-sm">{Number(p.avg_rating).toFixed(1)}</span>
+                      </div>
+                    )} />
+                    <CompareRow label="Total Reviews" products={products} render={(p) => <span className="font-medium">{p.total_reviews || 0}</span>} />
+                    <CompareRow label="Pricing Model" products={products} render={(p) => <Badge variant="outline" className="capitalize">{p.pricing_model || "—"}</Badge>} />
+                    <CompareRow label="Starting Price" products={products} render={(p) => (
+                      <span className="font-bold">{p.starting_price ? `$${p.starting_price}/mo` : "—"}</span>
+                    )} />
+                    <CompareRow label="Category" products={products} render={(p) => <span className="text-sm">{(p.categories as any)?.name || "—"}</span>} />
+                    <CompareRow label="Company Size" products={products} render={(p) => <span>{p.company_size || "—"}</span>} />
+                    <CompareRow label="Founded" products={products} render={(p) => <span>{p.founded_year || "—"}</span>} />
+                    <CompareRow label="Headquarters" products={products} render={(p) => <span>{p.headquarters || "—"}</span>} />
+                    <CompareRow label="Verified" products={products} render={(p) => (
+                      p.is_verified ? <Check className="h-4 w-4 text-[hsl(var(--success))] mx-auto" /> : <Minus className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                    )} />
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Feature Matrix */}
+            {allFeatures.length > 0 && (
+              <section>
+                <SectionLabel icon={<Check className="h-4 w-4" />} label="Feature Matrix" />
+                <div className="glass-card overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-5 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-48">Feature</th>
+                        {products.map((p) => (
+                          <th key={p.id} className="text-center py-3 px-4 text-sm font-semibold text-foreground">{p.name}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allFeatures.map((feature) => (
+                        <tr key={feature} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <td className="py-2.5 px-5 text-sm text-foreground font-medium">{feature}</td>
+                          {products.map((p) => {
+                            const has = Array.isArray(p.features) && p.features.includes(feature);
+                            return (
+                              <td key={p.id} className="py-2.5 px-4 text-center">
+                                {has ? (
+                                  <div className="h-6 w-6 rounded-full bg-[hsl(var(--success)/0.1)] flex items-center justify-center mx-auto">
+                                    <Check className="h-3.5 w-3.5 text-[hsl(var(--success))]" />
+                                  </div>
+                                ) : (
+                                  <Minus className="h-4 w-4 text-muted-foreground/20 mx-auto" />
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+            {/* Pros & Cons */}
+            {products.some((p) => p.pros_summary || p.cons_summary) && (
+              <section>
+                <SectionLabel icon={<BarChart3 className="h-4 w-4" />} label="Pros & Cons" />
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
+                  {products.map((p) => (
+                    <div key={p.id} className="space-y-3">
+                      <h4 className="font-semibold text-sm text-foreground text-center">{p.name}</h4>
+                      {p.pros_summary && (
+                        <div className="glass-card p-4 border-l-4 border-l-[hsl(var(--success))]">
+                          <p className="text-xs font-bold text-[hsl(var(--success))] uppercase mb-1">Pros</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{p.pros_summary}</p>
+                        </div>
+                      )}
+                      {p.cons_summary && (
+                        <div className="glass-card p-4 border-l-4 border-l-destructive">
+                          <p className="text-xs font-bold text-destructive uppercase mb-1">Cons</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{p.cons_summary}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Pricing Calculator */}
+            <section>
+              <SectionLabel icon={<Calculator className="h-4 w-4" />} label="Pricing Calculator" />
+              <div className="glass-card p-6">
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Team Size: {teamSize[0]} users</label>
+                    <Slider value={teamSize} onValueChange={setTeamSize} min={1} max={500} step={1} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Duration: {months[0]} months</label>
+                    <Slider value={months} onValueChange={setMonths} min={1} max={36} step={1} />
+                  </div>
+                </div>
+
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
+                  {products.map((p) => {
+                    const monthlyPerUser = p.starting_price || 0;
+                    const monthlyCost = monthlyPerUser * teamSize[0];
+                    const totalCost = monthlyCost * months[0];
+                    const isCheapest = products.every((other) => (other.starting_price || 0) >= (p.starting_price || 0));
+
+                    return (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={cn(
+                          "glass-card p-5 text-center",
+                          isCheapest && products.length > 1 && "ring-2 ring-primary/30"
+                        )}
+                      >
+                        {isCheapest && products.length > 1 && (
+                          <Badge className="mb-2 bg-primary/10 text-primary border-0 text-[10px]">Best Value</Badge>
+                        )}
+                        <h4 className="font-bold text-foreground mb-3">{p.name}</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Per user/mo</span>
+                            <span className="font-semibold text-foreground">{monthlyPerUser ? `$${monthlyPerUser}` : "Free"}</span>
+                          </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Monthly ({teamSize[0]} users)</span>
+                            <span className="font-semibold text-foreground">${monthlyCost.toLocaleString()}</span>
+                          </div>
+                          <div className="h-px bg-border my-2" />
+                          <div className="flex justify-between">
+                            <span className="font-medium text-foreground">Total ({months[0]}mo)</span>
+                            <span className="text-lg font-extrabold text-primary">${totalCost.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
           </div>
         ) : (
-          <div className="text-center py-16 text-muted-foreground">Select products above to start comparing.</div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
+            <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <Layers className="h-7 w-7 text-muted-foreground/30" />
+            </div>
+            <h2 className="text-lg font-bold text-foreground mb-1">
+              {products && products.length === 1 ? "Add one more product to compare" : "Select products to compare"}
+            </h2>
+            <p className="text-sm text-muted-foreground">Choose at least 2 products above to see a detailed side-by-side comparison.</p>
+          </motion.div>
         )}
       </div>
     </>
+  );
+}
+
+function SectionLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">{icon}</div>
+      <h2 className="text-lg font-bold text-foreground">{label}</h2>
+    </div>
+  );
+}
+
+function CompareRow({ label, products, render }: { label: string; products: any[]; render: (p: any) => React.ReactNode }) {
+  return (
+    <tr className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+      <td className="py-3 px-5 text-sm font-medium text-muted-foreground">{label}</td>
+      {products.map((p) => (
+        <td key={p.id} className="py-3 px-4 text-center text-sm">{render(p)}</td>
+      ))}
+    </tr>
   );
 }
