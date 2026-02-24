@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'DM Sans',
+  				'Inter',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -34,7 +34,7 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Crimson Pro',
+  				'Lora',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -43,7 +43,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'SF Mono',
+  				'Space Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
@@ -200,18 +200,22 @@ export default {
   					boxShadow: '0 0 40px -4px hsl(var(--primary) / 0.5)'
   				}
   			},
-			'spin-slow': {
-				from: {
-					transform: 'rotate(0deg)'
-				},
-				to: {
-					transform: 'rotate(360deg)'
-				}
-			},
-			'marquee': {
-				'0%': { transform: 'translateX(0)' },
-				'100%': { transform: 'translateX(-50%)' }
-			}
+  			'spin-slow': {
+  				from: {
+  					transform: 'rotate(0deg)'
+  				},
+  				to: {
+  					transform: 'rotate(360deg)'
+  				}
+  			},
+  			marquee: {
+  				'0%': {
+  					transform: 'translateX(0)'
+  				},
+  				'100%': {
+  					transform: 'translateX(-50%)'
+  				}
+  			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
@@ -223,8 +227,8 @@ export default {
   			'slide-up': 'slide-up 0.6s ease-out forwards',
   			'count-up': 'count-up 0.5s ease-out',
   			'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
-			'spin-slow': 'spin-slow 20s linear infinite',
-			'marquee': 'marquee 20s linear infinite'
+  			'spin-slow': 'spin-slow 20s linear infinite',
+  			marquee: 'marquee 20s linear infinite'
   		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',
