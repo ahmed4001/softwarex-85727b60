@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   Type, Image, MousePointerClick, Minus, MoveVertical,
   Trash2, GripVertical, Plus, Heading1, AlignLeft,
-  Columns2, ArrowUp, ArrowDown, Code, Save, FolderOpen, Loader2,
+  Columns2, ArrowUp, ArrowDown, Code, Save, FolderOpen, Loader2, Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -91,9 +91,23 @@ function blocksToFullHtml(blocks: EmailBlock[], bgColor: string, contentBg: stri
 }
 
 // ---------- Block editor panel ----------
-function BlockEditor({ block, onChange }: { block: EmailBlock; onChange: (props: Record<string, string>) => void }) {
+function BlockEditor({ block, onChange, onImageUpload }: { block: EmailBlock; onChange: (props: Record<string, string>) => void; onImageUpload?: (file: File) => Promise<string | null> }) {
+  const [uploading, setUploading] = useState(false);
   const { type, props: p } = block;
   const update = (key: string, val: string) => onChange({ ...p, [key]: val });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onImageUpload) return;
+    setUploading(true);
+    try {
+      const url = await onImageUpload(file);
+      if (url) update("src", url);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
 
   switch (type) {
     case "heading":
@@ -144,7 +158,23 @@ function BlockEditor({ block, onChange }: { block: EmailBlock; onChange: (props:
     case "image":
       return (
         <div className="space-y-3">
-          <div><Label className="text-xs">Image URL</Label><Input className="h-8" value={p.src} onChange={(e) => update("src", e.target.value)} /></div>
+          <div>
+            <Label className="text-xs">Image</Label>
+            <div className="flex gap-2 mt-1">
+              <Input className="h-8 flex-1" placeholder="Image URL" value={p.src} onChange={(e) => update("src", e.target.value)} />
+              <Button variant="outline" size="sm" className="h-8 gap-1 px-2 relative" disabled={uploading}>
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                <span className="text-xs">{uploading ? "..." : "Upload"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  onChange={handleFileSelect}
+                  disabled={uploading}
+                />
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div><Label className="text-xs">Alt text</Label><Input className="h-8" value={p.alt} onChange={(e) => update("alt", e.target.value)} /></div>
             <div><Label className="text-xs">Width %</Label><Input type="number" className="h-8" value={p.width} onChange={(e) => update("width", e.target.value)} /></div>
@@ -301,6 +331,19 @@ export function EmailBuilder({ value, onChange }: EmailBuilderProps) {
     setSelectedBlockId(null);
     toast.success("Template loaded");
   };
+
+  const handleImageUpload = useCallback(async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("email-assets").upload(path, file, { contentType: file.type });
+    if (error) {
+      toast.error(`Upload failed: ${error.message}`);
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from("email-assets").getPublicUrl(path);
+    toast.success("Image uploaded");
+    return urlData.publicUrl;
+  }, []);
 
   const syncHtml = useCallback((newBlocks: EmailBlock[]) => {
     setBlocks(newBlocks);
@@ -465,6 +508,7 @@ export function EmailBuilder({ value, onChange }: EmailBuilderProps) {
               <BlockEditor
                 block={selectedBlock}
                 onChange={(props) => updateBlockProps(selectedBlock.id, props)}
+                onImageUpload={handleImageUpload}
               />
             </div>
           ) : (
