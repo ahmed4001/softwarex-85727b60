@@ -46,9 +46,9 @@ export function VendorCTASection() {
           </div>
           <aside className="hidden md:flex flex-col gap-3 w-64 flex-shrink-0" aria-label="Platform statistics">
             {[
-              { label: "Software Products Listed", value: "500+", color: "primary" },
-              { label: "Monthly B2B Visitors", value: "120K", color: "secondary" },
-              { label: "Avg. Review Score", value: "4.6★", color: "primary" },
+              { label: "Software Products Listed", value: "82,847+", color: "primary" },
+              { label: "Monthly B2B Visitors", value: "1.2M", color: "secondary" },
+              { label: "Avg. Review Score", value: "4.8★", color: "primary" },
             ].map((stat) => (
               <div key={stat.label} className="bg-muted/50 rounded-xl p-4 text-center">
                 <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
