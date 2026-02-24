@@ -2,14 +2,15 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
-  CheckCircle2, XCircle, Loader2, Search, Download,
-  Globe, ArrowRight, Rocket, SkipForward,
+  CheckCircle2, XCircle, Loader2, Download,
+  Globe, ArrowRight, Rocket, SkipForward, Sparkles, Image,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -53,13 +54,14 @@ const PH_TOPICS = [
 export default function ProductHuntDiscoveryPanel() {
   const { toast } = useToast();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [customUrl, setCustomUrl] = useState("");
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [enrichEnabled, setEnrichEnabled] = useState(true);
   const [discoveredProducts, setDiscoveredProducts] = useState<DiscoveredProduct[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const [importProgress, setImportProgress] = useState(0);
+  const [currentProduct, setCurrentProduct] = useState<string | null>(null);
 
   const discoverProducts = useCallback(async (topic?: string) => {
     setIsDiscovering(true);
@@ -77,7 +79,6 @@ export default function ProductHuntDiscoveryPanel() {
 
       if (data?.products) {
         setDiscoveredProducts(data.products);
-        // Auto-select new products
         const newSlugs = data.products
           .filter((p: DiscoveredProduct) => !p.already_exists)
           .map((p: DiscoveredProduct) => p.slug);
@@ -122,15 +123,17 @@ export default function ProductHuntDiscoveryPanel() {
     setImportProgress(0);
 
     const products = discoveredProducts.filter((p) => selectedProducts.has(p.slug));
-    const batchSize = 5;
+    // When enriching, send 1 at a time since each takes longer (multiple scrapes)
+    const batchSize = enrichEnabled ? 1 : 5;
 
     for (let i = 0; i < products.length; i += batchSize) {
       const batch = products.slice(i, i + batchSize);
+      setCurrentProduct(batch[0]?.name || null);
       setImportProgress(Math.round(((i + batchSize) / products.length) * 100));
 
       try {
         const { data, error } = await supabase.functions.invoke("discover-producthunt", {
-          body: { action: "import", import_products: batch },
+          body: { action: "import", import_products: batch, enrich: enrichEnabled },
         });
 
         if (error) {
@@ -147,8 +150,9 @@ export default function ProductHuntDiscoveryPanel() {
 
     setIsImporting(false);
     setImportProgress(100);
+    setCurrentProduct(null);
     toast({ title: "Import complete", description: `Processed ${products.length} products` });
-  }, [selectedProducts, discoveredProducts, toast]);
+  }, [selectedProducts, discoveredProducts, enrichEnabled, toast]);
 
   const newProductsCount = discoveredProducts.filter((p) => !p.already_exists).length;
   const successCount = importResults.filter((r) => r.status === "success").length;
@@ -210,29 +214,63 @@ export default function ProductHuntDiscoveryPanel() {
                   {newProductsCount} new · {discoveredProducts.length - newProductsCount} already in database
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={selectAllNew}>
-                  Select All New ({newProductsCount})
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={importSelected}
-                  disabled={isImporting || selectedProducts.size === 0}
-                >
-                  {isImporting ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Importing...</>
-                  ) : (
-                    <><Download className="h-4 w-4 mr-1.5" /> Import {selectedProducts.size}</>
-                  )}
-                </Button>
+              <div className="flex items-center gap-4">
+                {/* Enrich toggle */}
+                <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-muted/30">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <Label htmlFor="enrich-toggle" className="text-xs font-medium cursor-pointer">
+                    Scrape & Enrich
+                  </Label>
+                  <Switch
+                    id="enrich-toggle"
+                    checked={enrichEnabled}
+                    onCheckedChange={setEnrichEnabled}
+                    disabled={isImporting}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={selectAllNew}>
+                    Select All New ({newProductsCount})
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={importSelected}
+                    disabled={isImporting || selectedProducts.size === 0}
+                  >
+                    {isImporting ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Importing...</>
+                    ) : (
+                      <><Download className="h-4 w-4 mr-1.5" /> Import {selectedProducts.size}</>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
+            {enrichEnabled && !isImporting && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1.5">
+                <Image className="h-3 w-3" />
+                Deep scrape enabled — each product's PH page + website will be scraped for descriptions, features, pricing & screenshots. This takes longer but produces richer listings.
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {isImporting && (
               <div className="mb-4 space-y-1.5">
                 <Progress value={importProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground text-right">{importProgress}%</p>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>
+                    {currentProduct && (
+                      <>
+                        {enrichEnabled ? (
+                          <><Sparkles className="inline h-3 w-3 text-amber-500 mr-1" />Enriching: {currentProduct}</>
+                        ) : (
+                          <>Importing: {currentProduct}</>
+                        )}
+                      </>
+                    )}
+                  </span>
+                  <span>{importProgress}%</span>
+                </div>
               </div>
             )}
 
