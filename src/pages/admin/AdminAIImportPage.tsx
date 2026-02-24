@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,14 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import G2DiscoveryPanel from "@/components/admin/G2DiscoveryPanel";
+import CapterraDiscoveryPanel from "@/components/admin/CapterraDiscoveryPanel";
 import {
   Sparkles, Package, Star, Wand2, Loader2, CheckCircle2,
   AlertCircle, Download, Trash2, ChevronDown, ChevronUp,
   Zap, Globe, Building2, Calendar, DollarSign, Layers,
   ThumbsUp, ThumbsDown, BrainCircuit, ArrowRight,
+  Upload, Image, Search, RefreshCw,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────
@@ -499,7 +502,7 @@ function GenerateReviewsTab() {
     queryFn: async () => {
       const { data } = await supabase
         .from("products")
-        .select("id, name, slug, avg_rating, category_id, categories(name)")
+        .select("id, name, slug, avg_rating, category_id, categories!products_category_id_fkey(name)")
         .eq("is_active", true)
         .order("name")
         .limit(500);
@@ -770,7 +773,7 @@ function EnrichProductsTab() {
     queryFn: async () => {
       const { data } = await supabase
         .from("products")
-        .select("id, name, slug, website_url, description, features, logo_url, tagline, pricing_model, avg_rating, category_id, categories(name)")
+        .select("id, name, slug, website_url, description, features, logo_url, tagline, pricing_model, avg_rating, category_id, categories!products_category_id_fkey(name)")
         .eq("is_active", true)
         .order("name")
         .limit(500);
@@ -968,6 +971,291 @@ function EnrichProductsTab() {
   );
 }
 
+// ─── Scrape Real Data Tab ──────────────────────────────
+function ScrapeRealDataTab() {
+  const [source, setSource] = useState<"g2" | "capterra">("g2");
+
+  return (
+    <div className="space-y-6">
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="bg-gradient-to-br from-blue-500/10 via-accent/20 to-transparent p-1">
+          <div className="bg-card rounded-[calc(var(--radius)-2px)] p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Search className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Scrape Real Products</h3>
+                <p className="text-xs text-muted-foreground">Discover and import real software from G2 & Capterra review sites</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={source === "g2" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSource("g2")}
+                  className="gap-1.5"
+                >
+                  <Globe className="h-3.5 w-3.5" /> G2
+                </Button>
+                <Button
+                  variant={source === "capterra" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSource("capterra")}
+                  className="gap-1.5"
+                >
+                  <Globe className="h-3.5 w-3.5" /> Capterra
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      {source === "g2" ? <G2DiscoveryPanel /> : <CapterraDiscoveryPanel />}
+    </div>
+  );
+}
+
+// ─── Upload Images Tab ─────────────────────────────────
+function UploadImagesTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [autoFetching, setAutoFetching] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState(0);
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["admin-products-for-images"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, slug, logo_url, website_url")
+        .eq("is_active", true)
+        .order("name")
+        .limit(500);
+      return data || [];
+    },
+  });
+
+  const productsWithoutLogos = products.filter((p) => !p.logo_url);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedProduct) return;
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `logos/${selectedProduct}-${Date.now()}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(path, file, { contentType: file.type });
+      
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(path);
+
+      await supabase
+        .from("products")
+        .update({ logo_url: urlData.publicUrl })
+        .eq("id", selectedProduct);
+
+      queryClient.invalidateQueries({ queryKey: ["admin-products-for-images"] });
+      toast({ title: "Logo uploaded", description: "Product logo has been updated." });
+      setSelectedProduct("");
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const autoFetchLogos = async () => {
+    setAutoFetching(true);
+    setFetchProgress(0);
+    let updated = 0;
+
+    for (let i = 0; i < productsWithoutLogos.length; i++) {
+      const p = productsWithoutLogos[i];
+      if (p.website_url) {
+        try {
+          const domain = new URL(p.website_url).hostname.replace("www.", "");
+          const logoUrl = `https://logo.clearbit.com/${domain}`;
+          
+          // Test if logo exists
+          const res = await fetch(logoUrl, { method: "HEAD" });
+          if (res.ok) {
+            await supabase
+              .from("products")
+              .update({ logo_url: logoUrl })
+              .eq("id", p.id);
+            updated++;
+          }
+        } catch {
+          // Skip failed fetches
+        }
+      }
+      setFetchProgress(Math.round(((i + 1) / productsWithoutLogos.length) * 100));
+    }
+
+    setAutoFetching(false);
+    queryClient.invalidateQueries({ queryKey: ["admin-products-for-images"] });
+    toast({ title: "Auto-fetch complete", description: `Updated ${updated} product logos.` });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Manual Upload Card */}
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="bg-gradient-to-br from-violet-500/10 via-accent/20 to-transparent p-1">
+          <div className="bg-card rounded-[calc(var(--radius)-2px)] p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-violet-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Upload Product Logo</h3>
+                <p className="text-xs text-muted-foreground">Manually upload a logo image for any product</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              <div className="md:col-span-5 space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Product</Label>
+                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                  <SelectTrigger className="h-11 bg-background/50">
+                    <SelectValue placeholder="Choose a product..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        <div className="flex items-center gap-2">
+                          {p.logo_url ? (
+                            <img src={p.logo_url} alt="" className="h-4 w-4 rounded object-contain" />
+                          ) : (
+                            <div className="h-4 w-4 rounded bg-muted flex items-center justify-center">
+                              <Image className="h-2.5 w-2.5 text-muted-foreground" />
+                            </div>
+                          )}
+                          {p.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Logo Image</Label>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={!selectedProduct || uploading}
+                  className="h-11 bg-background/50"
+                />
+              </div>
+              <div className="md:col-span-3">
+                {uploading && (
+                  <div className="flex items-center gap-2 h-11 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Auto-fetch Logos Card */}
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="bg-gradient-to-br from-emerald-500/10 via-accent/20 to-transparent p-1">
+          <div className="bg-card rounded-[calc(var(--radius)-2px)] p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <RefreshCw className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Auto-Fetch Logos</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically grab logos from product websites using Clearbit
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={autoFetchLogos}
+                disabled={autoFetching || productsWithoutLogos.length === 0}
+                className="shadow-md"
+              >
+                {autoFetching ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Fetching...</>
+                ) : (
+                  <><RefreshCw className="h-4 w-4 mr-2" /> Fetch {productsWithoutLogos.length} Logos</>
+                )}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <span className="font-bold text-2xl">{products.length}</span>
+                <p className="text-xs text-muted-foreground mt-1">Total Products</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-primary/5">
+                <span className="font-bold text-2xl">{products.length - productsWithoutLogos.length}</span>
+                <p className="text-xs text-muted-foreground mt-1">Have Logos</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-destructive/5">
+                <span className="font-bold text-2xl">{productsWithoutLogos.length}</span>
+                <p className="text-xs text-muted-foreground mt-1">Missing Logos</p>
+              </div>
+            </div>
+
+            {autoFetching && (
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Fetching logos...</span>
+                  <span className="font-semibold">{fetchProgress}%</span>
+                </div>
+                <Progress value={fetchProgress} className="h-2" />
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Products missing logos */}
+      {productsWithoutLogos.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Products Missing Logos ({productsWithoutLogos.length})
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {productsWithoutLogos.slice(0, 20).map((p) => (
+              <Card key={p.id} className="p-3 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0">
+                  <Image className="h-4 w-4 text-muted-foreground/50" />
+                </div>
+                <span className="text-xs font-medium truncate">{p.name}</span>
+              </Card>
+            ))}
+            {productsWithoutLogos.length > 20 && (
+              <Card className="p-3 flex items-center justify-center">
+                <span className="text-xs text-muted-foreground">+{productsWithoutLogos.length - 20} more</span>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ─────────────────────────────────────────
 export default function AdminAIImportPage() {
   return (
@@ -984,7 +1272,7 @@ export default function AdminAIImportPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">AI Product Data Generator</h1>
           <p className="text-muted-foreground mt-0.5 text-sm">
-            Generate, enrich, and import real software product data · Powered by AI + Clearbit logos
+            Generate, scrape, enrich, and import real software product data
           </p>
         </div>
       </div>
@@ -996,43 +1284,65 @@ export default function AdminAIImportPage() {
           <span className="text-xs">Lovable AI</span>
         </Badge>
         <Badge variant="outline" className="gap-1.5 px-3 py-1 bg-card">
+          <Search className="h-3.5 w-3.5 text-blue-600" />
+          <span className="text-xs">G2 & Capterra</span>
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 px-3 py-1 bg-card">
           <Globe className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs">Clearbit Logos</span>
         </Badge>
         <Badge variant="outline" className="gap-1.5 px-3 py-1 bg-card">
-          <Zap className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs">No API Key Required</span>
+          <Upload className="h-3.5 w-3.5 text-violet-600" />
+          <span className="text-xs">Manual Upload</span>
         </Badge>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="generate" className="w-full">
-        <TabsList className="bg-card border border-border/50 p-1 h-auto rounded-xl shadow-sm">
+        <TabsList className="bg-card border border-border/50 p-1 h-auto rounded-xl shadow-sm flex-wrap">
           <TabsTrigger
             value="generate"
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
           >
-            <Package className="h-4 w-4" /> Generate Products
+            <Package className="h-4 w-4" /> AI Generate
+          </TabsTrigger>
+          <TabsTrigger
+            value="scrape"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
+          >
+            <Search className="h-4 w-4" /> Scrape Real Data
           </TabsTrigger>
           <TabsTrigger
             value="reviews"
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
           >
-            <Star className="h-4 w-4" /> Generate Reviews
+            <Star className="h-4 w-4" /> Reviews
+          </TabsTrigger>
+          <TabsTrigger
+            value="images"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
+          >
+            <Image className="h-4 w-4" /> Images & Logos
           </TabsTrigger>
           <TabsTrigger
             value="enrich"
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:shadow-sm text-sm"
           >
-            <Wand2 className="h-4 w-4" /> Enrich Data
+            <Wand2 className="h-4 w-4" /> Enrich
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="generate" className="mt-6">
           <GenerateProductsTab />
         </TabsContent>
+        <TabsContent value="scrape" className="mt-6">
+          <ScrapeRealDataTab />
+        </TabsContent>
         <TabsContent value="reviews" className="mt-6">
           <GenerateReviewsTab />
+        </TabsContent>
+        <TabsContent value="images" className="mt-6">
+          <UploadImagesTab />
         </TabsContent>
         <TabsContent value="enrich" className="mt-6">
           <EnrichProductsTab />
