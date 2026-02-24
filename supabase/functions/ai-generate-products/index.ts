@@ -72,32 +72,42 @@ async function callLovableAI(prompt: string, maxTokens: number, apiKey: string):
 
 async function callGeminiDirect(prompt: string, maxTokens: number, apiKey: string): Promise<string> {
   const systemInstruction = "You are a data generation assistant. You ONLY return valid JSON arrays or objects. No markdown, no explanation, no code fences. Just raw JSON.";
+  const maxRetries = 5;
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemInstruction }] },
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: maxTokens,
-        temperature: 0.7,
-      },
-    }),
-  });
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: maxTokens,
+          temperature: 0.7,
+        },
+      }),
+    });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("Gemini API error:", response.status, errText);
     if (response.status === 429) {
-      throw new Error("Google Gemini rate limit exceeded. Please try again in a moment.");
+      const waitMs = Math.min(2000 * Math.pow(2, attempt), 30000) + Math.random() * 1000;
+      console.log(`Gemini rate limited (attempt ${attempt + 1}/${maxRetries}), waiting ${Math.round(waitMs)}ms...`);
+      await response.text(); // consume body
+      await new Promise((r) => setTimeout(r, waitMs));
+      continue;
     }
-    throw new Error(`Google Gemini API error: ${response.status}`);
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Gemini API error:", response.status, errText);
+      throw new Error(`Google Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return cleanJson(text);
   }
 
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return cleanJson(text);
+  throw new Error("Google Gemini rate limit exceeded after multiple retries. Please wait a minute and try again.");
 }
 
 function cleanJson(text: string): string {
