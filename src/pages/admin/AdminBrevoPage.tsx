@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, RefreshCw, Send, Trash2, Mail, Users, CreditCard, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Plus, RefreshCw, Send, Trash2, Mail, Users, CreditCard, Eye, EyeOff, Loader2, Zap } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CampaignComposer } from "@/components/admin/CampaignComposer";
@@ -241,7 +242,18 @@ export default function AdminBrevoPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{a.credits_used_today}/{a.daily_credit_limit}</span>
+                      <div className="space-y-1">
+                        <span className="text-sm">{a.credits_used_today}/{a.daily_credit_limit}</span>
+                        {(() => {
+                          const pct = Math.round(((a.credits_used_today || 0) / (a.daily_credit_limit || 300)) * 100);
+                          const color = pct < 50 ? "bg-green-500" : pct < 80 ? "bg-yellow-500" : "bg-destructive";
+                          return (
+                            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </TableCell>
                     <TableCell>{(a.total_emails_sent || 0).toLocaleString()}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">

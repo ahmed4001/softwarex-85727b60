@@ -1325,6 +1325,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_best_brevo_account: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1332,6 +1333,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reset_brevo_daily_credits: { Args: never; Returns: undefined }
     }
     Enums: {
       ad_placement: "homepage" | "category" | "product" | "blog"

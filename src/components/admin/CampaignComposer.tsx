@@ -148,8 +148,13 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
+      // For drafts with auto, use the first active account as placeholder
+      const draftAccountId = draft.accountId === "auto" 
+        ? activeAccounts[0]?.id 
+        : draft.accountId;
+      if (!draftAccountId) throw new Error("No active account available");
       const { error } = await supabase.from("brevo_campaigns").insert({
-        brevo_account_id: draft.accountId,
+        brevo_account_id: draftAccountId,
         subject: draft.subject,
         sender_name: draft.senderName,
         sender_email: draft.senderEmail,
@@ -168,10 +173,11 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
+      const isAuto = draft.accountId === "auto";
       const { data, error } = await supabase.functions.invoke("brevo-api", {
         body: {
-          action: "send-campaign",
-          accountId: draft.accountId,
+          action: isAuto ? "send-campaign-roundrobin" : "send-campaign",
+          ...(isAuto ? {} : { accountId: draft.accountId }),
           subject: draft.subject,
           senderName: draft.senderName,
           senderEmail: draft.senderEmail,
@@ -181,10 +187,11 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["brevo-campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["brevo-accounts"] });
-      toast.success("Campaign sent successfully!");
+      const accountInfo = data?.accountName ? ` via ${data.accountName}` : "";
+      toast.success(`Campaign sent successfully${accountInfo}!`);
       resetComposer();
     },
     onError: (e: Error) => toast.error(`Send failed: ${e.message}`),
@@ -211,7 +218,8 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
   };
 
   const isValid = draft.accountId && draft.subject && draft.senderEmail && draft.htmlContent;
-  const selectedAccountName = accounts.find((a) => a.id === draft.accountId)?.name;
+  const isAuto = draft.accountId === "auto";
+  const selectedAccountName = isAuto ? "Auto (Best Available)" : accounts.find((a) => a.id === draft.accountId)?.name;
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -335,6 +343,7 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
                       <SelectValue placeholder="Select account" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="auto">⚡ Auto - Best Available (Round-Robin)</SelectItem>
                       {activeAccounts.map((a) => (
                         <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                       ))}
@@ -433,7 +442,10 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
             <AlertDialogTitle>Send this campaign?</AlertDialogTitle>
             <AlertDialogDescription>
               This will send "<strong>{draft.subject}</strong>" from {draft.senderName} &lt;{draft.senderEmail}&gt;
-              via <strong>{selectedAccountName}</strong> to all contacts in the default list. This cannot be undone.
+              {isAuto 
+                ? <> via <strong>the best available account</strong> (auto round-robin)</>
+                : <> via <strong>{selectedAccountName}</strong></>
+              } to all contacts in the default list. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

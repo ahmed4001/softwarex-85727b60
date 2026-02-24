@@ -106,6 +106,17 @@ serve(async (req) => {
 
       case "send-campaign": {
         const account = await getApiKey(accountId);
+        
+        // Check credit limit before sending
+        const { data: acctData } = await supabase
+          .from("brevo_accounts")
+          .select("credits_used_today, daily_credit_limit")
+          .eq("id", accountId)
+          .single();
+        if (acctData && acctData.credits_used_today >= (acctData.daily_credit_limit || 300)) {
+          throw new Error("Daily credit limit reached for this account");
+        }
+
         // Create campaign in Brevo
         const campaign = await brevoFetch(account.api_key, "/emailCampaigns", "POST", {
           name: params.subject,
@@ -130,10 +141,83 @@ serve(async (req) => {
           sent_at: new Date().toISOString(),
         });
 
-        // Update credits
-        await supabase.rpc("increment_brevo_credits" as never, { account_id: accountId } as never);
+        // Increment credits
+        await supabase
+          .from("brevo_accounts")
+          .update({ 
+            credits_used_today: (acctData?.credits_used_today || 0) + 1,
+            total_emails_sent: account.total_emails_sent ? account.total_emails_sent + 1 : 1
+          })
+          .eq("id", accountId);
 
-        result = { campaignId: campaign.id, status: "sent" };
+        result = { campaignId: campaign.id, status: "sent", accountName: account.name };
+        break;
+      }
+
+      case "send-campaign-roundrobin": {
+        // Reset credits for overdue accounts
+        await supabase.rpc("reset_brevo_daily_credits" as never);
+
+        // Get best account
+        const { data: allAccounts, error: fetchErr } = await supabase
+          .from("brevo_accounts")
+          .select("*")
+          .eq("is_active", true)
+          .order("daily_credit_limit", { ascending: false });
+
+        if (fetchErr || !allAccounts || allAccounts.length === 0) {
+          throw new Error("No active Brevo accounts available");
+        }
+
+        // Pick account with most remaining credits
+        const bestAccount = allAccounts
+          .map(a => ({ ...a, remaining: (a.daily_credit_limit || 300) - (a.credits_used_today || 0) }))
+          .filter(a => a.remaining > 0)
+          .sort((a, b) => b.remaining - a.remaining)[0];
+
+        if (!bestAccount) {
+          throw new Error("All accounts have exhausted their daily credits");
+        }
+
+        // Send via best account
+        const rrCampaign = await brevoFetch(bestAccount.api_key, "/emailCampaigns", "POST", {
+          name: params.subject,
+          subject: params.subject,
+          sender: { name: params.senderName || "SoftwareHub", email: params.senderEmail },
+          htmlContent: params.htmlContent,
+          recipients: { listIds: params.listIds || [2] },
+        });
+
+        await brevoFetch(bestAccount.api_key, `/emailCampaigns/${rrCampaign.id}/sendNow`, "POST");
+
+        // Log campaign
+        await supabase.from("brevo_campaigns").insert({
+          brevo_account_id: bestAccount.id,
+          brevo_campaign_id: String(rrCampaign.id),
+          subject: params.subject,
+          sender_name: params.senderName || "SoftwareHub",
+          sender_email: params.senderEmail,
+          html_content: params.htmlContent,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        });
+
+        // Increment credits
+        await supabase
+          .from("brevo_accounts")
+          .update({
+            credits_used_today: (bestAccount.credits_used_today || 0) + 1,
+            total_emails_sent: (bestAccount.total_emails_sent || 0) + 1
+          })
+          .eq("id", bestAccount.id);
+
+        result = { 
+          campaignId: rrCampaign.id, 
+          status: "sent", 
+          accountId: bestAccount.id, 
+          accountName: bestAccount.name,
+          remainingCredits: bestAccount.remaining - 1
+        };
         break;
       }
 
