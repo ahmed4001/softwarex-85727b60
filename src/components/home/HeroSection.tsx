@@ -2,10 +2,13 @@ import { motion } from "framer-motion";
 import { Award, TrendingUp, CheckCircle } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 import { Link } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 
 export function HeroSection() {
+  const { t } = useTranslation();
+
   return (
-    <section className="relative overflow-hidden" style={{ background: "hsl(15 60% 96%)" }} aria-label="Find the best business software">
+    <section className="relative overflow-hidden" style={{ background: "hsl(15 60% 96%)" }} aria-label={t("hero.searchPlaceholder")}>
       {/* Geometric shapes - animated */}
       <motion.div
         className="absolute top-[-60px] left-[-40px] w-48 h-48 rounded-2xl"
@@ -57,7 +60,7 @@ export function HeroSection() {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground leading-[1.08] mb-6">
-            Find & Compare the
+            {t("hero.title1")}
             <br />
             <motion.span
               className="text-primary inline-block"
@@ -79,20 +82,18 @@ export function HeroSection() {
                   backgroundClip: "text",
                 }}
               >
-                Best Business Software
+                {t("hero.title2")}
               </motion.span>
             </motion.span>
           </h1>
 
-          <p className="text-lg md:text-xl text-foreground/60 mb-4 max-w-2xl mx-auto leading-relaxed">
-            Read <strong>verified user reviews</strong>, compare SaaS tools side-by-side, and discover the right
-            software for your team — from <strong>CRM</strong> and <strong>project management</strong> to{" "}
-            <strong>marketing automation</strong> and beyond.
-          </p>
+          <p className="text-lg md:text-xl text-foreground/60 mb-4 max-w-2xl mx-auto leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: t("hero.subtitle") }}
+          />
           <p className="text-sm text-foreground/40 mb-10 max-w-xl mx-auto flex items-center justify-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> 10,000+ verified reviews</span>
-            <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> 50+ categories</span>
-            <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> 100% free</span>
+            <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> {t("hero.verifiedReviews")}</span>
+            <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> {t("hero.categories")}</span>
+            <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> {t("hero.free")}</span>
           </p>
         </motion.div>
 
@@ -102,7 +103,7 @@ export function HeroSection() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="max-w-2xl mx-auto mb-8"
         >
-          <label htmlFor="hero-search" className="sr-only">Search for business software, SaaS tools, or categories</label>
+          <label htmlFor="hero-search" className="sr-only">{t("hero.searchPlaceholder")}</label>
           <SearchBar variant="hero" className="w-full" />
         </motion.div>
 
@@ -114,10 +115,10 @@ export function HeroSection() {
           aria-label="Quick links"
         >
           <Link to="/category/all" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
-            <Award className="h-4 w-4" aria-hidden="true" /> Best Software 2026
+            <Award className="h-4 w-4" aria-hidden="true" /> {t("hero.bestSoftware")}
           </Link>
           <Link to="/category/all" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
-            <TrendingUp className="h-4 w-4" aria-hidden="true" /> Trending SaaS Tools
+            <TrendingUp className="h-4 w-4" aria-hidden="true" /> {t("hero.trending")}
           </Link>
         </motion.nav>
       </div>

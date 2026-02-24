@@ -5,20 +5,23 @@ import { Menu, X, LayoutDashboard, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-
-const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/categories", label: "Categories" },
-  { to: "/compare", label: "Compare" },
-  { to: "/leaderboard", label: "Leaderboard" },
-  { to: "/blog", label: "Blog" },
-];
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function PublicHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const navLinks = [
+    { to: "/", label: t("nav.home") },
+    { to: "/categories", label: t("nav.categories") },
+    { to: "/compare", label: t("nav.compare") },
+    { to: "/leaderboard", label: t("nav.leaderboard") },
+    { to: "/blog", label: t("nav.blog") },
+  ];
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -65,29 +68,30 @@ export function PublicHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           {user ? (
             <div className="flex items-center gap-1">
               <Link to="/vendor">
                 <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm gap-1.5">
-                  <Store className="h-4 w-4" /> Vendor
+                  <Store className="h-4 w-4" /> {t("nav.vendor")}
                 </Button>
               </Link>
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" /> Dashboard
+                  <LayoutDashboard className="h-4 w-4" /> {t("nav.dashboard")}
                 </Button>
               </Link>
             </div>
           ) : (
             <Link to="/login">
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm">
-                Sign In
+                {t("nav.signIn")}
               </Button>
             </Link>
           )}
           <Link to="/submit-product">
             <Button size="sm" className="bg-primary text-primary-foreground rounded-lg font-semibold px-4 text-sm">
-              Submit Product
+              {t("nav.submitProduct")}
             </Button>
           </Link>
           <button
@@ -115,11 +119,11 @@ export function PublicHeader() {
             ))}
             {user ? (
               <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Dashboard
+                {t("nav.dashboard")}
               </Link>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Sign In
+                {t("nav.signIn")}
               </Link>
             )}
           </div>

@@ -1,54 +1,56 @@
 import { Link } from "react-router-dom";
-
-const footerSections = [
-  {
-    title: "SoftwareHub",
-    links: [
-      { to: "/category/all", label: "Browse Software" },
-      { to: "/blog", label: "Learning Hub" },
-      { to: "/category/all", label: "Software Reviews" },
-      
-      { to: "/search", label: "Research Hub" },
-      { to: "/compare", label: "Compare Software" },
-      { to: "/category/all", label: "Best Software Companies" },
-    ],
-  },
-  {
-    title: "Top Categories",
-    links: [
-      { to: "/category/ai-chatbots", label: "AI Chatbots Software" },
-      { to: "/category/crm", label: "CRM Software" },
-      { to: "/category/project-management", label: "Project Management" },
-      { to: "/category/expense-management", label: "Expense Management" },
-      { to: "/category/video-conferencing", label: "Video Conferencing" },
-      { to: "/category/e-commerce", label: "E-Commerce Platforms" },
-      { to: "/category/accounting", label: "Accounting Software" },
-      { to: "/category/erp", label: "ERP Systems" },
-      { to: "/category/marketing-automation", label: "Marketing Automation" },
-      { to: "/category/all", label: "All Categories" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { to: "/page/about", label: "About" },
-      { to: "/page/contact", label: "Contact" },
-      { to: "/blog", label: "News" },
-      { to: "/page/about", label: "Careers" },
-    ],
-  },
-  {
-    title: "Policies",
-    links: [
-      { to: "/page/community-guidelines", label: "Community Guidelines" },
-      { to: "/page/terms", label: "Terms of Use" },
-      { to: "/page/privacy", label: "Privacy Policy" },
-      { to: "/page/trust", label: "Trust & Security" },
-    ],
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export function PublicFooter() {
+  const { t } = useTranslation();
+
+  const footerSections = [
+    {
+      title: t("footer.softwareHub"),
+      links: [
+        { to: "/category/all", label: t("footer.browseSoftware") },
+        { to: "/blog", label: t("footer.learningHub") },
+        { to: "/category/all", label: t("footer.softwareReviews") },
+        { to: "/search", label: t("footer.researchHub") },
+        { to: "/compare", label: t("footer.compareSoftware") },
+        { to: "/category/all", label: t("footer.bestCompanies") },
+      ],
+    },
+    {
+      title: t("footer.topCategories"),
+      links: [
+        { to: "/category/ai-chatbots", label: t("categories.aiChatbots") },
+        { to: "/category/crm", label: t("categories.crm") },
+        { to: "/category/project-management", label: t("categories.projectManagement") },
+        { to: "/category/expense-management", label: t("categories.expenseManagement") },
+        { to: "/category/video-conferencing", label: t("categories.videoConferencing") },
+        { to: "/category/e-commerce", label: t("categories.eCommerce") },
+        { to: "/category/accounting", label: t("categories.accounting") },
+        { to: "/category/erp", label: t("categories.erp") },
+        { to: "/category/marketing-automation", label: t("categories.marketingAutomation") },
+        { to: "/category/all", label: t("categories.allCategories") },
+      ],
+    },
+    {
+      title: t("footer.company"),
+      links: [
+        { to: "/page/about", label: t("footer.about") },
+        { to: "/page/contact", label: t("footer.contact") },
+        { to: "/blog", label: t("footer.news") },
+        { to: "/page/about", label: t("footer.careers") },
+      ],
+    },
+    {
+      title: t("footer.policies"),
+      links: [
+        { to: "/page/community-guidelines", label: t("footer.communityGuidelines") },
+        { to: "/page/terms", label: t("footer.terms") },
+        { to: "/page/privacy", label: t("footer.privacy") },
+        { to: "/page/trust", label: t("footer.trust") },
+      ],
+    },
+  ];
+
   return (
     <footer className="bg-foreground text-white/70">
       <div className="container py-16">
@@ -77,7 +79,7 @@ export function PublicFooter() {
         </div>
 
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
-          <span>© {new Date().getFullYear()} SoftwareHub. All rights reserved.</span>
+          <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
         </div>
       </div>
     </footer>
