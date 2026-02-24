@@ -61,20 +61,39 @@ serve(async (req) => {
       const data = await response.json();
       const text = data.choices?.[0]?.message?.content || "";
       // Strip any markdown fences the model might add
-      const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      let cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      
+      // Try to repair truncated JSON arrays
+      try {
+        JSON.parse(cleaned);
+      } catch {
+        // If JSON is truncated, try to fix it
+        // Remove any trailing incomplete object
+        const lastComplete = cleaned.lastIndexOf("},");
+        if (lastComplete > 0) {
+          cleaned = cleaned.substring(0, lastComplete + 1) + "]";
+        } else {
+          const lastObj = cleaned.lastIndexOf("}");
+          if (lastObj > 0) {
+            cleaned = cleaned.substring(0, lastObj + 1);
+            if (!cleaned.endsWith("]")) cleaned += "]";
+          }
+        }
+      }
       return cleaned;
     };
 
     // ACTION 1: Generate products for a category
     if (action === "generate_category") {
-      const { category, count, categoryId } = payload;
+      const { category, count: rawCount, categoryId } = payload;
+      const count = Math.min(rawCount, 20); // Cap at 20 to avoid truncated responses
       const prompt = `Generate ${count} realistic software products for the category "${category}".
 Return ONLY a valid JSON array. Each product must have ALL these fields:
 {
   "name": "exact real product name that actually exists",
   "slug": "kebab-case-slug",
   "tagline": "one line value proposition under 80 chars",
-  "description": "3-4 paragraph detailed description, 200-300 words",
+  "description": "2-3 paragraph detailed description, 120-180 words",
   "website_url": "https://realdomain.com",
   "category": "${category}",
   "pricing_model": "free|freemium|subscription|paid|one-time",
@@ -87,14 +106,14 @@ Return ONLY a valid JSON array. Each product must have ALL these fields:
   "employee_count": realistic number,
   "features": ["feature1","feature2",...8 features],
   "integrations": ["tool1","tool2",...8 integrations],
-  "pros_summary": "2-3 sentence summary of main strengths",
-  "cons_summary": "2-3 sentence summary of main weaknesses",
+  "pros_summary": "1-2 sentence summary of main strengths",
+  "cons_summary": "1-2 sentence summary of main weaknesses",
   "seo_title": "Product Name Reviews & Pricing 2025",
   "seo_description": "meta description under 160 chars"
 }
 Use REAL software products that actually exist. Make all data accurate.`;
 
-      const result = await aiCall(prompt, 8000);
+      const result = await aiCall(prompt, count <= 5 ? 6000 : 12000);
       let products = JSON.parse(result);
 
       // Add Clearbit logo URLs and category_id
