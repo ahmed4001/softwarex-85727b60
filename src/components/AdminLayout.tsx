@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3, Box, ChevronDown, ChevronRight, FileText, FolderOpen,
   Image, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings,
-  Star, Users, Bell, Search, Menu, Activity, Mail, PanelLeftClose, PanelLeft
+  Star, Users, Bell, Search, Menu, Activity, Mail, PanelLeftClose, PanelLeft, Database
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ const sidebarItems = [
   { label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
   { label: "Settings", icon: Settings, to: "/admin/settings" },
   { label: "Activity Log", icon: Activity, to: "/admin/activity" },
+  { label: "Seed Data", icon: Database, to: "/admin/seed" },
 ];
 
 function SidebarItem({ item, collapsed }: { item: any; collapsed: boolean }) {
