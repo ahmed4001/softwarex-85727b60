@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { languages } from "@/i18n/languages";
 import { SeoHead } from "@/components/SeoHead";
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Globe, RefreshCw, CheckCircle2, Clock, AlertCircle, Loader2, Trash2,
+  Globe, RefreshCw, CheckCircle2, Clock, AlertCircle, Loader2, Trash2, Search, Plus,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import en from "@/i18n/locales/en.json";
 
 const TOP_LANGUAGES = ["zh", "es", "hi", "ar", "pt", "ru", "ja", "de", "ko", "fr"];
@@ -16,6 +17,7 @@ const TOP_LANGUAGES = ["zh", "es", "hi", "ar", "pt", "ru", "ja", "de", "ko", "fr
 export default function AdminTranslationsPage() {
   const queryClient = useQueryClient();
   const [regenerating, setRegenerating] = useState<Set<string>>(new Set());
+  const [langSearch, setLangSearch] = useState("");
 
   const { data: cached, isLoading } = useQuery({
     queryKey: ["admin-translations"],
@@ -206,10 +208,75 @@ export default function AdminTranslationsPage() {
           </div>
         </div>
 
+        {/* Generate any language */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Generate Any Language
+          </h2>
+          <div className="relative max-w-sm mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search languages..."
+              value={langSearch}
+              onChange={(e) => setLangSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+            {allLanguages
+              .filter((l) =>
+                l.name.toLowerCase().includes(langSearch.toLowerCase()) ||
+                l.nativeName.toLowerCase().includes(langSearch.toLowerCase()) ||
+                l.code.toLowerCase().includes(langSearch.toLowerCase())
+              )
+              .map((lang) => {
+                const cache = cachedMap.get(lang.code);
+                const isRegen = regenerating.has(lang.code);
+                const keyCount = getKeyCount(cache);
+                const coverage = totalKeys > 0 ? Math.round((keyCount / totalKeys) * 100) : 0;
+
+                return (
+                  <div
+                    key={lang.code}
+                    className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 gap-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[10px] font-mono font-bold text-muted-foreground uppercase w-5 flex-shrink-0">
+                        {lang.code}
+                      </span>
+                      <span className="text-xs font-medium text-foreground truncate">
+                        {lang.nativeName}
+                      </span>
+                      {cache && (
+                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{coverage}%</span>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={cache ? "ghost" : "outline"}
+                      className="h-6 w-6 p-0 flex-shrink-0"
+                      disabled={isRegen}
+                      onClick={() => regenerate(lang.code)}
+                      title={cache ? "Regenerate" : "Generate"}
+                    >
+                      {isRegen ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : cache ? (
+                        <RefreshCw className="h-3 w-3" />
+                      ) : (
+                        <Plus className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+
         {/* All cached languages table */}
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            All Cached Languages
+            All Cached Languages ({cached?.length || 0})
           </h2>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full">
@@ -316,7 +383,7 @@ export default function AdminTranslationsPage() {
                 {!isLoading && (!cached || cached.length === 0) && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                      No cached translations. Click "Regenerate Top 10" to get started.
+                      No cached translations yet.
                     </td>
                   </tr>
                 )}
