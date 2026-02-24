@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,11 +66,18 @@ export function PublicHeader() {
 
         <div className="flex items-center gap-2">
           {user ? (
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm gap-1.5">
-                <LayoutDashboard className="h-4 w-4" /> Dashboard
-              </Button>
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link to="/vendor">
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm gap-1.5">
+                  <Store className="h-4 w-4" /> Vendor
+                </Button>
+              </Link>
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" /> Dashboard
+                </Button>
+              </Link>
+            </div>
           ) : (
             <Link to="/login">
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm">

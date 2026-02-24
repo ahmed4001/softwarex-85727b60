@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { PublicLayout } from "@/components/PublicLayout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { VendorLayout } from "@/components/VendorLayout";
 import { lazy, Suspense } from "react";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,11 @@ const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategoriesPage
 const AdminReviewsPage = lazy(() => import("./pages/admin/AdminReviewsPage"));
 const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminBlogPage = lazy(() => import("./pages/admin/AdminBlogPage"));
+
+const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
+const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
+const VendorReviewsPage = lazy(() => import("./pages/vendor/VendorReviewsPage"));
+const VendorClaimPage = lazy(() => import("./pages/vendor/VendorClaimPage"));
 
 const queryClient = new QueryClient();
 
@@ -68,6 +74,14 @@ const App = () => (
                 <Route path="reviews/flagged" element={<AdminReviewsPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
                 <Route path="blog" element={<AdminBlogPage />} />
+              </Route>
+
+              {/* Vendor routes */}
+              <Route path="/vendor" element={<VendorLayout />}>
+                <Route index element={<VendorDashboard />} />
+                <Route path="products" element={<VendorProductsPage />} />
+                <Route path="reviews" element={<VendorReviewsPage />} />
+                <Route path="claim" element={<VendorClaimPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

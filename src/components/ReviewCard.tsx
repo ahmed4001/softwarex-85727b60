@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { StarRating } from "./StarRating";
-import { ThumbsUp, ThumbsDown, CheckCircle, MessageCircle, Send, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { ThumbsUp, ThumbsDown, CheckCircle, MessageCircle, Send, Trash2, ChevronDown, ChevronUp, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
@@ -36,6 +38,19 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, review
   const [commentText, setCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+
+  // Vendor response
+  const { data: vendorResponse } = useQuery({
+    queryKey: ["vendor-response", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vendor_responses")
+        .select("*, profiles!vendor_responses_user_id_fkey(name)")
+        .eq("review_id", id)
+        .maybeSingle();
+      return data;
+    },
+  });
 
   const handleComment = () => {
     if (!commentText.trim()) return;
@@ -82,6 +97,16 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, review
         </div>
       )}
       {body && <p className="text-sm text-muted-foreground leading-relaxed mb-4">{body}</p>}
+
+      {/* Vendor Response */}
+      {vendorResponse && (
+        <div className="mb-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1">
+            <Store className="h-3 w-3" /> Vendor Response
+          </div>
+          <p className="text-sm text-foreground leading-relaxed">{vendorResponse.body}</p>
+        </div>
+      )}
 
       {/* Footer with reviewer info, votes, comments toggle */}
       <div className="flex items-center justify-between pt-4 border-t border-border/50">
