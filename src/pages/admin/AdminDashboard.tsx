@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Package, Star, Users, MessageSquare, Eye } from "lucide-react";
+import { Package, Star, Users, MessageSquare, Eye, Sparkles } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -22,6 +22,46 @@ export default function AdminDashboard() {
         supabase.from("reviews").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
       return { products: products.count || 0, reviews: reviews.count || 0, users: users.count || 0, pending: pending.count || 0 };
+    },
+  });
+
+  const { data: enrichmentStats } = useQuery({
+    queryKey: ["admin-enrichment-stats"],
+    queryFn: async () => {
+      const { data: allProducts } = await supabase
+        .from("products")
+        .select("id, website_url, features, category_id, categories(name, slug)")
+        .eq("is_active", true);
+
+      const products = allProducts || [];
+      const needsEnrichment = products.filter(
+        (p: any) => !p.website_url || !p.features || (Array.isArray(p.features) && p.features.length === 0)
+      );
+
+      // Group by category
+      const byCategory: Record<string, { name: string; total: number; needsEnrich: number }> = {};
+      for (const p of products) {
+        const catName = (p as any).categories?.name || "Uncategorized";
+        const catSlug = (p as any).categories?.slug || "uncategorized";
+        if (!byCategory[catSlug]) byCategory[catSlug] = { name: catName, total: 0, needsEnrich: 0 };
+        byCategory[catSlug].total++;
+      }
+      for (const p of needsEnrichment) {
+        const catSlug = (p as any).categories?.slug || "uncategorized";
+        if (byCategory[catSlug]) byCategory[catSlug].needsEnrich++;
+      }
+
+      const topCategories = Object.entries(byCategory)
+        .filter(([, v]) => v.needsEnrich > 0)
+        .sort((a, b) => b[1].needsEnrich - a[1].needsEnrich)
+        .slice(0, 8);
+
+      return {
+        total: products.length,
+        needsEnrichment: needsEnrichment.length,
+        enriched: products.length - needsEnrichment.length,
+        topCategories,
+      };
     },
   });
 
@@ -109,7 +149,64 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+        </motion.div>
+
+        {/* Enrichment Widget */}
+        {enrichmentStats && enrichmentStats.needsEnrichment > 0 && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.27 }} className="glass-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                <h3 className="font-display font-bold text-foreground">Product Enrichment Status</h3>
+              </div>
+              <Link to="/admin/seed">
+                <Button variant="outline" size="sm" className="rounded-lg font-medium">
+                  <Sparkles className="mr-1 h-3 w-3" /> Enrich Now
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center p-3 rounded-xl bg-muted/50">
+                <div className="text-2xl font-bold text-foreground">{enrichmentStats.total}</div>
+                <div className="text-xs text-muted-foreground">Total Products</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-green-500/10">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{enrichmentStats.enriched}</div>
+                <div className="text-xs text-muted-foreground">Enriched</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-amber-500/10">
+                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{enrichmentStats.needsEnrichment}</div>
+                <div className="text-xs text-muted-foreground">Need Enrichment</div>
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Enrichment progress</span>
+                <span>{Math.round((enrichmentStats.enriched / enrichmentStats.total) * 100)}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all"
+                  style={{ width: `${(enrichmentStats.enriched / enrichmentStats.total) * 100}%` }}
+                />
+              </div>
+            </div>
+            {/* Top categories needing enrichment */}
+            {enrichmentStats.topCategories.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground mb-2">Top categories needing enrichment</div>
+                {enrichmentStats.topCategories.map(([slug, cat]) => (
+                  <div key={slug} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/50 text-sm">
+                    <span className="font-medium text-foreground">{cat.name}</span>
+                    <span className="text-xs text-amber-600 dark:text-amber-400">{cat.needsEnrich} / {cat.total}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
+        )}
+
         </div>
 
         <div className="grid xl:grid-cols-2 gap-5">
