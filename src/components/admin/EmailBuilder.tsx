@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   Type, Image, MousePointerClick, Minus, MoveVertical,
   Trash2, GripVertical, Plus, Heading1, AlignLeft,
-  Columns2, ArrowUp, ArrowDown, Code, Save, FolderOpen, Loader2, Upload, ImageIcon,
+  Columns2, ArrowUp, ArrowDown, Code, Save, FolderOpen, Loader2, Upload, ImageIcon, Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -362,6 +362,7 @@ export function EmailBuilder({ value, onChange }: EmailBuilderProps) {
   // Media library state
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [mediaSelectCallback, setMediaSelectCallback] = useState<((url: string) => void) | null>(null);
+  const [mediaSearch, setMediaSearch] = useState("");
 
   // Fetch email-assets from storage + media_library table
   const { data: mediaItems = [], isLoading: mediaLoading, refetch: refetchMedia } = useQuery({
@@ -661,44 +662,58 @@ export function EmailBuilder({ value, onChange }: EmailBuilderProps) {
       </Dialog>
 
       {/* Media Library Dialog */}
-      <Dialog open={mediaLibraryOpen} onOpenChange={setMediaLibraryOpen}>
+      <Dialog open={mediaLibraryOpen} onOpenChange={(open) => { setMediaLibraryOpen(open); if (!open) setMediaSearch(""); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5" /> Media Library
             </DialogTitle>
           </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search images by name..."
+              value={mediaSearch}
+              onChange={(e) => setMediaSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
           {mediaLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          ) : mediaItems.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <ImageIcon className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No images found. Upload one using the Upload button in the image block.</p>
-            </div>
-          ) : (
-            <ScrollArea className="max-h-[450px]">
-              <div className="grid grid-cols-3 gap-3 p-1">
-                {mediaItems.map((item, i) => (
-                  <button
-                    key={`${item.source}-${i}`}
-                    onClick={() => selectMediaItem(item.url)}
-                    className="group relative rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all aspect-square bg-muted"
-                  >
-                    <img
-                      src={item.url}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-[10px] text-white truncate">{item.name}</p>
-                      <p className="text-[9px] text-white/60">{item.source}</p>
-                    </div>
-                  </button>
-                ))}
+          ) : (() => {
+            const filtered = mediaItems.filter((item) =>
+              item.name.toLowerCase().includes(mediaSearch.toLowerCase())
+            );
+            return filtered.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <ImageIcon className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">{mediaSearch ? "No images match your search." : "No images found. Upload one using the Upload button in the image block."}</p>
               </div>
-            </ScrollArea>
-          )}
+            ) : (
+              <ScrollArea className="max-h-[400px]">
+                <div className="grid grid-cols-3 gap-3 p-1">
+                  {filtered.map((item, i) => (
+                    <button
+                      key={`${item.source}-${i}`}
+                      onClick={() => selectMediaItem(item.url)}
+                      className="group relative rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all aspect-square bg-muted"
+                    >
+                      <img
+                        src={item.url}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-[10px] text-white truncate">{item.name}</p>
+                        <p className="text-[9px] text-white/60">{item.source}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
