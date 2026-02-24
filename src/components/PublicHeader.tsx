@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -16,6 +17,7 @@ export function PublicHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -62,11 +64,19 @@ export function PublicHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link to="/login">
-            <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm">
-              Sign In
-            </Button>
-          </Link>
+          {user ? (
+            <Link to="/dashboard">
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm gap-1.5">
+                <LayoutDashboard className="h-4 w-4" /> Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-medium text-sm">
+                Sign In
+              </Button>
+            </Link>
+          )}
           <Link to="/submit-product">
             <Button size="sm" className="bg-primary text-primary-foreground rounded-lg font-semibold px-4 text-sm">
               Submit Product
@@ -95,6 +105,15 @@ export function PublicHeader() {
                 {l.label}
               </Link>
             ))}
+            {user ? (
+              <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
+                Dashboard
+              </Link>
+            ) : (
+              <Link to="/login" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}

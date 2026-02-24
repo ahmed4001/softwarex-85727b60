@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { StarRating } from "./StarRating";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSavedProducts } from "@/hooks/useSavedProducts";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   id: string;
@@ -17,13 +20,33 @@ interface ProductCardProps {
   is_sponsored?: boolean;
 }
 
-export function ProductCard({ slug, name, tagline, logo_url, avg_rating, total_reviews, pricing_model, category_name, is_featured, is_sponsored }: ProductCardProps) {
+export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, total_reviews, pricing_model, category_name, is_featured, is_sponsored }: ProductCardProps) {
+  const { user } = useAuth();
+  const { isSaved, toggleSave, isToggling } = useSavedProducts();
+  const saved = user ? isSaved(id) : false;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
+      className="relative"
     >
+      {user && (
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSave(id); }}
+          disabled={isToggling}
+          className={cn(
+            "absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-all duration-200",
+            saved
+              ? "bg-primary/10 text-primary"
+              : "bg-muted/80 text-muted-foreground/40 hover:text-primary hover:bg-primary/10"
+          )}
+          aria-label={saved ? "Remove from saved" : "Save product"}
+        >
+          <Bookmark className={cn("h-4 w-4", saved && "fill-current")} />
+        </button>
+      )}
       <Link to={`/product/${slug}`} className="glass-card p-5 group block relative">
         {is_sponsored && (
           <span className="absolute top-3 right-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
