@@ -6,13 +6,49 @@ import { Link } from "react-router-dom";
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden" style={{ background: "hsl(15 60% 96%)" }} aria-label="Find the best business software">
-      {/* Geometric shapes */}
-      <div className="absolute top-[-60px] left-[-40px] w-48 h-48 rotate-12 rounded-2xl" style={{ background: "hsl(220 90% 56%)" }} aria-hidden="true" />
-      <div className="absolute top-[-30px] left-[60px] w-36 h-36 -rotate-6 rounded-2xl" style={{ background: "hsl(0 80% 60%)" }} aria-hidden="true" />
-      <div className="absolute top-[-50px] right-[-30px] w-44 h-44 rotate-[20deg] rounded-2xl" style={{ background: "hsl(165 80% 48%)" }} aria-hidden="true" />
-      <div className="absolute bottom-[-40px] left-[5%] w-40 h-40 -rotate-12 rounded-2xl" style={{ background: "hsl(0 80% 58%)" }} aria-hidden="true" />
-      <div className="absolute bottom-[-50px] right-[8%] w-52 h-52 rotate-6 rounded-full" style={{ background: "hsl(260 60% 45%)" }} aria-hidden="true" />
-      <div className="absolute bottom-[20px] right-[-20px] w-36 h-36 rotate-[30deg] rounded-2xl" style={{ background: "hsl(165 80% 48%)" }} aria-hidden="true" />
+      {/* Geometric shapes - animated */}
+      <motion.div
+        className="absolute top-[-60px] left-[-40px] w-48 h-48 rounded-2xl"
+        style={{ background: "hsl(220 90% 56%)" }}
+        animate={{ rotate: [12, 20, 5, 12], y: [0, -15, 10, 0], x: [0, 10, -5, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="absolute top-[-30px] left-[60px] w-36 h-36 rounded-2xl"
+        style={{ background: "hsl(0 80% 60%)" }}
+        animate={{ rotate: [-6, 8, -12, -6], y: [0, 12, -8, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="absolute top-[-50px] right-[-30px] w-44 h-44 rounded-2xl"
+        style={{ background: "hsl(165 80% 48%)" }}
+        animate={{ rotate: [20, 30, 15, 20], y: [0, -10, 15, 0], x: [0, -12, 5, 0] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="absolute bottom-[-40px] left-[5%] w-40 h-40 rounded-2xl"
+        style={{ background: "hsl(0 80% 58%)" }}
+        animate={{ rotate: [-12, -5, -18, -12], y: [0, 10, -12, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="absolute bottom-[-50px] right-[8%] w-52 h-52 rounded-full"
+        style={{ background: "hsl(260 60% 45%)" }}
+        animate={{ rotate: [6, 15, -3, 6], scale: [1, 1.05, 0.97, 1] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="absolute bottom-[20px] right-[-20px] w-36 h-36 rounded-2xl"
+        style={{ background: "hsl(165 80% 48%)" }}
+        animate={{ rotate: [30, 40, 22, 30], y: [0, -14, 8, 0], x: [0, -8, 6, 0] }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+        aria-hidden="true"
+      />
 
       <div className="container relative z-10 py-28 md:py-36 lg:py-44 text-center">
         <motion.div
