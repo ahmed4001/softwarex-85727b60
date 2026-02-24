@@ -210,9 +210,29 @@ export default function AdminTranslationsPage() {
 
         {/* Generate any language */}
         <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Generate Any Language
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Generate Any Language
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs"
+              disabled={regenerating.size > 0}
+              onClick={() => {
+                const uncached = allLanguages.filter((l) => !cachedMap.has(l.code));
+                if (uncached.length === 0) {
+                  toast.info("All languages are already cached");
+                  return;
+                }
+                uncached.forEach((l) => regenerate(l.code));
+                toast.success(`Generating ${uncached.length} languages...`);
+              }}
+            >
+              <Plus className="h-3 w-3" />
+              Generate All Uncached ({allLanguages.filter((l) => !cachedMap.has(l.code)).length})
+            </Button>
+          </div>
           <div className="relative max-w-sm mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
