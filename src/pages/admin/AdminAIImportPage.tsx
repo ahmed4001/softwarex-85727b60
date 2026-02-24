@@ -958,7 +958,7 @@ function EnrichProductsTab() {
   const enrichedCount = products.length - needsEnrichment.length;
   const enrichPercent = products.length > 0 ? Math.round((enrichedCount / products.length) * 100) : 0;
 
-  const enrichSingle = async (product: any) => {
+  const enrichSingle = async (product: any): Promise<{ ok: boolean; rateLimited?: boolean }> => {
     setEnriching(product.id);
     try {
       const { data, error } = await supabase.functions.invoke("ai-generate-products", {
@@ -985,8 +985,18 @@ function EnrichProductsTab() {
       await supabase.from("products").update(updatePayload).eq("id", product.id);
       queryClient.invalidateQueries({ queryKey: ["admin-products-to-enrich"] });
       toast({ title: "Enriched", description: `${product.name} updated.` });
+      return { ok: true };
     } catch (e: any) {
-      toast({ title: "Enrichment failed", description: e.message, variant: "destructive" });
+      const message = e?.message || "Unknown error";
+      const isRateLimited = /rate limit|429/i.test(message);
+      toast({
+        title: isRateLimited ? "Rate limited" : "Enrichment failed",
+        description: isRateLimited
+          ? "AI provider is rate limiting requests. Slowing down and pausing bulk enrichment."
+          : message,
+        variant: "destructive",
+      });
+      return { ok: false, rateLimited: isRateLimited };
     } finally {
       setEnriching(null);
     }
@@ -995,12 +1005,23 @@ function EnrichProductsTab() {
   const enrichAll = async () => {
     setBulkEnriching(true);
     setEnrichProgress(0);
+    const delayMs = 2500;
+
     for (let i = 0; i < needsEnrichment.length; i++) {
-      await enrichSingle(needsEnrichment[i]);
+      const result = await enrichSingle(needsEnrichment[i]);
       setEnrichProgress(Math.round(((i + 1) / needsEnrichment.length) * 100));
+
+      if (result.rateLimited) {
+        break;
+      }
+
+      if (i < needsEnrichment.length - 1) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
     }
+
     setBulkEnriching(false);
-    toast({ title: "Bulk enrichment complete" });
+    toast({ title: "Bulk enrichment run finished" });
   };
 
   return (

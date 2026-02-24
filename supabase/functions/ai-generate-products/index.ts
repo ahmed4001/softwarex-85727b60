@@ -263,8 +263,10 @@ Only return fields that need updating. Use real accurate data.`;
   } catch (error) {
     console.error("ai-generate-products error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
+    const isRateLimited = /rate limit|429/i.test(message);
+
     return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+      status: isRateLimited ? 429 : 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
