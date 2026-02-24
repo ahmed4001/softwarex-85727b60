@@ -34,6 +34,7 @@ const AdminBlogPage = lazy(() => import("./pages/admin/AdminBlogPage"));
 const AdminSeedPage = lazy(() => import("./pages/admin/AdminSeedPage"));
 const AdminTranslationsPage = lazy(() => import("./pages/admin/AdminTranslationsPage"));
 const AdminAIImportPage = lazy(() => import("./pages/admin/AdminAIImportPage"));
+const AdminBlogEditorPage = lazy(() => import("./pages/admin/AdminBlogEditorPage"));
 
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
@@ -76,6 +77,8 @@ function AppContent() {
           <Route path="reviews/flagged" element={<AdminReviewsPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="blog" element={<AdminBlogPage />} />
+          <Route path="blog/new" element={<AdminBlogEditorPage />} />
+          <Route path="blog/:id/edit" element={<AdminBlogEditorPage />} />
           <Route path="seed" element={<AdminSeedPage />} />
           <Route path="ai-import" element={<AdminAIImportPage />} />
           <Route path="translations" element={<AdminTranslationsPage />} />
