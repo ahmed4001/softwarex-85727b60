@@ -5,11 +5,19 @@ interface PaginationControlsProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  scrollToTop?: boolean;
   className?: string;
 }
 
-export function PaginationControls({ page, totalPages, onPageChange, className = "" }: PaginationControlsProps) {
+export function PaginationControls({ page, totalPages, onPageChange, scrollToTop = true, className = "" }: PaginationControlsProps) {
   if (totalPages <= 1) return null;
+
+  const handlePageChange = (newPage: number) => {
+    onPageChange(newPage);
+    if (scrollToTop) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <div className={`flex items-center justify-center gap-2 ${className}`}>
@@ -18,7 +26,7 @@ export function PaginationControls({ page, totalPages, onPageChange, className =
         size="icon"
         className="rounded-xl"
         disabled={page === 0}
-        onClick={() => onPageChange(Math.max(0, page - 1))}
+        onClick={() => handlePageChange(Math.max(0, page - 1))}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -30,7 +38,7 @@ export function PaginationControls({ page, totalPages, onPageChange, className =
               variant={i === page ? "default" : "outline"}
               size="icon"
               className="rounded-xl h-9 w-9 text-sm"
-              onClick={() => onPageChange(i)}
+              onClick={() => handlePageChange(i)}
             >
               {i + 1}
             </Button>
@@ -45,7 +53,7 @@ export function PaginationControls({ page, totalPages, onPageChange, className =
         size="icon"
         className="rounded-xl"
         disabled={page >= totalPages - 1}
-        onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
+        onClick={() => handlePageChange(Math.min(totalPages - 1, page + 1))}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
