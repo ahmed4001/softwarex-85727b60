@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, category_slug, page, import_products } = await req.json();
+    const { action, category_slug, page, import_products, quick_import } = await req.json();
 
     // Action: discover — scrape a Capterra category page
     if (action === "discover") {
@@ -188,8 +188,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Action: import — scrape product details from Capterra and insert
+    // Action: import — insert products (quick mode skips per-product scraping)
     if (action === "import") {
+      
       if (!import_products || !Array.isArray(import_products) || import_products.length === 0) {
         return new Response(
           JSON.stringify({ success: false, error: "import_products array required" }),
@@ -226,46 +227,52 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Scrape Capterra product page for details
           let capterraData: any = {};
-          try {
-            const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                url: product.capterra_url,
-                formats: [
-                  {
-                    type: "json",
-                    schema: {
-                      type: "object",
-                      properties: {
-                        website_url: { type: "string", description: "The official website URL of the product" },
-                        avg_rating: { type: "number", description: "Overall average rating out of 5" },
-                        total_reviews: { type: "number", description: "Total number of reviews" },
-                        description: { type: "string", description: "Product description (2-3 sentences)" },
-                        tagline: { type: "string", description: "Product tagline or one-liner" },
-                        pricing_model: { type: "string", enum: ["free", "freemium", "paid", "subscription", "one-time"] },
-                        starting_price: { type: "number", description: "Starting price per month in USD, 0 if free" },
-                        pros_summary: { type: "string", description: "Summary of what users like most" },
-                        cons_summary: { type: "string", description: "Summary of common complaints" },
-                        features: { type: "array", items: { type: "string" }, description: "Key features (up to 8)" },
-                        logo_url: { type: "string", description: "URL of the product logo" },
+          
+          // Only scrape individual product pages in non-quick mode
+          if (!quick_import && FIRECRAWL_API_KEY) {
+            try {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout per product
+              
+              const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                signal: controller.signal,
+                body: JSON.stringify({
+                  url: product.capterra_url,
+                  formats: [
+                    {
+                      type: "json",
+                      schema: {
+                        type: "object",
+                        properties: {
+                          website_url: { type: "string", description: "The official website URL of the product" },
+                          avg_rating: { type: "number", description: "Overall average rating out of 5" },
+                          total_reviews: { type: "number", description: "Total number of reviews" },
+                          description: { type: "string", description: "Product description (2-3 sentences)" },
+                          tagline: { type: "string", description: "Product tagline or one-liner" },
+                          pricing_model: { type: "string", enum: ["free", "freemium", "paid", "subscription", "one-time"] },
+                          starting_price: { type: "number", description: "Starting price per month in USD, 0 if free" },
+                          features: { type: "array", items: { type: "string" }, description: "Key features (up to 8)" },
+                          logo_url: { type: "string", description: "URL of the product logo" },
+                        },
                       },
                     },
-                  },
-                ],
-                onlyMainContent: true,
-                waitFor: 3000,
-              }),
-            });
-            const result = await res.json();
-            capterraData = result?.data?.json || result?.json || {};
-          } catch (e) {
-            console.error(`Failed to scrape Capterra for ${product.name}:`, e);
+                  ],
+                  onlyMainContent: true,
+                  waitFor: 3000,
+                }),
+              });
+              clearTimeout(timeout);
+              const result = await res.json();
+              capterraData = result?.data?.json || result?.json || {};
+            } catch (e) {
+              console.warn(`Scrape timeout/error for ${product.name}, using discovered data`);
+            }
           }
 
           const productRecord = {
@@ -302,7 +309,10 @@ Deno.serve(async (req) => {
           });
         }
 
-        await new Promise((r) => setTimeout(r, 1500));
+        // Only delay in non-quick mode
+        if (!quick_import) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
       }
 
       return new Response(

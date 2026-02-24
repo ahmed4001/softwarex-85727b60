@@ -161,6 +161,7 @@ export default function CapterraDiscoveryPanel() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const [importProgress, setImportProgress] = useState(0);
+  const [quickImportMode, setQuickImportMode] = useState(true);
 
   // Auto-discover state
   const [isAutoRunning, setIsAutoRunning] = useState(false);
@@ -171,6 +172,29 @@ export default function CapterraDiscoveryPanel() {
   const [autoTotalErrors, setAutoTotalErrors] = useState(0);
   const [autoCategoryResults, setAutoCategoryResults] = useState<Array<{ slug: string; imported: number; skipped: number; errors: number }>>([]);
   const autoCancelRef = useRef(false);
+
+  const MAX_RETRIES = 2;
+
+  const invokeWithRetry = useCallback(async (body: any, retries = MAX_RETRIES): Promise<{ data: any; error: any }> => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const { data, error } = await supabase.functions.invoke("discover-capterra", { body });
+        if (!error) return { data, error: null };
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        }
+        return { data: null, error };
+      } catch (err) {
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        }
+        return { data: null, error: err };
+      }
+    }
+    return { data: null, error: new Error("Max retries exceeded") };
+  }, []);
 
   const categoryEntries = Object.entries(CAPTERRA_CATEGORY_MAP).sort((a, b) =>
     (CATEGORY_LABELS[a[0]] || a[0]).localeCompare(CATEGORY_LABELS[b[0]] || b[0])
@@ -235,7 +259,7 @@ export default function CapterraDiscoveryPanel() {
     setImportProgress(0);
 
     const products = discoveredProducts.filter((p) => selectedProducts.has(p.slug));
-    const batchSize = 3;
+    const batchSize = quickImportMode ? 10 : 3;
     const batches: DiscoveredProduct[][] = [];
     for (let i = 0; i < products.length; i += batchSize) {
       batches.push(products.slice(i, i + batchSize));
@@ -244,26 +268,24 @@ export default function CapterraDiscoveryPanel() {
     for (let i = 0; i < batches.length; i++) {
       setImportProgress(((i + 1) / batches.length) * 100);
 
-      try {
-        const { data, error } = await supabase.functions.invoke("discover-capterra", {
-          body: { action: "import", category_slug: selectedCategory, import_products: batches[i] },
-        });
+      const { data, error } = await invokeWithRetry({
+        action: "import",
+        category_slug: selectedCategory,
+        import_products: batches[i],
+        quick_import: quickImportMode,
+      });
 
-        if (error) {
-          const errorResults = batches[i].map((p) => ({ name: p.name, status: "error" as const, reason: error.message }));
-          setImportResults((prev) => [...prev, ...errorResults]);
-        } else if (data?.results) {
-          setImportResults((prev) => [...prev, ...data.results]);
-        }
-      } catch (err) {
-        const errorResults = batches[i].map((p) => ({ name: p.name, status: "error" as const, reason: err instanceof Error ? err.message : "Network error" }));
+      if (error) {
+        const errorResults = batches[i].map((p) => ({ name: p.name, status: "error" as const, reason: error.message || "Network error" }));
         setImportResults((prev) => [...prev, ...errorResults]);
+      } else if (data?.results) {
+        setImportResults((prev) => [...prev, ...data.results]);
       }
     }
 
     setIsImporting(false);
     toast({ title: "Import complete", description: `Processed ${products.length} products.` });
-  }, [selectedCategory, selectedProducts, discoveredProducts, toast]);
+  }, [selectedCategory, selectedProducts, discoveredProducts, toast, quickImportMode, invokeWithRetry]);
 
   const autoDiscoverAll = useCallback(async () => {
     autoCancelRef.current = false;
@@ -287,8 +309,8 @@ export default function CapterraDiscoveryPanel() {
       for (let page = 1; page <= maxPages; page++) {
         if (autoCancelRef.current) break;
         try {
-          const { data, error } = await supabase.functions.invoke("discover-capterra", {
-            body: { action: "discover", category_slug: catSlug, page },
+          const { data, error } = await invokeWithRetry({
+            action: "discover", category_slug: catSlug, page,
           });
           if (!error && data?.products) {
             const newOnes = data.products.filter((p: any) => !p.already_exists);
@@ -308,24 +330,23 @@ export default function CapterraDiscoveryPanel() {
       }
 
       let catImported = 0, catSkipped = 0, catErrors = 0;
-      const batchSize = 3;
+      const batchSize = quickImportMode ? 10 : 3;
       for (let j = 0; j < discovered.length; j += batchSize) {
         if (autoCancelRef.current) break;
         const batch = discovered.slice(j, j + batchSize);
-        try {
-          const { data, error } = await supabase.functions.invoke("discover-capterra", {
-            body: { action: "import", category_slug: catSlug, import_products: batch },
-          });
-          if (!error && data?.results) {
-            for (const r of data.results) {
-              if (r.status === "success") catImported++;
-              else if (r.status === "skipped") catSkipped++;
-              else catErrors++;
-            }
-          } else {
-            catErrors += batch.length;
+        const { data, error } = await invokeWithRetry({
+          action: "import",
+          category_slug: catSlug,
+          import_products: batch,
+          quick_import: quickImportMode,
+        });
+        if (!error && data?.results) {
+          for (const r of data.results) {
+            if (r.status === "success") catImported++;
+            else if (r.status === "skipped") catSkipped++;
+            else catErrors++;
           }
-        } catch {
+        } else {
           catErrors += batch.length;
         }
       }
@@ -340,7 +361,7 @@ export default function CapterraDiscoveryPanel() {
     setAutoCurrentCategory(null);
     const wasCancelled = autoCancelRef.current;
     toast({ title: wasCancelled ? "Auto-discovery stopped" : "Auto-discovery complete", description: wasCancelled ? "Stopped by user." : "All categories have been processed." });
-  }, [categoryEntries, toast]);
+  }, [categoryEntries, toast, quickImportMode, invokeWithRetry]);
 
   const cancelAutoDiscover = useCallback(() => {
     autoCancelRef.current = true;
@@ -365,6 +386,16 @@ export default function CapterraDiscoveryPanel() {
               <CardDescription>
                 Crawl Capterra category pages to discover and import software products automatically.
               </CardDescription>
+              <div className="flex items-center gap-2 mt-2">
+                <Checkbox
+                  id="quick-import"
+                  checked={quickImportMode}
+                  onCheckedChange={(v) => setQuickImportMode(v === true)}
+                />
+                <label htmlFor="quick-import" className="text-sm text-muted-foreground cursor-pointer">
+                  Quick Import (skip per-product scraping — faster, fewer errors, uses discovered data only)
+                </label>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
