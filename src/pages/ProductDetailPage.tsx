@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -17,10 +17,21 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  if (!screenshots.length) return null;
-
   const prev = () => setActiveIndex((i) => (i - 1 + screenshots.length) % screenshots.length);
   const next = () => setActiveIndex((i) => (i + 1) % screenshots.length);
+
+  React.useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
+      else if (e.key === "Escape") setLightboxOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxOpen, screenshots.length]);
+
+  if (!screenshots.length) return null;
 
   return (
     <div className="glass-card p-8">
