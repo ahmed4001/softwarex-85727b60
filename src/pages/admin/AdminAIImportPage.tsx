@@ -21,7 +21,7 @@ import {
   AlertCircle, Download, Trash2, ChevronDown, ChevronUp,
   Zap, Globe, Building2, Calendar, DollarSign, Layers,
   ThumbsUp, ThumbsDown, BrainCircuit, ArrowRight,
-  Upload, Image, Search, RefreshCw, Rocket,
+  Upload, Image, Search, RefreshCw, Rocket, Square,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────
@@ -937,6 +937,7 @@ function EnrichProductsTab() {
   const [enriching, setEnriching] = useState<string | null>(null);
   const [enrichProgress, setEnrichProgress] = useState(0);
   const [bulkEnriching, setBulkEnriching] = useState(false);
+  const bulkCancelRef = useRef(false);
   const queryClient = useQueryClient();
 
   const { data: products = [], isLoading } = useQuery({
@@ -1004,24 +1005,37 @@ function EnrichProductsTab() {
 
   const enrichAll = async () => {
     setBulkEnriching(true);
+    bulkCancelRef.current = false;
     setEnrichProgress(0);
-    const delayMs = 2500;
+    const delayMs = 3000; // 3s between requests to stay under rate limits
+    let completed = 0;
 
     for (let i = 0; i < needsEnrichment.length; i++) {
-      const result = await enrichSingle(needsEnrichment[i]);
-      setEnrichProgress(Math.round(((i + 1) / needsEnrichment.length) * 100));
-
-      if (result.rateLimited) {
+      if (bulkCancelRef.current) {
+        toast({ title: "Enrichment stopped", description: `Completed ${completed} of ${needsEnrichment.length} products.` });
         break;
       }
 
-      if (i < needsEnrichment.length - 1) {
+      const result = await enrichSingle(needsEnrichment[i]);
+      completed++;
+      setEnrichProgress(Math.round((completed / needsEnrichment.length) * 100));
+
+      if (result.rateLimited) {
+        toast({ title: "Paused — rate limited", description: `Completed ${completed} products. Wait a moment and resume.`, variant: "destructive" });
+        break;
+      }
+
+      // Throttle: wait between requests to avoid rate limits
+      if (i < needsEnrichment.length - 1 && !bulkCancelRef.current) {
         await new Promise((r) => setTimeout(r, delayMs));
       }
     }
 
     setBulkEnriching(false);
-    toast({ title: "Bulk enrichment run finished" });
+  };
+
+  const stopEnrichAll = () => {
+    bulkCancelRef.current = true;
   };
 
   return (
@@ -1040,17 +1054,21 @@ function EnrichProductsTab() {
                   <p className="text-xs text-muted-foreground">AI fills missing descriptions, features, taglines & more</p>
                 </div>
               </div>
-              <Button
-                onClick={enrichAll}
-                disabled={bulkEnriching || needsEnrichment.length === 0}
-                className="shadow-md"
-              >
+              <div className="flex gap-2">
                 {bulkEnriching ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enriching...</>
+                  <Button onClick={stopEnrichAll} variant="destructive" className="shadow-md">
+                    <Square className="h-4 w-4 mr-2" /> Stop
+                  </Button>
                 ) : (
-                  <><Wand2 className="h-4 w-4 mr-2" /> Enrich All ({needsEnrichment.length})</>
+                  <Button
+                    onClick={enrichAll}
+                    disabled={needsEnrichment.length === 0}
+                    className="shadow-md"
+                  >
+                    <Wand2 className="h-4 w-4 mr-2" /> Enrich All ({needsEnrichment.length})
+                  </Button>
                 )}
-              </Button>
+              </div>
             </div>
 
             {/* Progress overview */}
