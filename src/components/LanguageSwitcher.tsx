@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { languages, getLanguage } from "@/i18n/languages";
 import { loadLanguage } from "@/i18n";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Globe, Loader2, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -35,10 +38,13 @@ export function LanguageSwitcher() {
     }
     setLoading(true);
     await loadLanguage(code);
-    // Set document direction for RTL languages
     const lang = getLanguage(code);
     document.documentElement.dir = lang?.dir || "ltr";
     document.documentElement.lang = code;
+    // Persist preference to profile if logged in
+    if (user) {
+      supabase.from("profiles").update({ preferred_language: code }).eq("user_id", user.id).then(() => {});
+    }
     setLoading(false);
     setOpen(false);
   };
