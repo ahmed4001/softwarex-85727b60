@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, RefreshCw, Send, Trash2, Mail, Users, CreditCard, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CampaignComposer } from "@/components/admin/CampaignComposer";
 
 interface BrevoAccount {
   id: string;
@@ -276,6 +276,9 @@ export default function AdminBrevoPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Campaign Composer & History */}
+      <CampaignComposer accounts={accounts} />
 
       {/* Add Account Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
