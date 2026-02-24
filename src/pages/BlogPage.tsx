@@ -1,13 +1,17 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CalendarDays, Eye, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function BlogPage() {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTag = searchParams.get("tag") || "";
+
   const { data: posts, isLoading } = useQuery({
     queryKey: ["blog-posts"],
     queryFn: async () => {
@@ -20,15 +24,63 @@ export default function BlogPage() {
     },
   });
 
+  const allTags = useMemo(() => {
+    if (!posts) return [];
+    const tagSet = new Set<string>();
+    posts.forEach((p) => {
+      const tags = Array.isArray(p.tags) ? (p.tags as string[]) : [];
+      tags.forEach((tag) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+  }, [posts]);
+
+  const filteredPosts = useMemo(() => {
+    if (!posts || !activeTag) return posts;
+    return posts.filter((p) => {
+      const tags = Array.isArray(p.tags) ? (p.tags as string[]) : [];
+      return tags.includes(activeTag);
+    });
+  }, [posts, activeTag]);
+
+  const setTag = (tag: string) => {
+    if (tag) {
+      setSearchParams({ tag });
+    } else {
+      setSearchParams({});
+    }
+  };
+
   return (
     <>
       <SeoHead title={t("blog.title")} description={t("blog.subtitle")} />
       <div className="container py-12">
         <h1 className="text-3xl font-bold text-foreground mb-2">{t("blog.title")}</h1>
-        <p className="text-muted-foreground mb-8">{t("blog.subtitle")}</p>
+        <p className="text-muted-foreground mb-4">{t("blog.subtitle")}</p>
+
+        {allTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2">
+            <Badge
+              variant={activeTag === "" ? "default" : "outline"}
+              className="cursor-pointer shrink-0"
+              onClick={() => setTag("")}
+            >
+              All
+            </Badge>
+            {allTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant={activeTag === tag ? "default" : "outline"}
+                className="cursor-pointer shrink-0"
+                onClick={() => setTag(tag)}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts?.map((post) => {
+          {filteredPosts?.map((post) => {
             const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
             return (
               <Link key={post.id} to={`/blog/${post.slug}`} className="product-card group block">
@@ -60,6 +112,12 @@ export default function BlogPage() {
 
         {!isLoading && (!posts || posts.length === 0) && (
           <div className="text-center py-16 text-muted-foreground">{t("blog.noPosts")}</div>
+        )}
+        {!isLoading && posts && posts.length > 0 && filteredPosts?.length === 0 && (
+          <div className="text-center py-16 text-muted-foreground">
+            No posts found for tag "{activeTag}".{" "}
+            <button className="text-primary underline" onClick={() => setTag("")}>Show all</button>
+          </div>
         )}
       </div>
     </>
