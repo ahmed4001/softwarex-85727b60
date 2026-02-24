@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Eye, Loader2, X, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -23,6 +24,12 @@ function slugify(text: string) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim();
+}
+
+function estimateReadingTime(html: string): number {
+  const text = html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  const wordCount = text.split(" ").filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 200));
 }
 
 interface BlogForm {
@@ -40,6 +47,8 @@ interface BlogForm {
   seo_keywords: string;
   canonical_url: string;
   og_image: string;
+  tags: string[];
+  scheduled_at: string;
 }
 
 const emptyForm: BlogForm = {
@@ -57,6 +66,8 @@ const emptyForm: BlogForm = {
   seo_keywords: "",
   canonical_url: "",
   og_image: "",
+  tags: [],
+  scheduled_at: "",
 };
 
 export default function AdminBlogEditorPage() {
@@ -66,6 +77,7 @@ export default function AdminBlogEditorPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<BlogForm>(emptyForm);
   const [autoSlug, setAutoSlug] = useState(true);
+  const [tagInput, setTagInput] = useState("");
 
   const { data: existing, isLoading: loadingPost } = useQuery({
     queryKey: ["admin-blog-post", id],
@@ -75,6 +87,21 @@ export default function AdminBlogEditorPage() {
       return data;
     },
     enabled: isEdit,
+  });
+
+  // Fetch existing tags for autocomplete
+  const { data: allTags = [] } = useQuery({
+    queryKey: ["all-blog-tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("blog_posts").select("tags");
+      const tagSet = new Set<string>();
+      data?.forEach((p) => {
+        if (Array.isArray(p.tags)) {
+          (p.tags as string[]).forEach((t) => tagSet.add(t));
+        }
+      });
+      return Array.from(tagSet).sort();
+    },
   });
 
   useEffect(() => {
@@ -94,6 +121,8 @@ export default function AdminBlogEditorPage() {
         seo_keywords: existing.seo_keywords || "",
         canonical_url: existing.canonical_url || "",
         og_image: existing.og_image || "",
+        tags: Array.isArray(existing.tags) ? (existing.tags as string[]) : [],
+        scheduled_at: existing.scheduled_at || "",
       });
       setAutoSlug(false);
     }
@@ -109,8 +138,33 @@ export default function AdminBlogEditorPage() {
     });
   };
 
+  const addTag = (tag: string) => {
+    const t = tag.trim().toLowerCase();
+    if (t && !form.tags.includes(t)) {
+      updateField("tags", [...form.tags, t]);
+    }
+    setTagInput("");
+  };
+
+  const removeTag = (tag: string) => {
+    updateField("tags", form.tags.filter((t) => t !== tag));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(tagInput);
+    }
+  };
+
+  const filteredSuggestions = tagInput.length > 0
+    ? allTags.filter((t) => t.toLowerCase().includes(tagInput.toLowerCase()) && !form.tags.includes(t)).slice(0, 5)
+    : [];
+
   const saveMutation = useMutation({
     mutationFn: async (status?: string) => {
+      const finalStatus = status || form.status;
+      const readingTime = estimateReadingTime(form.body);
       const payload = {
         title: form.title,
         slug: form.slug,
@@ -118,7 +172,7 @@ export default function AdminBlogEditorPage() {
         body: form.body || null,
         category: form.category || null,
         featured_image: form.featured_image || null,
-        status: (status || form.status) as any,
+        status: finalStatus as any,
         is_featured: form.is_featured,
         is_pinned: form.is_pinned,
         seo_title: form.seo_title || null,
@@ -126,7 +180,10 @@ export default function AdminBlogEditorPage() {
         seo_keywords: form.seo_keywords || null,
         canonical_url: form.canonical_url || null,
         og_image: form.og_image || null,
-        published_at: (status || form.status) === "published" ? new Date().toISOString() : existing?.published_at || null,
+        reading_time: readingTime,
+        tags: form.tags as any,
+        scheduled_at: finalStatus === "scheduled" && form.scheduled_at ? form.scheduled_at : null,
+        published_at: finalStatus === "published" ? new Date().toISOString() : existing?.published_at || null,
       };
 
       if (isEdit) {
@@ -167,9 +224,23 @@ export default function AdminBlogEditorPage() {
     saveMutation.mutate("published");
   };
 
+  const handleSchedule = () => {
+    if (!form.title.trim() || !form.slug.trim()) {
+      toast({ title: "Title and slug are required", variant: "destructive" });
+      return;
+    }
+    if (!form.scheduled_at) {
+      toast({ title: "Please set a scheduled date/time", variant: "destructive" });
+      return;
+    }
+    saveMutation.mutate("scheduled");
+  };
+
   if (isEdit && loadingPost) {
     return <div className="flex items-center justify-center py-16 text-muted-foreground">Loading...</div>;
   }
+
+  const readingTime = estimateReadingTime(form.body);
 
   return (
     <>
@@ -187,6 +258,7 @@ export default function AdminBlogEditorPage() {
               <h1 className="text-xl font-bold text-foreground">{isEdit ? "Edit Post" : "New Post"}</h1>
               <p className="text-xs text-muted-foreground">
                 {isEdit ? `Editing: ${existing?.title}` : "Create a new blog post"}
+                {form.body && <span className="ml-2">• ~{readingTime} min read</span>}
               </p>
             </div>
           </div>
@@ -201,6 +273,9 @@ export default function AdminBlogEditorPage() {
             <Button variant="outline" size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               <span className="ml-1.5">Save Draft</span>
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleSchedule} disabled={saveMutation.isPending}>
+              Schedule
             </Button>
             <Button size="sm" onClick={handlePublish} disabled={saveMutation.isPending}>
               Publish
@@ -265,6 +340,44 @@ export default function AdminBlogEditorPage() {
                   placeholder="Write your blog post content..."
                   className="min-h-[300px]"
                 />
+                <p className="text-xs text-muted-foreground">~{readingTime} min read</p>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {form.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1">
+                      {tag}
+                      <button onClick={() => removeTag(tag)} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="relative">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    placeholder="Add tag and press Enter..."
+                    className="text-sm"
+                  />
+                  {filteredSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                      {filteredSuggestions.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => addTag(s)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -393,6 +506,21 @@ export default function AdminBlogEditorPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {form.status === "scheduled" && (
+                <div className="space-y-2">
+                  <Label htmlFor="scheduled_at">Publish Date & Time</Label>
+                  <Input
+                    id="scheduled_at"
+                    type="datetime-local"
+                    value={form.scheduled_at ? form.scheduled_at.slice(0, 16) : ""}
+                    onChange={(e) => updateField("scheduled_at", e.target.value ? new Date(e.target.value).toISOString() : "")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Post will be automatically published at this time.
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center justify-between rounded-xl border border-border p-4">
                 <div>
