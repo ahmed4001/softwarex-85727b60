@@ -937,6 +937,7 @@ function EnrichProductsTab() {
   const [enriching, setEnriching] = useState<string | null>(null);
   const [enrichProgress, setEnrichProgress] = useState(0);
   const [bulkEnriching, setBulkEnriching] = useState(false);
+  const [resumeIndex, setResumeIndex] = useState(0);
   const bulkCancelRef = useRef(false);
   const queryClient = useQueryClient();
 
@@ -1024,16 +1025,17 @@ function EnrichProductsTab() {
     }
   };
 
-  const enrichAll = async () => {
+  const enrichAll = async (startFrom = 0) => {
     setBulkEnriching(true);
     bulkCancelRef.current = false;
-    setEnrichProgress(0);
+    setEnrichProgress(startFrom > 0 ? Math.round((startFrom / needsEnrichment.length) * 100) : 0);
     const delayMs = 5000;
-    let completed = 0;
+    let completed = startFrom;
 
-    for (let i = 0; i < needsEnrichment.length; i++) {
+    for (let i = startFrom; i < needsEnrichment.length; i++) {
       if (bulkCancelRef.current) {
-        toast({ title: "Enrichment stopped", description: `Completed ${completed} of ${needsEnrichment.length} products.` });
+        setResumeIndex(i);
+        toast({ title: "Enrichment paused", description: `Completed ${completed} of ${needsEnrichment.length}. You can resume from here.` });
         break;
       }
 
@@ -1042,17 +1044,26 @@ function EnrichProductsTab() {
       setEnrichProgress(Math.round((completed / needsEnrichment.length) * 100));
 
       if (result.rateLimited) {
-        toast({ title: "Paused — rate limited", description: `Completed ${completed} products. Wait a moment and resume.`, variant: "destructive" });
+        setResumeIndex(i + 1);
+        toast({ title: "Paused — rate limited", description: `Completed ${completed} products. Click Resume to continue.`, variant: "destructive" });
         break;
       }
 
       if (i < needsEnrichment.length - 1 && !bulkCancelRef.current) {
         await new Promise((r) => setTimeout(r, delayMs));
       }
+
+      // If we finished all items, reset resume index
+      if (i === needsEnrichment.length - 1) {
+        setResumeIndex(0);
+      }
     }
 
     setBulkEnriching(false);
   };
+
+  const resumeEnrichAll = () => enrichAll(resumeIndex);
+  const startFreshEnrichAll = () => { setResumeIndex(0); enrichAll(0); };
 
   const stopEnrichAll = () => {
     bulkCancelRef.current = true;
@@ -1079,9 +1090,18 @@ function EnrichProductsTab() {
                   <Button onClick={stopEnrichAll} variant="destructive" className="shadow-md">
                     <Square className="h-4 w-4 mr-2" /> Stop
                   </Button>
+                ) : resumeIndex > 0 && resumeIndex < needsEnrichment.length ? (
+                  <div className="flex gap-2">
+                    <Button onClick={resumeEnrichAll} className="shadow-md">
+                      <RefreshCw className="h-4 w-4 mr-2" /> Resume ({needsEnrichment.length - resumeIndex} left)
+                    </Button>
+                    <Button onClick={startFreshEnrichAll} variant="outline" disabled={needsEnrichment.length === 0}>
+                      <Wand2 className="h-4 w-4 mr-2" /> Restart All
+                    </Button>
+                  </div>
                 ) : (
                   <Button
-                    onClick={enrichAll}
+                    onClick={startFreshEnrichAll}
                     disabled={needsEnrichment.length === 0}
                     className="shadow-md"
                   >
