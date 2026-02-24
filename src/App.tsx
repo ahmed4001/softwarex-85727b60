@@ -9,6 +9,7 @@ import { PublicLayout } from "@/components/PublicLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { VendorLayout } from "@/components/VendorLayout";
 import { lazy, Suspense } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import NotFound from "./pages/NotFound";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -55,47 +56,47 @@ function AppContent() {
       <Routes>
         {/* Public routes */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/categories" element={<AllCategoriesPage />} />
-          <Route path="/category/:slug" element={<CategoryPage />} />
-          <Route path="/product/:slug" element={<ProductDetailPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/compare/:slug" element={<ComparisonDetailPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="/blog/:slug" element={<BlogPostPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/submit-product" element={<SubmitProductPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+          <Route path="/categories" element={<ErrorBoundary><AllCategoriesPage /></ErrorBoundary>} />
+          <Route path="/category/:slug" element={<ErrorBoundary><CategoryPage /></ErrorBoundary>} />
+          <Route path="/product/:slug" element={<ErrorBoundary><ProductDetailPage /></ErrorBoundary>} />
+          <Route path="/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
+          <Route path="/compare" element={<ErrorBoundary><ComparePage /></ErrorBoundary>} />
+          <Route path="/compare/:slug" element={<ErrorBoundary><ComparisonDetailPage /></ErrorBoundary>} />
+          <Route path="/blog" element={<ErrorBoundary><BlogPage /></ErrorBoundary>} />
+          <Route path="/blog/:slug" element={<ErrorBoundary><BlogPostPage /></ErrorBoundary>} />
+          <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
+          <Route path="/submit-product" element={<ErrorBoundary><SubmitProductPage /></ErrorBoundary>} />
+          <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
+          <Route path="/leaderboard" element={<ErrorBoundary><LeaderboardPage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="products" element={<AdminProductsPage />} />
-          <Route path="categories" element={<AdminCategoriesPage />} />
-          <Route path="reviews" element={<AdminReviewsPage />} />
-          <Route path="reviews/pending" element={<AdminReviewsPage />} />
-          <Route path="reviews/flagged" element={<AdminReviewsPage />} />
-          <Route path="users" element={<AdminUsersPage />} />
-          <Route path="blog" element={<AdminBlogPage />} />
-          <Route path="blog/new" element={<AdminBlogEditorPage />} />
-          <Route path="blog/:id/edit" element={<AdminBlogEditorPage />} />
-          <Route path="seed" element={<AdminSeedPage />} />
-          <Route path="ai-import" element={<AdminAIImportPage />} />
-          <Route path="translations" element={<AdminTranslationsPage />} />
-          <Route path="brevo" element={<AdminBrevoPage />} />
-          <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route index element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>} />
+          <Route path="products" element={<ErrorBoundary><AdminProductsPage /></ErrorBoundary>} />
+          <Route path="categories" element={<ErrorBoundary><AdminCategoriesPage /></ErrorBoundary>} />
+          <Route path="reviews" element={<ErrorBoundary><AdminReviewsPage /></ErrorBoundary>} />
+          <Route path="reviews/pending" element={<ErrorBoundary><AdminReviewsPage /></ErrorBoundary>} />
+          <Route path="reviews/flagged" element={<ErrorBoundary><AdminReviewsPage /></ErrorBoundary>} />
+          <Route path="users" element={<ErrorBoundary><AdminUsersPage /></ErrorBoundary>} />
+          <Route path="blog" element={<ErrorBoundary><AdminBlogPage /></ErrorBoundary>} />
+          <Route path="blog/new" element={<ErrorBoundary><AdminBlogEditorPage /></ErrorBoundary>} />
+          <Route path="blog/:id/edit" element={<ErrorBoundary><AdminBlogEditorPage /></ErrorBoundary>} />
+          <Route path="seed" element={<ErrorBoundary><AdminSeedPage /></ErrorBoundary>} />
+          <Route path="ai-import" element={<ErrorBoundary><AdminAIImportPage /></ErrorBoundary>} />
+          <Route path="translations" element={<ErrorBoundary><AdminTranslationsPage /></ErrorBoundary>} />
+          <Route path="brevo" element={<ErrorBoundary><AdminBrevoPage /></ErrorBoundary>} />
+          <Route path="analytics" element={<ErrorBoundary><AdminAnalyticsPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}
         <Route path="/vendor" element={<VendorLayout />}>
-          <Route index element={<VendorDashboard />} />
-          <Route path="products" element={<VendorProductsPage />} />
-          <Route path="reviews" element={<VendorReviewsPage />} />
-          <Route path="claim" element={<VendorClaimPage />} />
-          <Route path="analytics" element={<VendorAnalyticsPage />} />
+          <Route index element={<ErrorBoundary><VendorDashboard /></ErrorBoundary>} />
+          <Route path="products" element={<ErrorBoundary><VendorProductsPage /></ErrorBoundary>} />
+          <Route path="reviews" element={<ErrorBoundary><VendorReviewsPage /></ErrorBoundary>} />
+          <Route path="claim" element={<ErrorBoundary><VendorClaimPage /></ErrorBoundary>} />
+          <Route path="analytics" element={<ErrorBoundary><VendorAnalyticsPage /></ErrorBoundary>} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
@@ -105,17 +106,19 @@ function AppContent() {
 }
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+  <ErrorBoundary>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  </ErrorBoundary>
 );
 
 export default App;
