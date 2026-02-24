@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Send, FileText, Eye, Loader2, Plus, Clock, CheckCircle, XCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { EmailBuilder } from "@/components/admin/EmailBuilder";
 
 interface BrevoAccount {
   id: string;
@@ -302,7 +303,7 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
 
       {/* Composer Dialog */}
       <Dialog open={composerOpen} onOpenChange={(open) => { if (!open) resetComposer(); else setComposerOpen(true); }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Compose Campaign</DialogTitle>
           </DialogHeader>
@@ -379,12 +380,10 @@ export function CampaignComposer({ accounts }: CampaignComposerProps) {
               </div>
 
               <div>
-                <Label>HTML Content</Label>
-                <Textarea
-                  className="min-h-[300px] font-mono text-xs"
-                  placeholder="Paste or write your HTML email content..."
+                <Label>Email Content</Label>
+                <EmailBuilder
                   value={draft.htmlContent}
-                  onChange={(e) => setDraft({ ...draft, htmlContent: e.target.value })}
+                  onChange={(html) => setDraft({ ...draft, htmlContent: html })}
                 />
               </div>
             </TabsContent>
