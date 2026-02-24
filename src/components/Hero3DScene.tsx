@@ -133,3 +133,5 @@ export function Hero3DScene() {
     </div>
   );
 }
+
+export default Hero3DScene;
