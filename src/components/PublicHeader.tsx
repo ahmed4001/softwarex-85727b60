@@ -10,7 +10,6 @@ const navLinks = [
   { to: "/categories", label: "Categories" },
   { to: "/compare", label: "Compare" },
   { to: "/blog", label: "Blog" },
-  { to: "/submit-product", label: "Submit Product" },
 ];
 
 export function PublicHeader() {
@@ -70,7 +69,7 @@ export function PublicHeader() {
           </Link>
           <Link to="/submit-product">
             <Button size="sm" className="bg-primary text-primary-foreground rounded-lg font-semibold px-4 text-sm">
-              Get Started
+              Submit Product
             </Button>
           </Link>
           <button
