@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.discover-producthunt]
 verify_jwt = false
+
+[functions.publish-scheduled-posts]
+verify_jwt = false
