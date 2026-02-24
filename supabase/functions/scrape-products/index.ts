@@ -36,7 +36,6 @@ Deno.serve(async (req) => {
 
     // Handle comparison creation
     if (action === "create_comparisons") {
-      const { comparisons } = await req.json().catch(() => ({ comparisons: [] }));
       return await handleComparisons(supabase, products);
     }
 
