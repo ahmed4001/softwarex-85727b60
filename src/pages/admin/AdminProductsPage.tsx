@@ -11,7 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Pencil, Trash2, Eye, CheckSquare, Square, ImageDown, Loader2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Eye, CheckSquare, Square, ImageDown, Loader2, Monitor } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +21,8 @@ export default function AdminProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFetchingLogos, setIsFetchingLogos] = useState(false);
-  const [logoProgress, setLogoProgress] = useState({ processed: 0, succeeded: 0, failed: 0 });
+  const [isFetchingScreenshots, setIsFetchingScreenshots] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState({ processed: 0, succeeded: 0, failed: 0 });
   const abortRef = useRef(false);
   const queryClient = useQueryClient();
 
@@ -70,34 +71,36 @@ export default function AdminProductsPage() {
     onError: () => toast.error("Bulk delete failed"),
   });
 
-  const bulkFetchLogos = useCallback(async () => {
-    setIsFetchingLogos(true);
+  const bulkFetchMedia = useCallback(async (mode: "logo" | "screenshot" | "both") => {
+    const setLoading = mode === "screenshot" ? setIsFetchingScreenshots : setIsFetchingLogos;
+    setLoading(true);
     abortRef.current = false;
-    setLogoProgress({ processed: 0, succeeded: 0, failed: 0 });
+    setFetchProgress({ processed: 0, succeeded: 0, failed: 0 });
     let offset = 0;
-    const batchSize = 20;
+    const batchSize = mode === "screenshot" ? 5 : 20;
     let totalProcessed = 0, totalSucceeded = 0, totalFailed = 0;
 
     try {
       while (!abortRef.current) {
         const { data, error } = await supabase.functions.invoke("bulk-selfhost-logos", {
-          body: { batchSize, offset },
+          body: { batchSize, offset, mode },
         });
         if (error) throw error;
         totalProcessed += data.processed || 0;
         totalSucceeded += data.succeeded || 0;
         totalFailed += data.failed || 0;
-        setLogoProgress({ processed: totalProcessed, succeeded: totalSucceeded, failed: totalFailed });
+        setFetchProgress({ processed: totalProcessed, succeeded: totalSucceeded, failed: totalFailed });
 
         if (data.done || data.processed === 0) break;
         offset = data.nextOffset;
       }
-      toast.success(`Done! ${totalSucceeded} logos self-hosted, ${totalFailed} failed`);
+      const label = mode === "screenshot" ? "screenshots" : "logos";
+      toast.success(`Done! ${totalSucceeded} ${label} fetched, ${totalFailed} failed`);
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     } catch (e: any) {
-      toast.error(`Logo fetch stopped: ${e.message || "Unknown error"}`);
+      toast.error(`Fetch stopped: ${e.message || "Unknown error"}`);
     } finally {
-      setIsFetchingLogos(false);
+      setLoading(false);
     }
   }, [queryClient]);
 
@@ -155,18 +158,34 @@ export default function AdminProductsPage() {
             <Button
               variant="outline"
               className="gap-1.5"
-              onClick={isFetchingLogos ? () => { abortRef.current = true; } : bulkFetchLogos}
-              disabled={false}
+              onClick={isFetchingLogos ? () => { abortRef.current = true; } : () => bulkFetchMedia("logo")}
             >
               {isFetchingLogos ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {logoProgress.processed > 0 ? `${logoProgress.succeeded} done...` : "Starting..."}
+                  {fetchProgress.processed > 0 ? `${fetchProgress.succeeded} logos...` : "Starting..."}
                 </>
               ) : (
                 <>
                   <ImageDown className="h-4 w-4" />
-                  Self-Host Logos
+                  Fetch Logos
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={isFetchingScreenshots ? () => { abortRef.current = true; } : () => bulkFetchMedia("screenshot")}
+            >
+              {isFetchingScreenshots ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {fetchProgress.processed > 0 ? `${fetchProgress.succeeded} screenshots...` : "Starting..."}
+                </>
+              ) : (
+                <>
+                  <Monitor className="h-4 w-4" />
+                  Fetch Screenshots
                 </>
               )}
             </Button>

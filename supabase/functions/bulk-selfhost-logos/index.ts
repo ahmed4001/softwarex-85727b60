@@ -6,6 +6,78 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function tryFetchLogo(formattedUrl: string): Promise<{ bytes: Uint8Array; contentType: string } | null> {
+  const domain = new URL(formattedUrl).hostname.replace("www.", "");
+  const candidates = [
+    `https://logo.clearbit.com/${domain}`,
+    `https://${domain}/favicon.ico`,
+    `https://${domain}/apple-touch-icon.png`,
+    `https://${domain}/favicon-32x32.png`,
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate, { redirect: "follow" });
+      if (res.ok) {
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("image") || candidate.includes("clearbit")) {
+          const bytes = new Uint8Array(await res.arrayBuffer());
+          const contentType = ct.includes("image") ? ct.split(";")[0] : "image/png";
+          if (bytes.length >= 100) return { bytes, contentType };
+        } else {
+          await res.body?.cancel();
+        }
+      } else {
+        await res.body?.cancel();
+      }
+    } catch { /* skip */ }
+  }
+  return null;
+}
+
+async function tryFetchScreenshot(formattedUrl: string, apiKey: string): Promise<Uint8Array | null> {
+  try {
+    const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: formattedUrl,
+        formats: ["screenshot"],
+        waitFor: 3000,
+        onlyMainContent: false,
+      }),
+    });
+
+    if (!scrapeRes.ok) {
+      await scrapeRes.body?.cancel();
+      return null;
+    }
+
+    const scrapeData = await scrapeRes.json();
+    const screenshot = scrapeData.data?.screenshot || scrapeData.screenshot;
+    if (!screenshot) return null;
+
+    if (screenshot.startsWith("http")) {
+      const imgRes = await fetch(screenshot);
+      if (!imgRes.ok) { await imgRes.body?.cancel(); return null; }
+      return new Uint8Array(await imgRes.arrayBuffer());
+    }
+
+    // base64
+    const base64 = screenshot.replace(/^data:image\/\w+;base64,/, "");
+    const binaryStr = atob(base64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+    return bytes;
+  } catch (e) {
+    console.error("Screenshot fetch error:", e);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,17 +88,28 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { batchSize = 25, offset = 0 } = await req.json().catch(() => ({}));
+    const { batchSize = 20, offset = 0, mode = "logo" } = await req.json().catch(() => ({}));
+    // mode: "logo" | "screenshot" | "both"
 
-    // Get products that still use clearbit or have no logo
-    const { data: products, error: fetchErr } = await supabase
+    const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY") || "";
+    const canScreenshot = !!FIRECRAWL_API_KEY && (mode === "screenshot" || mode === "both");
+
+    // Build query based on mode
+    let query = supabase
       .from("products")
-      .select("id, slug, website_url, logo_url")
+      .select("id, slug, website_url, logo_url, screenshots")
       .eq("is_active", true)
       .not("website_url", "is", null)
-      .neq("website_url", "")
-      .or("logo_url.ilike.%clearbit%,logo_url.is.null,logo_url.eq.")
-      .range(offset, offset + batchSize - 1);
+      .neq("website_url", "");
+
+    if (mode === "logo" || mode === "both") {
+      query = query.or("logo_url.ilike.%clearbit%,logo_url.is.null,logo_url.eq.");
+    } else if (mode === "screenshot") {
+      // Products with empty screenshots array
+      query = query.or("screenshots.is.null,screenshots.eq.[]");
+    }
+
+    const { data: products, error: fetchErr } = await query.range(offset, offset + batchSize - 1);
 
     if (fetchErr) throw fetchErr;
     if (!products || products.length === 0) {
@@ -36,80 +119,82 @@ Deno.serve(async (req) => {
       );
     }
 
-    const results: { id: string; slug: string; status: string; logoUrl?: string }[] = [];
+    const results: { id: string; slug: string; logo?: string; screenshot?: string; status: string }[] = [];
 
     for (const product of products) {
       try {
         let formattedUrl = product.website_url!.trim();
         if (!formattedUrl.startsWith("http")) formattedUrl = `https://${formattedUrl}`;
-
-        const domain = new URL(formattedUrl).hostname.replace("www.", "");
         const slug = product.slug || product.id;
+        let logoStatus = "";
+        let screenshotStatus = "";
 
-        // Try multiple logo sources in order
-        const logoCandidates = [
-          `https://logo.clearbit.com/${domain}`,
-          `https://${domain}/favicon.ico`,
-          `https://${domain}/apple-touch-icon.png`,
-          `https://${domain}/favicon-32x32.png`,
-        ];
-
-        let logoBytes: Uint8Array | null = null;
-        let contentType = "image/png";
-
-        for (const candidate of logoCandidates) {
-          try {
-            const res = await fetch(candidate, { redirect: "follow" });
-            if (res.ok) {
-              const ct = res.headers.get("content-type") || "";
-              if (ct.includes("image") || candidate.includes("clearbit")) {
-                logoBytes = new Uint8Array(await res.arrayBuffer());
-                contentType = ct.includes("image") ? ct.split(";")[0] : "image/png";
-                // Skip tiny broken favicons (< 100 bytes)
-                if (logoBytes.length >= 100) break;
-                logoBytes = null;
+        // Logo
+        if (mode === "logo" || mode === "both") {
+          const needsLogo = !product.logo_url || product.logo_url.includes("clearbit");
+          if (needsLogo) {
+            const logo = await tryFetchLogo(formattedUrl);
+            if (logo) {
+              const ext = logo.contentType.includes("svg") ? "svg" : logo.contentType.includes("ico") ? "ico" : "png";
+              const logoPath = `logos/${slug}-${Date.now()}.${ext}`;
+              const { error: upErr } = await supabase.storage
+                .from("product-images")
+                .upload(logoPath, logo.bytes, { contentType: logo.contentType, upsert: true });
+              if (!upErr) {
+                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(logoPath);
+                await supabase.from("products").update({ logo_url: urlData.publicUrl }).eq("id", product.id);
+                logoStatus = "ok";
               } else {
-                await res.body?.cancel();
+                logoStatus = "upload_error";
               }
             } else {
-              await res.body?.cancel();
+              logoStatus = "not_found";
             }
-          } catch {
-            // Skip failed candidate
-          }
-        }
-
-        if (logoBytes && logoBytes.length >= 100) {
-          const ext = contentType.includes("svg") ? "svg" : contentType.includes("ico") ? "ico" : "png";
-          const logoPath = `logos/${slug}-${Date.now()}.${ext}`;
-
-          const { error: upErr } = await supabase.storage
-            .from("product-images")
-            .upload(logoPath, logoBytes, { contentType, upsert: true });
-
-          if (!upErr) {
-            const { data: urlData } = supabase.storage
-              .from("product-images")
-              .getPublicUrl(logoPath);
-
-            await supabase
-              .from("products")
-              .update({ logo_url: urlData.publicUrl })
-              .eq("id", product.id);
-
-            results.push({ id: product.id, slug: product.slug, status: "ok", logoUrl: urlData.publicUrl });
           } else {
-            results.push({ id: product.id, slug: product.slug, status: "upload_error" });
+            logoStatus = "already_hosted";
           }
-        } else {
-          results.push({ id: product.id, slug: product.slug, status: "no_logo_found" });
         }
+
+        // Screenshot
+        if (canScreenshot) {
+          const currentScreenshots = Array.isArray(product.screenshots) ? product.screenshots : [];
+          if (currentScreenshots.length === 0) {
+            const screenshotBytes = await tryFetchScreenshot(formattedUrl, FIRECRAWL_API_KEY);
+            if (screenshotBytes && screenshotBytes.length > 500) {
+              const screenshotPath = `screenshots/${slug}-${Date.now()}.png`;
+              const { error: upErr } = await supabase.storage
+                .from("product-images")
+                .upload(screenshotPath, screenshotBytes, { contentType: "image/png", upsert: true });
+              if (!upErr) {
+                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(screenshotPath);
+                await supabase
+                  .from("products")
+                  .update({ screenshots: [urlData.publicUrl] })
+                  .eq("id", product.id);
+                screenshotStatus = "ok";
+              } else {
+                screenshotStatus = "upload_error";
+              }
+            } else {
+              screenshotStatus = "not_found";
+            }
+          } else {
+            screenshotStatus = "already_exists";
+          }
+        }
+
+        const status = [
+          logoStatus ? `logo:${logoStatus}` : "",
+          screenshotStatus ? `screenshot:${screenshotStatus}` : "",
+        ].filter(Boolean).join(", ") || "skipped";
+
+        results.push({ id: product.id, slug: product.slug, status });
       } catch (e) {
         results.push({ id: product.id, slug: product.slug, status: `error: ${e instanceof Error ? e.message : "unknown"}` });
       }
     }
 
-    const succeeded = results.filter(r => r.status === "ok").length;
+    const succeeded = results.filter(r => r.status.includes("ok")).length;
 
     return new Response(
       JSON.stringify({
