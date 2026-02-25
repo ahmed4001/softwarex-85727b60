@@ -44,6 +44,9 @@ const AdminActivityPage = lazy(() => import("./pages/admin/AdminActivityPage"));
 const AdminProductEditorPage = lazy(() => import("./pages/admin/AdminProductEditorPage"));
 const AdminSubmissionsPage = lazy(() => import("./pages/admin/AdminSubmissionsPage"));
 const AdminAdsPage = lazy(() => import("./pages/admin/AdminAdsPage"));
+const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage"));
+const AdminMediaPage = lazy(() => import("./pages/admin/AdminMediaPage"));
+const AdminPagesPage = lazy(() => import("./pages/admin/AdminPagesPage"));
 
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
@@ -52,6 +55,7 @@ const VendorClaimPage = lazy(() => import("./pages/vendor/VendorClaimPage"));
 const VendorAnalyticsPage = lazy(() => import("./pages/vendor/VendorAnalyticsPage"));
 const VendorProductEditorPage = lazy(() => import("./pages/vendor/VendorProductEditorPage"));
 const VendorCompetitorsPage = lazy(() => import("./pages/vendor/VendorCompetitorsPage"));
+const VendorResponseTemplatesPage = lazy(() => import("./pages/vendor/VendorResponseTemplatesPage"));
 
 const queryClient = new QueryClient();
 
@@ -103,6 +107,9 @@ function AppContent() {
           <Route path="submissions" element={<ErrorBoundary><AdminSubmissionsPage /></ErrorBoundary>} />
           <Route path="activity" element={<ErrorBoundary><AdminActivityPage /></ErrorBoundary>} />
           <Route path="ads" element={<ErrorBoundary><AdminAdsPage /></ErrorBoundary>} />
+          <Route path="settings" element={<ErrorBoundary><AdminSettingsPage /></ErrorBoundary>} />
+          <Route path="media" element={<ErrorBoundary><AdminMediaPage /></ErrorBoundary>} />
+          <Route path="pages" element={<ErrorBoundary><AdminPagesPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}
@@ -114,6 +121,7 @@ function AppContent() {
           <Route path="analytics" element={<ErrorBoundary><VendorAnalyticsPage /></ErrorBoundary>} />
           <Route path="products/:productId/edit" element={<ErrorBoundary><VendorProductEditorPage /></ErrorBoundary>} />
           <Route path="competitors" element={<ErrorBoundary><VendorCompetitorsPage /></ErrorBoundary>} />
+          <Route path="templates" element={<ErrorBoundary><VendorResponseTemplatesPage /></ErrorBoundary>} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
