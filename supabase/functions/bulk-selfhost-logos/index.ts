@@ -20,7 +20,10 @@ async function tryFetchLogo(formattedUrl: string): Promise<{ bytes: Uint8Array; 
 
   for (const candidate of candidates) {
     try {
-      const res = await fetch(candidate, { redirect: "follow" });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(candidate, { redirect: "follow", signal: controller.signal });
+      clearTimeout(timer);
       if (res.ok) {
         const ct = res.headers.get("content-type") || "";
         if (ct.includes("image") || candidate.includes("clearbit")) {
