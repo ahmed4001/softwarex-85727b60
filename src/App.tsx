@@ -48,7 +48,11 @@ const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage"));
 const AdminMediaPage = lazy(() => import("./pages/admin/AdminMediaPage"));
 const AdminPagesPage = lazy(() => import("./pages/admin/AdminPagesPage"));
 const AdminAlternativesPage = lazy(() => import("./pages/admin/AdminAlternativesPage"));
+const AdminBroadcastPage = lazy(() => import("./pages/admin/AdminBroadcastPage"));
+const AdminProductImportExportPage = lazy(() => import("./pages/admin/AdminProductImportExportPage"));
+const AdminSentimentPage = lazy(() => import("./pages/admin/AdminSentimentPage"));
 const StaticPage = lazy(() => import("./pages/StaticPage"));
+const ActivityFeedPage = lazy(() => import("./pages/ActivityFeedPage"));
 
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
@@ -85,6 +89,7 @@ function AppContent() {
           <Route path="/leaderboard" element={<ErrorBoundary><LeaderboardPage /></ErrorBoundary>} />
           <Route path="/user/:id" element={<ErrorBoundary><UserProfilePage /></ErrorBoundary>} />
           <Route path="/page/:slug" element={<ErrorBoundary><StaticPage /></ErrorBoundary>} />
+          <Route path="/activity" element={<ErrorBoundary><ActivityFeedPage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
@@ -114,6 +119,9 @@ function AppContent() {
           <Route path="media" element={<ErrorBoundary><AdminMediaPage /></ErrorBoundary>} />
           <Route path="pages" element={<ErrorBoundary><AdminPagesPage /></ErrorBoundary>} />
           <Route path="alternatives" element={<ErrorBoundary><AdminAlternativesPage /></ErrorBoundary>} />
+          <Route path="broadcast" element={<ErrorBoundary><AdminBroadcastPage /></ErrorBoundary>} />
+          <Route path="import-export" element={<ErrorBoundary><AdminProductImportExportPage /></ErrorBoundary>} />
+          <Route path="sentiment" element={<ErrorBoundary><AdminSentimentPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}

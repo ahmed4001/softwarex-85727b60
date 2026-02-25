@@ -52,8 +52,11 @@ const sidebarItems = [
   { label: "Seed Data", icon: Database, to: "/admin/seed" },
   { label: "AI Import", icon: Sparkles, to: "/admin/ai-import" },
   { label: "AI Integration", icon: Bot, to: "/admin/ai" },
+  { label: "Sentiment", icon: Bot, to: "/admin/sentiment" },
   { label: "Translations", icon: Globe, to: "/admin/translations" },
   { label: "Alternatives", icon: ArrowLeftRight, to: "/admin/alternatives" },
+  { label: "Import/Export", icon: Database, to: "/admin/import-export" },
+  { label: "Broadcast", icon: Megaphone, to: "/admin/broadcast" },
   { label: "Brevo Email", icon: Mail, to: "/admin/brevo" },
 ];
 
