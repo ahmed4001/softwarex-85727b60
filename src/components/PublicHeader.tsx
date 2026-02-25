@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { NotificationBell } from "./NotificationBell";
 
 const resourceLinks = [
   { to: "/blog", label: "nav.blog", icon: BookOpen },
@@ -125,6 +126,7 @@ export function PublicHeader() {
 
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
+          <NotificationBell />
           {user ? (
             <div className="flex items-center gap-1">
               <Link to="/vendor">

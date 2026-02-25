@@ -1,6 +1,6 @@
-import { Search, Bell, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Search, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface AdminHeaderProps {
   collapsed: boolean;
@@ -23,10 +23,7 @@ export function AdminHeader({ collapsed, onToggleCollapse }: AdminHeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="relative rounded-xl">
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute -top-0.5 -right-0.5 h-4.5 w-4.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-card">3</span>
-        </Button>
+        <NotificationBell />
         <div className="h-9 w-9 rounded-xl gradient-hero flex items-center justify-center shadow-sm">
           <span className="text-xs font-bold text-primary-foreground">A</span>
         </div>
