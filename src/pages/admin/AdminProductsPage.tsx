@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
+  const [mediaFilter, setMediaFilter] = useState<"all" | "missing_logo" | "missing_screenshot">("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFetchingLogos, setIsFetchingLogos] = useState(false);
@@ -125,10 +126,15 @@ export default function AdminProductsPage() {
   }, [queryClient]);
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["admin-products", search],
+    queryKey: ["admin-products", search, mediaFilter],
     queryFn: async () => {
       let query = supabase.from("products").select("*, categories!products_category_id_fkey(name)").order("created_at", { ascending: false });
       if (search) query = query.ilike("name", `%${search}%`);
+      if (mediaFilter === "missing_logo") {
+        query = query.or("logo_url.is.null,logo_url.eq.,logo_url.ilike.%clearbit%");
+      } else if (mediaFilter === "missing_screenshot") {
+        query = query.or("screenshots.is.null,screenshots.eq.[]");
+      }
       const { data } = await query.limit(50);
       return data || [];
     },
@@ -236,6 +242,16 @@ export default function AdminProductsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
           </div>
+          <Select value={mediaFilter} onValueChange={(v) => setMediaFilter(v as any)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Products</SelectItem>
+              <SelectItem value="missing_logo">Missing Logo</SelectItem>
+              <SelectItem value="missing_screenshot">Missing Screenshot</SelectItem>
+            </SelectContent>
+          </Select>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground font-medium">{selectedIds.size} selected</span>
