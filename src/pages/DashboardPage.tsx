@@ -15,6 +15,23 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      <div>
+        <div className="h-8 w-48 bg-muted rounded-lg mb-2" />
+        <div className="h-4 w-72 bg-muted/60 rounded-lg" />
+      </div>
+      <div className="h-10 w-80 bg-muted/50 rounded-lg" />
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-48 rounded-xl bg-muted/40" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, signOut } = useAuth();
   const { t } = useTranslation();
@@ -23,23 +40,27 @@ export default function DashboardPage() {
     <RequireAuth>
       <SeoHead title={t("dashboard.title")} description={t("dashboard.subtitle")} />
       <main className="container py-10 max-w-5xl">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">{t("dashboard.title")}</h1>
-          <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
-        </motion.div>
+        {!user ? (
+          <DashboardSkeleton />
+        ) : (
+          <>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">{t("dashboard.title")}</h1>
+              <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+            </motion.div>
 
-        {user && (
-          <Tabs defaultValue="saved" className="space-y-6">
-            <TabsList className="bg-muted/50">
-              <TabsTrigger value="saved" className="gap-1.5"><Bookmark className="h-4 w-4" /> {t("dashboard.saved")}</TabsTrigger>
-              <TabsTrigger value="reviews" className="gap-1.5"><Star className="h-4 w-4" /> {t("dashboard.myReviews")}</TabsTrigger>
-              <TabsTrigger value="profile" className="gap-1.5"><Settings className="h-4 w-4" /> {t("dashboard.profile")}</TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="saved" className="space-y-6">
+              <TabsList className="bg-muted/50">
+                <TabsTrigger value="saved" className="gap-1.5"><Bookmark className="h-4 w-4" /> {t("dashboard.saved")}</TabsTrigger>
+                <TabsTrigger value="reviews" className="gap-1.5"><Star className="h-4 w-4" /> {t("dashboard.myReviews")}</TabsTrigger>
+                <TabsTrigger value="profile" className="gap-1.5"><Settings className="h-4 w-4" /> {t("dashboard.profile")}</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="saved"><SavedProductsTab userId={user.id} /></TabsContent>
-            <TabsContent value="reviews"><MyReviewsTab userId={user.id} /></TabsContent>
-            <TabsContent value="profile"><ProfileTab user={user} onSignOut={signOut} /></TabsContent>
-          </Tabs>
+              <TabsContent value="saved"><SavedProductsTab userId={user.id} /></TabsContent>
+              <TabsContent value="reviews"><MyReviewsTab userId={user.id} /></TabsContent>
+              <TabsContent value="profile"><ProfileTab user={user} onSignOut={signOut} /></TabsContent>
+            </Tabs>
+          </>
         )}
       </main>
     </RequireAuth>
