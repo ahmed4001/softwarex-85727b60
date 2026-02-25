@@ -251,7 +251,7 @@ export default function HomePage() {
               {loadingTop ? Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />) :
                 topProducts && topProducts.length > 0 ?
                   topProducts.map((p: any) => (
-                    <ProductCard key={p.id} id={p.id} slug={p.slug} name={p.name} tagline={p.tagline} logo_url={p.logo_url} avg_rating={Number(p.avg_rating)} total_reviews={p.total_reviews} pricing_model={p.pricing_model} category_name={p.categories?.name} />
+                    <ProductCard key={p.id} id={p.id} slug={p.slug} name={p.name} tagline={p.tagline} logo_url={p.logo_url} avg_rating={Number(p.avg_rating)} total_reviews={p.total_reviews} pricing_model={p.pricing_model} category_name={p.categories?.name} is_featured={p.is_featured} is_sponsored={p.is_sponsored} />
                   )) : (
                     <EmptyBlock icon={<Star className="h-6 w-6 text-muted-foreground/30" />} text="No rated products yet" sub="Be the first to leave a verified review" />
                   )
