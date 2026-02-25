@@ -60,8 +60,7 @@ export function usePaddleCheckout() {
       if (!paddleInitialized && window.Paddle) {
         window.Paddle.Initialize({
           token: PADDLE_CLIENT_TOKEN,
-          // For sandbox testing, uncomment:
-          // environment: "sandbox",
+          environment: "sandbox",
         });
         paddleInitialized = true;
       }
