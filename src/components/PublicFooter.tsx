@@ -37,7 +37,7 @@ export function PublicFooter() {
         { to: "/page/about", label: t("footer.about") },
         { to: "/page/contact", label: t("footer.contact") },
         { to: "/blog", label: t("footer.news") },
-        { to: "/page/about", label: t("footer.careers") },
+        { to: "/page/careers", label: t("footer.careers") },
       ],
     },
     {
