@@ -11,7 +11,6 @@ import { NotificationBell } from "./NotificationBell";
 
 const resourceLinks = [
   { to: "/blog", label: "nav.blog", icon: BookOpen },
-  { to: "/compare", label: "nav.compare", icon: GitCompareArrows },
   { to: "/leaderboard", label: "nav.leaderboard", icon: Trophy },
   { to: "/activity", label: "nav.activityFeed", icon: Activity },
 ];
@@ -28,6 +27,7 @@ export function PublicHeader() {
   const navLinks = [
     { to: "/", label: t("nav.home") },
     { to: "/categories", label: t("nav.categories") },
+    { to: "/compare", label: t("nav.compare") },
   ];
 
   const isResourceActive = resourceLinks.some((l) => location.pathname.startsWith(l.to));
