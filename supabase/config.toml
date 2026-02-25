@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.analyze-sentiment]
 verify_jwt = false
+
+[functions.bulk-selfhost-logos]
+verify_jwt = false
+
+[functions.bulk-fetch-photos]
+verify_jwt = false
