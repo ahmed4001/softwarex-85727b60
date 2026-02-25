@@ -7,7 +7,8 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare, ShoppingCart } from "lucide-react";
+import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
@@ -85,6 +86,7 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const { t } = useTranslation();
+  const { openCheckout } = usePaddleCheckout();
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -212,6 +214,15 @@ export default function ProductDetailPage() {
                 )}
                 <Link to={`/product/${slug}/write-review`}><Button variant="outline" className="rounded-xl font-semibold">{t("productDetail.writeReview")}</Button></Link>
                 <Link to={`/compare?products=${product.id}`}><Button variant="ghost" className="rounded-xl font-medium">{t("productDetail.compare")}</Button></Link>
+                <Button
+                  onClick={() => openCheckout({
+                    priceId: "pri_01kjb9kc8d6yhkwma9dg4kb3pj",
+                    customData: { product_id: product.id, product_name: product.name },
+                  })}
+                  className="rounded-xl font-semibold bg-success hover:bg-success/90 text-success-foreground gap-2"
+                >
+                  <ShoppingCart className="h-4 w-4" /> Buy Now
+                </Button>
               </div>
             </div>
             <div className="flex flex-col gap-4 lg:border-l lg:border-border/50 lg:pl-8 flex-shrink-0">
