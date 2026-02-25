@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeftRight, BarChart3, Bot, Box, ChevronDown, FileText, FolderOpen,
   Image, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings,
-  Star, Users, Activity, Mail, Database, Sparkles, Globe
+  Star, Users, Activity, Mail, Database, Sparkles, Globe, Inbox
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -47,6 +47,7 @@ const sidebarItems = [
   { label: "Comparisons", icon: ArrowLeftRight, to: "/admin/comparisons" },
   { label: "Submissions", icon: MessageSquare, to: "/admin/submissions" },
   { label: "Email Templates", icon: Mail, to: "/admin/emails" },
+  { label: "Subscribers", icon: Inbox, to: "/admin/subscribers" },
   { label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
   { label: "Settings", icon: Settings, to: "/admin/settings" },
   { label: "Activity Log", icon: Activity, to: "/admin/activity" },
