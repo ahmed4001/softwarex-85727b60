@@ -6,24 +6,54 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { PaginationControls } from "@/components/PaginationControls";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
+const PRICING_MODELS = [
+  { value: "all", label: "All Pricing" },
+  { value: "free", label: "Free" },
+  { value: "freemium", label: "Freemium" },
+  { value: "paid", label: "Paid" },
+  { value: "subscription", label: "Subscription" },
+  { value: "one-time", label: "One-time" },
+];
 
 export default function SearchPage() {
   const [params, setParams] = useSearchParams();
   const q = params.get("q") || "";
   const [page, setPage] = useState(0);
   const [tierFilter, setTierFilter] = useState("all");
+  const [pricingFilter, setPricingFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [ratingRange, setRatingRange] = useState([0]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { t } = useTranslation();
 
-  useEffect(() => { setPage(0); }, [q, tierFilter]);
+  const hasActiveFilters = pricingFilter !== "all" || categoryFilter !== "all" || ratingRange[0] > 0 || tierFilter !== "all";
+
+  useEffect(() => { setPage(0); }, [q, tierFilter, pricingFilter, categoryFilter, ratingRange]);
+
+  const { data: categories } = useQuery({
+    queryKey: ["search-categories"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("is_active", true)
+        .is("parent_id", null)
+        .order("name");
+      return data || [];
+    },
+  });
 
   const { data: totalCount } = useQuery({
-    queryKey: ["search-count", q, tierFilter],
+    queryKey: ["search-count", q, tierFilter, pricingFilter, categoryFilter, ratingRange[0]],
     queryFn: async () => {
       if (!q.trim()) return 0;
       let query = supabase
@@ -34,6 +64,15 @@ export default function SearchPage() {
       if (tierFilter !== "all") {
         query = query.eq("is_sponsored", true).eq("sponsor_tier", tierFilter as any);
       }
+      if (pricingFilter !== "all") {
+        query = query.eq("pricing_model", pricingFilter as any);
+      }
+      if (categoryFilter !== "all") {
+        query = query.eq("category_id", categoryFilter);
+      }
+      if (ratingRange[0] > 0) {
+        query = query.gte("avg_rating", ratingRange[0]);
+      }
       const { count } = await query;
       return count ?? 0;
     },
@@ -41,7 +80,7 @@ export default function SearchPage() {
   });
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["search", q, page, tierFilter],
+    queryKey: ["search", q, page, tierFilter, pricingFilter, categoryFilter, ratingRange[0]],
     queryFn: async () => {
       if (!q.trim()) return [];
       let query = supabase
@@ -51,6 +90,15 @@ export default function SearchPage() {
         .ilike("name", `%${q}%`);
       if (tierFilter !== "all") {
         query = query.eq("is_sponsored", true).eq("sponsor_tier", tierFilter as any);
+      }
+      if (pricingFilter !== "all") {
+        query = query.eq("pricing_model", pricingFilter as any);
+      }
+      if (categoryFilter !== "all") {
+        query = query.eq("category_id", categoryFilter);
+      }
+      if (ratingRange[0] > 0) {
+        query = query.gte("avg_rating", ratingRange[0]);
       }
       const { data } = await query
         .order("is_sponsored", { ascending: false })
@@ -68,6 +116,13 @@ export default function SearchPage() {
   });
 
   const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
+
+  const clearFilters = () => {
+    setPricingFilter("all");
+    setCategoryFilter("all");
+    setRatingRange([0]);
+    setTierFilter("all");
+  };
 
   return (
     <>
@@ -89,15 +144,94 @@ export default function SearchPage() {
 
         {q && (
           <div className="mb-6">
-            <Select value={tierFilter} onValueChange={setTierFilter}>
-              <SelectTrigger className="w-44 rounded-xl"><SelectValue placeholder="Sponsor Tier" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Products</SelectItem>
-                <SelectItem value="gold">🥇 Gold Sponsors</SelectItem>
-                <SelectItem value="silver">🥈 Silver Sponsors</SelectItem>
-                <SelectItem value="bronze">🥉 Bronze Sponsors</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 mb-3">
+              <Button
+                variant={filtersOpen ? "secondary" : "outline"}
+                size="sm"
+                className="gap-2 rounded-xl"
+                onClick={() => setFiltersOpen(!filtersOpen)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+                {hasActiveFilters && (
+                  <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                    {[pricingFilter !== "all", categoryFilter !== "all", ratingRange[0] > 0, tierFilter !== "all"].filter(Boolean).length}
+                  </span>
+                )}
+              </Button>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" onClick={clearFilters}>
+                  <X className="h-3.5 w-3.5" /> Clear
+                </Button>
+              )}
+            </div>
+
+            <div className={cn(
+              "grid gap-4 overflow-hidden transition-all duration-300",
+              filtersOpen ? "grid-rows-[1fr] opacity-100 mb-4" : "grid-rows-[0fr] opacity-0 h-0"
+            )}>
+              <div className="min-h-0">
+                <div className="flex flex-wrap gap-3 p-4 rounded-xl border border-border bg-card">
+                  {/* Pricing Model */}
+                  <div className="space-y-1.5 min-w-[160px]">
+                    <label className="text-xs font-medium text-muted-foreground">Pricing Model</label>
+                    <Select value={pricingFilter} onValueChange={setPricingFilter}>
+                      <SelectTrigger className="w-44 rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PRICING_MODELS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Category */}
+                  <div className="space-y-1.5 min-w-[160px]">
+                    <label className="text-xs font-medium text-muted-foreground">Category</label>
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger className="w-48 rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories?.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Sponsor Tier */}
+                  <div className="space-y-1.5 min-w-[160px]">
+                    <label className="text-xs font-medium text-muted-foreground">Sponsor Tier</label>
+                    <Select value={tierFilter} onValueChange={setTierFilter}>
+                      <SelectTrigger className="w-44 rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Products</SelectItem>
+                        <SelectItem value="gold">🥇 Gold</SelectItem>
+                        <SelectItem value="silver">🥈 Silver</SelectItem>
+                        <SelectItem value="bronze">🥉 Bronze</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Rating Range */}
+                  <div className="space-y-1.5 min-w-[200px] flex-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Min Rating: {ratingRange[0] > 0 ? `${ratingRange[0]}+ ★` : "Any"}
+                    </label>
+                    <div className="pt-1.5 px-1">
+                      <Slider
+                        value={ratingRange}
+                        onValueChange={setRatingRange}
+                        min={0}
+                        max={5}
+                        step={0.5}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
