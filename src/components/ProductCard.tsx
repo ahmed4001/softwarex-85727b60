@@ -83,12 +83,27 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
                 alt={name}
                 className="h-full w-full object-cover"
                 onError={(e) => {
+                  const img = e.currentTarget;
+                  const src = img.getAttribute("src") || "";
+                  // If current src is a broken clearbit/external URL, try ui-avatars as fallback
+                  if (!src.includes("ui-avatars.com")) {
+                    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=88&bold=true&format=png`;
+                  } else {
+                    img.style.display = 'none';
+                    img.parentElement!.innerHTML = `<span class="text-base font-bold text-primary">${name.charAt(0)}</span>`;
+                  }
+                }}
+              />
+            ) : (
+              <img
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=88&bold=true&format=png`}
+                alt={name}
+                className="h-full w-full object-cover"
+                onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.parentElement!.innerHTML = `<span class="text-base font-bold text-primary">${name.charAt(0)}</span>`;
                 }}
               />
-            ) : (
-              <span className="text-base font-bold text-primary">{name.charAt(0)}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
