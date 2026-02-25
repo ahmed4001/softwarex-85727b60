@@ -26,7 +26,7 @@ function loadPaddleScript(): Promise<void> {
 
     paddleLoading = true;
     const script = document.createElement("script");
-    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.src = "https://sandbox-cdn.paddle.com/paddle/v2/paddle.js";
     script.async = true;
     script.onload = () => {
       paddleLoading = false;
@@ -60,7 +60,6 @@ export function usePaddleCheckout() {
       if (!paddleInitialized && window.Paddle) {
         window.Paddle.Initialize({
           token: PADDLE_CLIENT_TOKEN,
-          environment: "sandbox",
         });
         paddleInitialized = true;
       }
