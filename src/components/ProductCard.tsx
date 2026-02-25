@@ -47,7 +47,7 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
           <Bookmark className={cn("h-4 w-4", saved && "fill-current")} />
         </button>
       )}
-      <Link to={`/product/${slug}`} className="glass-card p-5 group block relative">
+      <Link to={`/product/${slug}`} className={cn("glass-card p-5 group block relative", is_sponsored && "ring-1 ring-primary/15 bg-primary/[0.02]")}>
         {is_sponsored && (
           <span className="absolute top-3 left-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
             AD
