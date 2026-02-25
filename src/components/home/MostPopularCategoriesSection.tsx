@@ -103,7 +103,7 @@ export function MostPopularCategoriesSection() {
           <div className="flex-1">
             <div className="flex items-center justify-end mb-4">
               <Link
-                to={`/category/${(activeCat as any)?.slug || "all"}`}
+                to={`/category/${(activeCat as any)?.slug || "accounting"}`}
                 className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
               >
                 See all {(activeCat as any)?.name} Software

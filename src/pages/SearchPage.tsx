@@ -251,7 +251,7 @@ export default function SearchPage() {
         {!isLoading && q && products?.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg font-medium mb-2">{t("searchPage.noResults")}</p>
-            <p>{t("searchPage.tryDifferent")} <Link to="/category/all" className="text-primary hover:underline">{t("searchPage.browseCategories")}</Link></p>
+            <p>{t("searchPage.tryDifferent")} <Link to="/categories" className="text-primary hover:underline">{t("searchPage.browseCategories")}</Link></p>
           </div>
         )}
 

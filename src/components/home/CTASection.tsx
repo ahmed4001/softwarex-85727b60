@@ -32,7 +32,7 @@ export function CTASection() {
                   Start Comparing Software <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/category/all">
+              <Link to="/categories">
                 <Button size="lg" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10 h-12 px-8 rounded-xl font-semibold">
                   Browse All Categories
                 </Button>

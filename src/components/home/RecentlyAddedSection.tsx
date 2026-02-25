@@ -36,7 +36,7 @@ export function RecentlyAddedSection() {
             <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">Recently added</h2>
             <p className="text-muted-foreground mt-1">The latest software added to our directory</p>
           </div>
-          <Link to="/category/all">
+          <Link to="/categories">
             <Button variant="ghost" className="gap-1.5 font-semibold group text-sm">
               View All <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Button>

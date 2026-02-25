@@ -114,10 +114,10 @@ export function HeroSection() {
           className="flex flex-wrap items-center justify-center gap-6 text-sm"
           aria-label="Quick links"
         >
-          <Link to="/category/all" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
+          <Link to="/categories" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
             <Award className="h-4 w-4" aria-hidden="true" /> {t("hero.bestSoftware")}
           </Link>
-          <Link to="/category/all" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
+          <Link to="/categories" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
             <TrendingUp className="h-4 w-4" aria-hidden="true" /> {t("hero.trending")}
           </Link>
         </motion.nav>

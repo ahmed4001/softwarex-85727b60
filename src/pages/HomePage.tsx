@@ -246,7 +246,7 @@ export default function HomePage() {
         {/* Highest-Rated Software */}
         <section className="py-20 bg-muted/30" aria-labelledby="top-rated-heading">
           <div className="container">
-            <SectionHeader id="top-rated-heading" label="Highest Rated" title="Best-Reviewed Business Software" subtitle="Top-rated tools based on verified user reviews and satisfaction scores" linkTo="/category/all" />
+            <SectionHeader id="top-rated-heading" label="Highest Rated" title="Best-Reviewed Business Software" subtitle="Top-rated tools based on verified user reviews and satisfaction scores" linkTo="/categories" />
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {loadingTop ? Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />) :
                 topProducts && topProducts.length > 0 ?
