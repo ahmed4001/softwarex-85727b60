@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { RequireAuth } from "@/components/RequireAuth";
-import { BarChart3, Package, MessageSquare, ShieldCheck, ArrowLeft, TrendingUp } from "lucide-react";
+import { BarChart3, Package, MessageSquare, ShieldCheck, ArrowLeft, TrendingUp, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const vendorNav = [
@@ -8,6 +8,7 @@ const vendorNav = [
   { to: "/vendor/products", label: "Products", icon: Package },
   { to: "/vendor/reviews", label: "Reviews", icon: MessageSquare },
   { to: "/vendor/analytics", label: "Analytics", icon: TrendingUp },
+  { to: "/vendor/templates", label: "Templates", icon: FileText },
   { to: "/vendor/claim", label: "Claim Product", icon: ShieldCheck },
 ];
 
