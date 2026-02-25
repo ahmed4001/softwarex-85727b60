@@ -20,10 +20,31 @@ export function PublicFooter() {
     staleTime: 1000 * 60 * 10,
   });
 
+  const { data: featuredCategories } = useQuery({
+    queryKey: ["footer-categories"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("slug, name")
+        .eq("is_active", true)
+        .eq("is_featured", true)
+        .order("sort_order")
+        .limit(10);
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   // Split dynamic pages into company vs policies by known slugs
   const policySlugs = ["terms", "privacy", "community-guidelines", "trust"];
   const companyPages = (footerPages || []).filter(p => !policySlugs.includes(p.slug));
   const policyPages = (footerPages || []).filter(p => policySlugs.includes(p.slug));
+
+  const categoryLinks = (featuredCategories || []).map(c => ({
+    to: `/category/${c.slug}`,
+    label: c.name,
+  }));
+  categoryLinks.push({ to: "/categories", label: t("categories.allCategories") });
 
   const footerSections = [
     {
@@ -39,18 +60,7 @@ export function PublicFooter() {
     },
     {
       title: t("footer.topCategories"),
-      links: [
-        { to: "/category/ai-chatbots", label: t("categories.aiChatbots") },
-        { to: "/category/crm", label: t("categories.crm") },
-        { to: "/category/project-management", label: t("categories.projectManagement") },
-        { to: "/category/expense-management", label: t("categories.expenseManagement") },
-        { to: "/category/video-conferencing", label: t("categories.videoConferencing") },
-        { to: "/category/ecommerce", label: t("categories.eCommerce") },
-        { to: "/category/accounting", label: t("categories.accounting") },
-        { to: "/category/erp", label: t("categories.erp") },
-        { to: "/category/marketing", label: t("categories.marketingAutomation") },
-        { to: "/categories", label: t("categories.allCategories") },
-      ],
+      links: categoryLinks,
     },
     {
       title: t("footer.company"),
