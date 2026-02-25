@@ -78,7 +78,15 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
         <div className="flex items-start gap-3.5">
           <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
             {logo_url ? (
-              <img src={logo_url} alt={name} className="h-full w-full object-cover" />
+              <img
+                src={logo_url}
+                alt={name}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = `<span class="text-base font-bold text-primary">${name.charAt(0)}</span>`;
+                }}
+              />
             ) : (
               <span className="text-base font-bold text-primary">{name.charAt(0)}</span>
             )}
