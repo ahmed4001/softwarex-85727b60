@@ -12,7 +12,8 @@ import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell } from "lucide-react";
+import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award } from "lucide-react";
+import { BadgeShowcase } from "@/components/dashboard/BadgeShowcase";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -299,6 +300,7 @@ function ProfileTab({ user, onSignOut }: { user: any; onSignOut: () => void }) {
 
   return (
     <div className="max-w-lg space-y-6">
+      <BadgeShowcase userId={user.id} />
       <div className="glass-card p-6 space-y-4">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
