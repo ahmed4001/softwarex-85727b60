@@ -49,7 +49,7 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
       )}
       <Link to={`/product/${slug}`} className="glass-card p-5 group block relative">
         {is_sponsored && (
-          <span className="absolute top-3 right-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+          <span className="absolute top-3 left-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
             AD
           </span>
         )}
