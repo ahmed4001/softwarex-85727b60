@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ProductLogo } from "@/components/ProductLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { ArrowRight, Clock } from "lucide-react";
@@ -54,13 +55,7 @@ export function RecentlyAddedSection() {
             >
               <Link to={`/product/${p.slug}`} className="glass-card p-5 group block">
                 <div className="flex items-start gap-3.5">
-                  <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {p.logo_url ? (
-                      <img src={p.logo_url} alt={p.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-base font-bold text-primary">{p.name.charAt(0)}</span>
-                    )}
-                  </div>
+                  <ProductLogo name={p.name} logoUrl={p.logo_url} size="md" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground text-[15px] group-hover:text-primary transition-colors truncate">
                       {p.name}

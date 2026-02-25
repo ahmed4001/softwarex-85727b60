@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { ProductLogo } from "@/components/ProductLogo";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,9 +81,7 @@ export function SearchBar({ variant = "compact", className }: SearchBarProps) {
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
             >
-              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {r.logo_url ? <img src={r.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{r.name.charAt(0)}</span>}
-              </div>
+              <ProductLogo name={r.name} logoUrl={r.logo_url} size="sm" />
               <div>
                 <p className="text-sm font-medium text-foreground">{r.name}</p>
                 {r.tagline && <p className="text-xs text-muted-foreground line-clamp-1">{r.tagline}</p>}

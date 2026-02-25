@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { StarRating } from "./StarRating";
+import { ProductLogo } from "./ProductLogo";
 import { ArrowUpRight, Sparkles, Bookmark } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
@@ -76,36 +77,7 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
           </TooltipProvider>
         )}
         <div className="flex items-start gap-3.5">
-          <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {logo_url ? (
-              <img
-                src={logo_url}
-                alt={name}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  const img = e.currentTarget;
-                  const src = img.getAttribute("src") || "";
-                  // If current src is a broken clearbit/external URL, try ui-avatars as fallback
-                  if (!src.includes("ui-avatars.com")) {
-                    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=88&bold=true&format=png`;
-                  } else {
-                    img.style.display = 'none';
-                    img.parentElement!.innerHTML = `<span class="text-base font-bold text-primary">${name.charAt(0)}</span>`;
-                  }
-                }}
-              />
-            ) : (
-              <img
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=88&bold=true&format=png`}
-                alt={name}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = `<span class="text-base font-bold text-primary">${name.charAt(0)}</span>`;
-                }}
-              />
-            )}
-          </div>
+          <ProductLogo name={name} logoUrl={logo_url} size="md" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <h3 className="font-semibold text-foreground text-[15px] group-hover:text-primary transition-colors truncate">

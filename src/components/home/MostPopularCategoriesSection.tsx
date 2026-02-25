@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ProductLogo } from "@/components/ProductLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -133,13 +134,7 @@ export function MostPopularCategoriesSection() {
                           ({p.total_reviews?.toLocaleString() || 0})
                         </span>
                       </div>
-                      <div className="h-16 w-16 mx-auto rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                        {p.logo_url ? (
-                          <img src={p.logo_url} alt={p.name} className="h-full w-full object-contain p-1" />
-                        ) : (
-                          <span className="text-2xl font-bold text-primary/30">{p.name.charAt(0)}</span>
-                        )}
-                      </div>
+                      <ProductLogo name={p.name} logoUrl={p.logo_url} size="lg" className="mx-auto" />
                     </Link>
                   </motion.div>
                 ))
