@@ -7,7 +7,7 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
@@ -109,6 +109,35 @@ export default function ProductDetailPage() {
     },
     enabled: !!product?.id,
   });
+
+  // Fetch alternatives
+  const { data: alternatives = [] } = useQuery({
+    queryKey: ["product-alternatives", product?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("alternatives")
+        .select("*, alternative:products!alternatives_alternative_product_id_fkey(id, name, slug, logo_url, avg_rating, total_reviews, tagline, pricing_model)")
+        .eq("product_id", product!.id)
+        .order("similarity_score", { ascending: false });
+      return data || [];
+    },
+    enabled: !!product?.id,
+  });
+
+  // Fetch vendor responses for the reviews
+  const reviewIds = (reviews || []).map((r: any) => r.id);
+  const { data: vendorResponses = [] } = useQuery({
+    queryKey: ["vendor-responses-public", reviewIds],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vendor_responses")
+        .select("*, profiles!vendor_responses_user_id_fkey(name)")
+        .in("review_id", reviewIds);
+      return data || [];
+    },
+    enabled: reviewIds.length > 0,
+  });
+  const responseMap = new Map((vendorResponses as any[]).map((r: any) => [r.review_id, r]));
 
   if (isLoading) return <div className="container py-20 text-center text-muted-foreground">{t("common.loading")}</div>;
   if (!product) return <div className="container py-20 text-center text-muted-foreground">{t("productDetail.notFound")}</div>;
@@ -245,16 +274,30 @@ export default function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value="reviews" className="space-y-5">
-            {reviews?.map((r: any) => (
-              <ReviewCard
-                key={r.id} id={r.id} title={r.title} body={r.body} pros={r.pros} cons={r.cons}
-                overall_rating={r.overall_rating} reviewer_name={r.profiles?.name}
-                reviewer_user_id={r.user_id}
-                reviewer_role={r.reviewer_role} company_size={r.company_size}
-                verified_reviewer={r.verified_reviewer}
-                created_at={r.created_at}
-              />
-            ))}
+            {reviews?.map((r: any) => {
+              const vendorResponse = responseMap.get(r.id);
+              return (
+                <div key={r.id}>
+                  <ReviewCard
+                    id={r.id} title={r.title} body={r.body} pros={r.pros} cons={r.cons}
+                    overall_rating={r.overall_rating} reviewer_name={r.profiles?.name}
+                    reviewer_user_id={r.user_id}
+                    reviewer_role={r.reviewer_role} company_size={r.company_size}
+                    verified_reviewer={r.verified_reviewer}
+                    created_at={r.created_at}
+                  />
+                  {vendorResponse && (
+                    <div className="ml-8 mt-2 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1.5">
+                        <MessageSquare className="h-3 w-3" /> Vendor Response
+                        {vendorResponse.profiles?.name && <span className="text-muted-foreground font-normal">from {vendorResponse.profiles.name}</span>}
+                      </div>
+                      <p className="text-sm text-foreground leading-relaxed">{vendorResponse.body}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {(!reviews || reviews.length === 0) && (
               <div className="glass-card p-12 text-center">
                 <p className="text-muted-foreground mb-4">{t("productDetail.noReviews")}</p>
@@ -275,7 +318,38 @@ export default function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value="alternatives">
-            <div className="glass-card p-12 text-center text-muted-foreground">{t("productDetail.alternativesPlaceholder")}</div>
+            {alternatives.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {alternatives.map((a: any) => (
+                  <Link key={a.id} to={`/product/${a.alternative?.slug}`} className="glass-card p-5 hover:border-primary/30 transition-all group">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {a.alternative?.logo_url ? <img src={a.alternative.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">{a.alternative?.name}</h3>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <span>★ {Number(a.alternative?.avg_rating || 0).toFixed(1)}</span>
+                          <span>·</span>
+                          <span>{a.alternative?.total_reviews} reviews</span>
+                        </div>
+                      </div>
+                    </div>
+                    {a.alternative?.tagline && <p className="text-xs text-muted-foreground line-clamp-2">{a.alternative.tagline}</p>}
+                    {a.similarity_score && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full bg-primary/60" style={{ width: `${Number(a.similarity_score) * 100}%` }} />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-medium">{(Number(a.similarity_score) * 100).toFixed(0)}% similar</span>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card p-12 text-center text-muted-foreground">No alternatives listed yet.</div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

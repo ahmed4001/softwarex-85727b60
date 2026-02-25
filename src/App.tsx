@@ -47,6 +47,8 @@ const AdminAdsPage = lazy(() => import("./pages/admin/AdminAdsPage"));
 const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage"));
 const AdminMediaPage = lazy(() => import("./pages/admin/AdminMediaPage"));
 const AdminPagesPage = lazy(() => import("./pages/admin/AdminPagesPage"));
+const AdminAlternativesPage = lazy(() => import("./pages/admin/AdminAlternativesPage"));
+const StaticPage = lazy(() => import("./pages/StaticPage"));
 
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
@@ -82,6 +84,7 @@ function AppContent() {
           <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
           <Route path="/leaderboard" element={<ErrorBoundary><LeaderboardPage /></ErrorBoundary>} />
           <Route path="/user/:id" element={<ErrorBoundary><UserProfilePage /></ErrorBoundary>} />
+          <Route path="/page/:slug" element={<ErrorBoundary><StaticPage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
@@ -110,6 +113,7 @@ function AppContent() {
           <Route path="settings" element={<ErrorBoundary><AdminSettingsPage /></ErrorBoundary>} />
           <Route path="media" element={<ErrorBoundary><AdminMediaPage /></ErrorBoundary>} />
           <Route path="pages" element={<ErrorBoundary><AdminPagesPage /></ErrorBoundary>} />
+          <Route path="alternatives" element={<ErrorBoundary><AdminAlternativesPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}

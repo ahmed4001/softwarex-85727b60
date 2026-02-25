@@ -11,14 +11,61 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Eye, CheckSquare, Square } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (!products) return;
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products.map((p: any) => p.id)));
+    }
+  };
+
+  const bulkMutation = useMutation({
+    mutationFn: async ({ field, value }: { field: string; value: any }) => {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase.from("products").update({ [field]: value }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setSelectedIds(new Set());
+      toast.success("Bulk update applied");
+    },
+    onError: () => toast.error("Bulk update failed"),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setSelectedIds(new Set());
+      toast.success("Products deleted");
+    },
+    onError: () => toast.error("Bulk delete failed"),
+  });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products", search],
@@ -73,9 +120,20 @@ export default function AdminProductsPage() {
           <Link to="/admin/products/new"><Button className="gap-1"><Plus className="h-4 w-4" />Add Product</Button></Link>
         </div>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        <div className="flex items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          </div>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" onClick={() => bulkMutation.mutate({ field: "is_active", value: true })}>Activate</Button>
+              <Button variant="outline" size="sm" onClick={() => bulkMutation.mutate({ field: "is_active", value: false })}>Deactivate</Button>
+              <Button variant="outline" size="sm" onClick={() => bulkMutation.mutate({ field: "is_featured", value: true })}>Feature</Button>
+              <Button variant="destructive" size="sm" onClick={() => bulkDeleteMutation.mutate()}>Delete</Button>
+            </div>
+          )}
         </div>
 
         <div className="product-card overflow-hidden p-0">
@@ -83,6 +141,9 @@ export default function AdminProductsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 w-10">
+                    <Checkbox checked={products?.length ? selectedIds.size === products.length : false} onCheckedChange={toggleAll} />
+                  </th>
                   <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Product</th>
                   <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Category</th>
                   <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Rating</th>
@@ -96,6 +157,9 @@ export default function AdminProductsPage() {
               <tbody>
                 {products?.map((p: any) => (
                   <tr key={p.id} className="admin-table-row">
+                    <td className="px-4 py-3">
+                      <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -142,8 +206,8 @@ export default function AdminProductsPage() {
                     </td>
                   </tr>
                 ))}
-                {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>}
-                {!isLoading && products?.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No products found.</td></tr>}
+                {isLoading && <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>}
+                {!isLoading && products?.length === 0 && <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No products found.</td></tr>}
               </tbody>
             </table>
           </div>
