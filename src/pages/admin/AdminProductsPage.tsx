@@ -60,8 +60,9 @@ export default function AdminProductsPage() {
                   <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Rating</th>
                   <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Reviews</th>
                   <th className="text-center text-xs font-semibold text-muted-foreground px-4 py-3">Active</th>
-                  <th className="text-center text-xs font-semibold text-muted-foreground px-4 py-3">Featured</th>
-                  <th className="text-right text-xs font-semibold text-muted-foreground px-4 py-3">Actions</th>
+                   <th className="text-center text-xs font-semibold text-muted-foreground px-4 py-3">Featured</th>
+                   <th className="text-center text-xs font-semibold text-muted-foreground px-4 py-3">Sponsored</th>
+                   <th className="text-right text-xs font-semibold text-muted-foreground px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,6 +88,9 @@ export default function AdminProductsPage() {
                     <td className="px-4 py-3 text-center">
                       <Switch checked={p.is_featured} onCheckedChange={(v) => toggleMutation.mutate({ id: p.id, field: "is_featured", value: v })} />
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <Switch checked={p.is_sponsored} onCheckedChange={(v) => toggleMutation.mutate({ id: p.id, field: "is_sponsored", value: v })} />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <Link to={`/product/${p.slug}`}><Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button></Link>
@@ -96,8 +100,8 @@ export default function AdminProductsPage() {
                     </td>
                   </tr>
                 ))}
-                {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>}
-                {!isLoading && products?.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No products found.</td></tr>}
+                {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>}
+                {!isLoading && products?.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No products found.</td></tr>}
               </tbody>
             </table>
           </div>
