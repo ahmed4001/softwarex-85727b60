@@ -95,42 +95,48 @@ Return a JSON object with these fields:
 
 Return ONLY the JSON object, no markdown.`;
 
-        // Try Lovable AI first, fall back to Google Gemini on 402/429
+        // Try multiple Lovable AI models, then fall back to Google Gemini direct
         let content = "";
         let aiOk = false;
 
-        // Attempt 1: Lovable AI Gateway
-        try {
-          const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${lovableKey}`,
-            },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.7,
-            }),
-          });
+        const lovableModels = [
+          "google/gemini-2.5-flash-lite",
+          "google/gemini-3-flash-preview",
+          "google/gemini-2.5-flash",
+        ];
 
-          if (aiResponse.ok) {
-            const aiData = await aiResponse.json();
-            content = aiData.choices?.[0]?.message?.content || "";
-            aiOk = true;
-          } else if (aiResponse.status === 402 || aiResponse.status === 429) {
-            console.log(`Lovable AI returned ${aiResponse.status}, falling back to Gemini`);
-            await aiResponse.text(); // consume body
-          } else {
-            errors.push(`AI error for ${comparison.id}: ${aiResponse.status}`);
-            await aiResponse.text();
-            continue;
+        for (const model of lovableModels) {
+          if (aiOk) break;
+          try {
+            const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${lovableKey}`,
+              },
+              body: JSON.stringify({
+                model,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.7,
+              }),
+            });
+
+            if (aiResponse.ok) {
+              const aiData = await aiResponse.json();
+              content = aiData.choices?.[0]?.message?.content || "";
+              if (content) aiOk = true;
+            } else {
+              const status = aiResponse.status;
+              await aiResponse.text();
+              console.log(`Lovable AI ${model} returned ${status}`);
+              if (status !== 402 && status !== 429) break; // non-quota error, stop
+            }
+          } catch (e) {
+            console.log(`Lovable AI ${model} failed: ${e}`);
           }
-        } catch (e) {
-          console.log(`Lovable AI failed: ${e}, falling back to Gemini`);
         }
 
-        // Attempt 2: Google Gemini direct
+        // Fallback: Google Gemini direct API
         if (!aiOk) {
           const geminiKey = Deno.env.get("GOOGLE_GEMINI_API_KEY");
           if (!geminiKey) {
@@ -139,7 +145,6 @@ Return ONLY the JSON object, no markdown.`;
           }
 
           const models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"];
-          let geminiOk = false;
 
           for (const model of models) {
             try {
@@ -158,8 +163,7 @@ Return ONLY the JSON object, no markdown.`;
               if (geminiRes.ok) {
                 const geminiData = await geminiRes.json();
                 content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                geminiOk = true;
-                break;
+                if (content) { aiOk = true; break; }
               } else {
                 const errText = await geminiRes.text();
                 console.log(`Gemini ${model} failed: ${geminiRes.status} ${errText.substring(0, 100)}`);
@@ -169,7 +173,7 @@ Return ONLY the JSON object, no markdown.`;
             }
           }
 
-          if (!geminiOk) {
+          if (!aiOk) {
             errors.push(`All AI providers failed for ${comparison.id}`);
             continue;
           }
