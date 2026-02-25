@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StarRating } from "./StarRating";
@@ -115,7 +116,11 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, review
             <span className="text-[10px] font-bold text-primary">{(reviewer_name || "A").charAt(0)}</span>
           </div>
           <div>
-            <span className="font-semibold text-foreground">{reviewer_name || "Anonymous"}</span>
+            <span className="font-semibold text-foreground">
+              {reviewer_user_id ? (
+                <Link to={`/user/${reviewer_user_id}`} className="hover:text-primary transition-colors">{reviewer_name || "Anonymous"}</Link>
+              ) : (reviewer_name || "Anonymous")}
+            </span>
             {reviewerBadges.length > 0 && <BadgeRow badges={reviewerBadges} max={3} size="xs" />}
             {reviewer_role && <span className="opacity-60"> · {reviewer_role}</span>}
             {company_size && <span className="opacity-60"> · {company_size}</span>}

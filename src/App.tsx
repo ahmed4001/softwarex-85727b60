@@ -25,6 +25,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SubmitProductPage = lazy(() => import("./pages/SubmitProductPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
+const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
@@ -71,6 +72,7 @@ function AppContent() {
           <Route path="/submit-product" element={<ErrorBoundary><SubmitProductPage /></ErrorBoundary>} />
           <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
           <Route path="/leaderboard" element={<ErrorBoundary><LeaderboardPage /></ErrorBoundary>} />
+          <Route path="/user/:id" element={<ErrorBoundary><UserProfilePage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
