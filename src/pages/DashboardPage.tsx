@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,8 @@ export default function DashboardPage() {
           <DashboardSkeleton />
         ) : (
           <>
+            <WelcomeBanner userName={user.email?.split("@")[0]} />
+
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
               <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">{t("dashboard.title")}</h1>
               <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
