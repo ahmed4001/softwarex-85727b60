@@ -79,7 +79,7 @@ export default function SearchPage() {
                 key={p.id} id={p.id} slug={p.slug} name={p.name} tagline={p.tagline}
                 logo_url={p.logo_url} avg_rating={Number(p.avg_rating)} total_reviews={p.total_reviews}
                 pricing_model={p.pricing_model} category_name={p.categories?.name}
-                is_featured={p.is_featured} is_sponsored={p.is_sponsored}
+                is_featured={p.is_featured} is_sponsored={p.is_sponsored} sponsor_tier={p.sponsor_tier}
               />
             ))
           }

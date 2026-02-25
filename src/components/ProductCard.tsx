@@ -19,9 +19,16 @@ interface ProductCardProps {
   category_name?: string;
   is_featured?: boolean;
   is_sponsored?: boolean;
+  sponsor_tier?: string | null;
 }
 
-export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, total_reviews, pricing_model, category_name, is_featured, is_sponsored }: ProductCardProps) {
+const tierColors: Record<string, string> = {
+  gold: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  silver: "bg-slate-100 text-slate-700 dark:bg-slate-800/40 dark:text-slate-300",
+  bronze: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+};
+
+export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, total_reviews, pricing_model, category_name, is_featured, is_sponsored, sponsor_tier }: ProductCardProps) {
   const { user } = useAuth();
   const { isSaved, toggleSave, isToggling } = useSavedProducts();
   const saved = user ? isSaved(id) : false;
@@ -53,9 +60,14 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="absolute top-3 left-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded cursor-default">
-                  AD
-                </span>
+                <span className="absolute top-3 left-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded cursor-default flex items-center gap-1">
+                   AD
+                   {sponsor_tier && (
+                     <span className={cn("px-1.5 py-px rounded text-[9px] font-bold uppercase", tierColors[sponsor_tier] || tierColors.bronze)}>
+                       {sponsor_tier}
+                     </span>
+                   )}
+                 </span>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
                 This is a sponsored listing
