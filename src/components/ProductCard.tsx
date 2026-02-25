@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { StarRating } from "./StarRating";
 import { ArrowUpRight, Sparkles, Bookmark } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import { useSavedProducts } from "@/hooks/useSavedProducts";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,9 +50,18 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
       )}
       <Link to={`/product/${slug}`} className={cn("glass-card p-5 group block relative", is_sponsored && "ring-1 ring-primary/15 bg-primary/[0.02]")}>
         {is_sponsored && (
-          <span className="absolute top-3 left-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
-            AD
-          </span>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="absolute top-3 left-3 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded cursor-default">
+                  AD
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                This is a sponsored listing
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         <div className="flex items-start gap-3.5">
           <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
