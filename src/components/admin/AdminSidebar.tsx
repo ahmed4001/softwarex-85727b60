@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3, Bot, Box, ChevronDown, FileText, FolderOpen,
+  ArrowLeftRight, BarChart3, Bot, Box, ChevronDown, FileText, FolderOpen,
   Image, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings,
   Star, Users, Activity, Mail, Database, Sparkles, Globe
 } from "lucide-react";
@@ -53,6 +53,7 @@ const sidebarItems = [
   { label: "AI Import", icon: Sparkles, to: "/admin/ai-import" },
   { label: "AI Integration", icon: Bot, to: "/admin/ai" },
   { label: "Translations", icon: Globe, to: "/admin/translations" },
+  { label: "Alternatives", icon: ArrowLeftRight, to: "/admin/alternatives" },
   { label: "Brevo Email", icon: Mail, to: "/admin/brevo" },
 ];
 
