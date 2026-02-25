@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Sparkles } from "lucide-react";
+import { Settings, Save, Loader2, Globe, Palette, Shield, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 type SettingRow = {
@@ -25,7 +24,6 @@ const DEFAULT_SETTINGS: Record<string, { label: string; description: string; gro
   site_name: { label: "Site Name", description: "The name of your site", group: "general", defaultValue: "SoftwareHub" },
   site_tagline: { label: "Tagline", description: "Short description shown in SEO", group: "general", defaultValue: "Find & Compare the Best Business Software" },
   contact_email: { label: "Contact Email", description: "Public contact email address", group: "general", defaultValue: "" },
-  spotlight_product_id: { label: "Product of the Month", description: "Featured product shown in the homepage spotlight", group: "general", defaultValue: "" },
   reviews_require_approval: { label: "Reviews Require Approval", description: "New reviews must be approved before appearing", group: "moderation", defaultValue: true },
   allow_anonymous_reviews: { label: "Allow Anonymous Reviews", description: "Allow reviews without sign-in", group: "moderation", defaultValue: false },
   max_reviews_per_user_per_product: { label: "Max Reviews Per User Per Product", description: "Limit duplicate reviews", group: "moderation", defaultValue: "1" },
@@ -44,14 +42,6 @@ export default function AdminSettingsPage() {
     queryFn: async () => {
       const { data } = await supabase.from("site_settings").select("*");
       return (data || []) as SettingRow[];
-    },
-  });
-
-  const { data: allProducts = [] } = useQuery({
-    queryKey: ["admin-all-products-for-spotlight"],
-    queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, slug").eq("is_active", true).order("name");
-      return data || [];
     },
   });
 
@@ -84,7 +74,6 @@ export default function AdminSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-site-settings"] });
-      queryClient.invalidateQueries({ queryKey: ["spotlight-setting"] });
       toast.success("Settings saved");
     },
     onError: () => toast.error("Failed to save settings"),
@@ -95,27 +84,6 @@ export default function AdminSettingsPage() {
   const renderField = (key: string) => {
     const def = DEFAULT_SETTINGS[key];
     const val = form[key];
-
-    if (key === "spotlight_product_id") {
-      return (
-        <div key={key} className="space-y-1.5">
-          <Label className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> {def.label}</Label>
-          <Select value={val || "__none__"} onValueChange={(v) => updateField(key, v === "__none__" ? "" : v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Auto (highest-rated featured)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Auto (highest-rated featured)</SelectItem>
-              {allProducts.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-[11px] text-muted-foreground">{def.description}</p>
-        </div>
-      );
-    }
-
     if (typeof def.defaultValue === "boolean") {
       return (
         <div key={key} className="flex items-center justify-between py-3">
@@ -137,7 +105,7 @@ export default function AdminSettingsPage() {
   };
 
   const groups = [
-    { id: "general", label: "General", icon: Globe, keys: ["site_name", "site_tagline", "contact_email", "spotlight_product_id"] },
+    { id: "general", label: "General", icon: Globe, keys: ["site_name", "site_tagline", "contact_email"] },
     { id: "moderation", label: "Moderation", icon: Shield, keys: ["reviews_require_approval", "allow_anonymous_reviews", "max_reviews_per_user_per_product"] },
     { id: "appearance", label: "Appearance", icon: Palette, keys: ["primary_color", "footer_text"] },
     { id: "email", label: "Email", icon: Mail, keys: ["smtp_from_email", "smtp_from_name"] },

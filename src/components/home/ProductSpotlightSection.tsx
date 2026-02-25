@@ -7,36 +7,17 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export function ProductSpotlightSection() {
-  // First check if admin has set a spotlight product
-  const { data: spotlightSetting } = useQuery({
-    queryKey: ["spotlight-setting"],
+  const { data: product } = useQuery({
+    queryKey: ["product-spotlight"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "spotlight_product_id")
-        .maybeSingle();
-      return (data?.value as string) || null;
-    },
-  });
-
-  const { data: product } = useQuery({
-    queryKey: ["product-spotlight", spotlightSetting],
-    queryFn: async () => {
-      let query = supabase
         .from("products")
         .select("*, categories!products_category_id_fkey(name)")
-        .eq("is_active", true);
-
-      if (spotlightSetting) {
-        // Admin-picked product
-        query = query.eq("id", spotlightSetting);
-      } else {
-        // Fallback: highest-rated featured
-        query = query.eq("is_featured", true).order("avg_rating", { ascending: false });
-      }
-
-      const { data } = await query.limit(1).maybeSingle();
+        .eq("is_active", true)
+        .eq("is_featured", true)
+        .order("avg_rating", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       return data;
     },
   });
@@ -56,7 +37,7 @@ export function ProductSpotlightSection() {
             <Sparkles className="h-3.5 w-3.5" /> Product Spotlight
           </p>
           <h2 id="spotlight-heading" className="text-2xl md:text-3xl font-extrabold text-foreground">
-            Product of the Month
+            Featured Product of the Month
           </h2>
           <p className="text-muted-foreground mt-1">Hand-picked by our editorial team</p>
         </motion.div>
@@ -72,6 +53,7 @@ export function ProductSpotlightSection() {
             className="glass-card group block overflow-hidden ring-1 ring-primary/10"
           >
             <div className="flex flex-col md:flex-row">
+              {/* Left: Hero area */}
               <div className="md:w-2/5 bg-gradient-to-br from-primary/5 to-primary/10 p-8 md:p-10 flex items-center justify-center">
                 <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl bg-background shadow-lg flex items-center justify-center overflow-hidden">
                   {product.logo_url ? (
@@ -90,6 +72,7 @@ export function ProductSpotlightSection() {
                 </div>
               </div>
 
+              {/* Right: Details */}
               <div className="flex-1 p-8 md:p-10 flex flex-col justify-center">
                 <div className="flex items-center gap-2 mb-2">
                   {(product.categories as any)?.name && (
