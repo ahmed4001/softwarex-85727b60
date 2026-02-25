@@ -7,13 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { X, Plus, Check, Minus, ArrowRight, Calculator, BarChart3, Layers, Crown } from "lucide-react";
+import { X, Plus, Check, Minus, ArrowRight, Calculator, BarChart3, Layers, Crown, ArrowLeftRight, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { PaginationControls } from "@/components/PaginationControls";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const MAX_PRODUCTS = 4;
+const PAGE_SIZE = 24;
 
 export default function ComparePage() {
   const [searchParams] = useSearchParams();
@@ -25,6 +34,71 @@ export default function ComparePage() {
   const [months, setMonths] = useState([12]);
   const { t } = useTranslation();
 
+  // Directory state
+  const [dirSearch, setDirSearch] = useState("");
+  const [dirCategory, setDirCategory] = useState("all");
+  const [dirPage, setDirPage] = useState(0);
+
+  // Fetch total count for pagination
+  const { data: totalCount } = useQuery({
+    queryKey: ["comparisons-count", dirSearch, dirCategory],
+    queryFn: async () => {
+      let query = supabase
+        .from("comparisons")
+        .select("id", { count: "exact", head: true })
+        .eq("is_published", true);
+
+      if (dirSearch.trim()) {
+        query = query.ilike("title", `%${dirSearch.trim()}%`);
+      }
+      if (dirCategory !== "all") {
+        query = query.eq("category_id", dirCategory);
+      }
+
+      const { count } = await query;
+      return count || 0;
+    },
+  });
+
+  // Fetch paginated comparisons
+  const { data: comparisons, isLoading: comparisonsLoading } = useQuery({
+    queryKey: ["comparisons-directory", dirSearch, dirCategory, dirPage],
+    queryFn: async () => {
+      let query = supabase
+        .from("comparisons")
+        .select("id, title, slug, product_ids, view_count, summary, category_id, product_a_score, product_b_score, winner_verdict")
+        .eq("is_published", true)
+        .order("view_count", { ascending: false })
+        .range(dirPage * PAGE_SIZE, (dirPage + 1) * PAGE_SIZE - 1);
+
+      if (dirSearch.trim()) {
+        query = query.ilike("title", `%${dirSearch.trim()}%`);
+      }
+      if (dirCategory !== "all") {
+        query = query.eq("category_id", dirCategory);
+      }
+
+      const { data } = await query;
+      return data || [];
+    },
+  });
+
+  // Fetch categories for filter
+  const { data: categories } = useQuery({
+    queryKey: ["categories-for-compare-filter"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      return data || [];
+    },
+  });
+
+  const totalPages = Math.ceil((totalCount || 0) / PAGE_SIZE);
+
+  // Manual compare tool queries
   const { data: products } = useQuery({
     queryKey: ["compare-products", productIds],
     queryFn: async () => {
@@ -46,7 +120,7 @@ export default function ComparePage() {
         .select("id, name, slug, logo_url, avg_rating, tagline")
         .eq("is_active", true)
         .order("name")
-        .limit(200);
+        .limit(500);
       return data || [];
     },
   });
@@ -86,15 +160,17 @@ export default function ComparePage() {
 
   return (
     <>
-      <SeoHead title={t("comparePage.title")} description={t("comparePage.subtitle", { max: MAX_PRODUCTS })} />
+      <SeoHead title="Software Comparisons — Side-by-Side Reviews" description="Browse 1000+ head-to-head software comparisons. Find out which tool is best for your team with detailed feature matrices and pricing calculators." />
 
       <div className="container py-8 max-w-6xl">
+        {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2">{t("comparePage.title")}</h1>
           <p className="text-muted-foreground">{t("comparePage.subtitle", { max: MAX_PRODUCTS })}</p>
         </motion.div>
 
-        <div className="glass-card p-6 mb-8">
+        {/* Manual compare tool */}
+        <div className="glass-card p-6 mb-10">
           <div className="flex flex-wrap items-center gap-3">
             {products?.map((p) => (
               <motion.div key={p.id} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2 pr-2">
@@ -144,8 +220,9 @@ export default function ComparePage() {
           </div>
         </div>
 
-        {products && products.length >= 2 ? (
-          <div className="space-y-8">
+        {/* Manual comparison results */}
+        {products && products.length >= 2 && (
+          <div className="space-y-8 mb-16">
             <section>
               <SectionLabel icon={<BarChart3 className="h-4 w-4" />} label={t("comparePage.overview")} />
               <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
@@ -312,10 +389,9 @@ export default function ComparePage() {
                             <span>{t("comparePage.monthlyUsers", { count: teamSize[0] })}</span>
                             <span className="font-semibold text-foreground">${monthlyCost.toLocaleString()}</span>
                           </div>
-                          <div className="h-px bg-border my-2" />
-                          <div className="flex justify-between">
-                            <span className="font-medium text-foreground">{t("comparePage.totalMonths", { count: months[0] })}</span>
-                            <span className="text-lg font-extrabold text-primary">${totalCost.toLocaleString()}</span>
+                          <div className="border-t border-border pt-2 flex justify-between">
+                            <span className="font-semibold text-foreground">{t("comparePage.totalCost", { count: months[0] })}</span>
+                            <span className="font-extrabold text-primary text-lg">${totalCost.toLocaleString()}</span>
                           </div>
                         </div>
                       </motion.div>
@@ -325,17 +401,125 @@ export default function ComparePage() {
               </div>
             </section>
           </div>
-        ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-              <Layers className="h-7 w-7 text-muted-foreground/30" />
-            </div>
-            <h2 className="text-lg font-bold text-foreground mb-1">
-              {products && products.length === 1 ? t("comparePage.addOneMore") : t("comparePage.selectProducts")}
-            </h2>
-            <p className="text-sm text-muted-foreground">{t("comparePage.selectHint")}</p>
-          </motion.div>
         )}
+
+        {/* ===== Comparisons Directory ===== */}
+        <div className="border-t border-border pt-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 mb-6">
+            <div>
+              <p className="text-sm font-semibold text-primary mb-1">Browse All</p>
+              <h2 className="text-xl md:text-2xl font-extrabold text-foreground">
+                Software Comparisons {totalCount ? <span className="text-muted-foreground font-medium text-base">({totalCount.toLocaleString()})</span> : null}
+              </h2>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search comparisons..."
+                value={dirSearch}
+                onChange={(e) => { setDirSearch(e.target.value); setDirPage(0); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={dirCategory} onValueChange={(v) => { setDirCategory(v); setDirPage(0); }}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories?.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Grid */}
+          {comparisonsLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="glass-card p-5 animate-pulse">
+                  <div className="h-4 w-3/4 bg-muted rounded mb-3" />
+                  <div className="h-3 w-full bg-muted/60 rounded mb-2" />
+                  <div className="h-3 w-1/2 bg-muted/40 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : comparisons && comparisons.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {comparisons.map((c, i) => {
+                const title = c.title || "Comparison";
+                const parts = title.split(" vs ");
+                const a = parts[0] || "";
+                const b = parts[1] || "";
+
+                return (
+                  <motion.article
+                    key={c.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                  >
+                    <Link
+                      to={`/compare/${c.slug || c.id}`}
+                      className="glass-card p-5 flex flex-col gap-3 group hover:ring-1 hover:ring-primary/20 transition-all"
+                      aria-label={`Compare ${a} vs ${b}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-primary">{a.charAt(0)}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">
+                            {title}
+                          </p>
+                          {c.winner_verdict && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{c.winner_verdict}</p>
+                          )}
+                        </div>
+                        <ArrowLeftRight className="h-4 w-4 text-muted-foreground/30 flex-shrink-0" />
+                      </div>
+
+                      {(c.product_a_score || c.product_b_score) && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-semibold text-foreground">{a.split(" ")[0]}: {Number(c.product_a_score).toFixed(1)}</span>
+                          <span className="text-muted-foreground">vs</span>
+                          <span className="font-semibold text-foreground">{b.split(" ")[0]}: {Number(c.product_b_score).toFixed(1)}</span>
+                        </div>
+                      )}
+
+                      {c.summary && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">{c.summary.substring(0, 120)}...</p>
+                      )}
+
+                      {c.view_count > 0 && (
+                        <span className="text-[11px] text-muted-foreground/50">{c.view_count.toLocaleString()} views</span>
+                      )}
+                    </Link>
+                  </motion.article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <ArrowLeftRight className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+              <p className="text-muted-foreground">No comparisons found</p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          <PaginationControls
+            page={dirPage}
+            totalPages={totalPages}
+            onPageChange={setDirPage}
+            className="mt-8"
+          />
+        </div>
       </div>
     </>
   );
@@ -345,7 +529,7 @@ function SectionLabel({ icon, label }: { icon: React.ReactNode; label: string })
   return (
     <div className="flex items-center gap-2 mb-4">
       <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">{icon}</div>
-      <h2 className="text-lg font-bold text-foreground">{label}</h2>
+      <h3 className="font-bold text-foreground">{label}</h3>
     </div>
   );
 }
@@ -353,9 +537,11 @@ function SectionLabel({ icon, label }: { icon: React.ReactNode; label: string })
 function CompareRow({ label, products, render }: { label: string; products: any[]; render: (p: any) => React.ReactNode }) {
   return (
     <tr className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-      <td className="py-3 px-5 text-sm font-medium text-muted-foreground">{label}</td>
+      <td className="py-3 px-5 text-sm text-muted-foreground font-medium">{label}</td>
       {products.map((p) => (
-        <td key={p.id} className="py-3 px-4 text-center text-sm">{render(p)}</td>
+        <td key={p.id} className="py-3 px-4 text-center text-sm">
+          {render(p)}
+        </td>
       ))}
     </tr>
   );

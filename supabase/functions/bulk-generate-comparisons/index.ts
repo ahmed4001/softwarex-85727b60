@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { category_id, max_comparisons = 500 } = await req.json();
+    const { category_id, max_comparisons = 2000 } = await req.json();
 
     // Get categories to process
     let categories: any[] = [];
