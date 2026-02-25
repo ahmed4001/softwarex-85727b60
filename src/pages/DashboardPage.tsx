@@ -51,9 +51,14 @@ export default function DashboardPage() {
           <>
             <WelcomeBanner userName={user.email?.split("@")[0]} />
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">{t("dashboard.title")}</h1>
-              <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">{t("dashboard.title")}</h1>
+                <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={signOut} className="gap-2 text-destructive hover:text-destructive">
+                <LogOut className="h-4 w-4" /> {t("auth.signOut")}
+              </Button>
             </motion.div>
 
             <div className="mb-8">
