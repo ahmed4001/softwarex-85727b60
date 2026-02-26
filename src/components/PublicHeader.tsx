@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign, MessageCircle, Layers, Compass } from "lucide-react";
+import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign, MessageCircle, Layers, Compass, BookMarked } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,7 @@ const resourceLinks = [
   { to: "/discussions", label: "Discussions", icon: MessageCircle },
   { to: "/stacks", label: "Tech Stacks", icon: Layers },
   { to: "/guides", label: "Buyer Guides", icon: Compass },
+  { to: "/glossary", label: "Glossary", icon: BookMarked },
 ];
 
 export function PublicHeader() {

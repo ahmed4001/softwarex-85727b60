@@ -89,6 +89,12 @@ const BuyerGuidePage = lazy(() => import("./pages/BuyerGuidePage"));
 const VendorWarRoomPage = lazy(() => import("./pages/vendor/VendorWarRoomPage"));
 const AdminBuyerGuidesPage = lazy(() => import("./pages/admin/AdminBuyerGuidesPage"));
 const AdminModerationPage = lazy(() => import("./pages/admin/AdminModerationPage"));
+const AdminGlossaryPage = lazy(() => import("./pages/admin/AdminGlossaryPage"));
+const AdminTrendReportsPage = lazy(() => import("./pages/admin/AdminTrendReportsPage"));
+const AdminCohortPage = lazy(() => import("./pages/admin/AdminCohortPage"));
+const AlternativesPage = lazy(() => import("./pages/AlternativesPage"));
+const GlossaryPage = lazy(() => import("./pages/GlossaryPage"));
+const GlossaryTermPage = lazy(() => import("./pages/GlossaryTermPage"));
 
 const queryClient = new QueryClient();
 
@@ -131,6 +137,9 @@ function AppContent() {
           <Route path="/stacks/:slug" element={<ErrorBoundary><TechStackDetailPage /></ErrorBoundary>} />
           <Route path="/guides" element={<ErrorBoundary><BuyerGuidesListPage /></ErrorBoundary>} />
           <Route path="/guides/:slug" element={<ErrorBoundary><BuyerGuidePage /></ErrorBoundary>} />
+          <Route path="/alternatives/:slug" element={<ErrorBoundary><AlternativesPage /></ErrorBoundary>} />
+          <Route path="/glossary" element={<ErrorBoundary><GlossaryPage /></ErrorBoundary>} />
+          <Route path="/glossary/:slug" element={<ErrorBoundary><GlossaryTermPage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
@@ -172,6 +181,9 @@ function AppContent() {
           <Route path="landing-pages" element={<ErrorBoundary><AdminLandingPagesPage /></ErrorBoundary>} />
           <Route path="buyer-guides" element={<ErrorBoundary><AdminBuyerGuidesPage /></ErrorBoundary>} />
           <Route path="moderation" element={<ErrorBoundary><AdminModerationPage /></ErrorBoundary>} />
+          <Route path="glossary" element={<ErrorBoundary><AdminGlossaryPage /></ErrorBoundary>} />
+          <Route path="trend-reports" element={<ErrorBoundary><AdminTrendReportsPage /></ErrorBoundary>} />
+          <Route path="cohort" element={<ErrorBoundary><AdminCohortPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}
