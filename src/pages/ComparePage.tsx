@@ -186,8 +186,18 @@ export default function ComparePage() {
       <div className="container py-8 max-w-6xl">
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2">{t("comparePage.title")}</h1>
-          <p className="text-muted-foreground">{t("comparePage.subtitle", { max: MAX_PRODUCTS })}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2">{t("comparePage.title")}</h1>
+              <p className="text-muted-foreground">{t("comparePage.subtitle", { max: MAX_PRODUCTS })}</p>
+            </div>
+            <Link to="/compare-pricing">
+              <Button variant="outline" className="rounded-xl font-semibold gap-2">
+                <Calculator className="h-4 w-4" />
+                Compare Pricing & Plans
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Manual compare tool */}

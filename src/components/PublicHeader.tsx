@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity } from "lucide-react";
+import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +28,7 @@ export function PublicHeader() {
     { to: "/", label: t("nav.home") },
     { to: "/categories", label: t("nav.categories") },
     { to: "/compare", label: t("nav.compare") },
+    { to: "/compare-pricing", label: t("nav.comparePricing", "Compare Pricing") },
   ];
 
   const isResourceActive = resourceLinks.some((l) => location.pathname.startsWith(l.to));
