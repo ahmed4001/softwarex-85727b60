@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Save, Loader2, Globe, Palette, Shield, Mail } from "lucide-react";
+import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Search } from "lucide-react";
 import { toast } from "sonner";
 
 type SettingRow = {
@@ -31,6 +31,17 @@ const DEFAULT_SETTINGS: Record<string, { label: string; description: string; gro
   footer_text: { label: "Footer Copyright Text", description: "Text shown in footer", group: "appearance", defaultValue: "© 2026 SoftwareHub. All rights reserved." },
   smtp_from_email: { label: "From Email", description: "Default sender email", group: "email", defaultValue: "" },
   smtp_from_name: { label: "From Name", description: "Default sender name", group: "email", defaultValue: "SoftwareHub" },
+  seo_default_title: { label: "Default Meta Title", description: "Fallback title for pages without a custom one (max 60 chars)", group: "seo", defaultValue: "SoftwareHub — Find & Compare Business Software" },
+  seo_default_description: { label: "Default Meta Description", description: "Fallback meta description (max 160 chars)", group: "seo", defaultValue: "Discover, compare, and review the best business software. Honest reviews from real users." },
+  seo_default_keywords: { label: "Default Keywords", description: "Comma-separated global keywords", group: "seo", defaultValue: "software reviews, SaaS comparison, business tools" },
+  seo_default_og_image: { label: "Default OG Image", description: "Fallback Open Graph image URL", group: "seo", defaultValue: "" },
+  seo_google_verification: { label: "Google Site Verification", description: "Google Search Console verification meta tag content", group: "seo", defaultValue: "" },
+  seo_bing_verification: { label: "Bing Site Verification", description: "Bing Webmaster verification meta tag content", group: "seo", defaultValue: "" },
+  robots_txt: { label: "robots.txt Content", description: "Custom robots.txt directives", group: "seo", defaultValue: "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /vendor/\nDisallow: /login\n\nSitemap: /sitemap.xml" },
+  sitemap_include_products: { label: "Include Products in Sitemap", description: "Add all active products to sitemap.xml", group: "seo", defaultValue: true },
+  sitemap_include_categories: { label: "Include Categories in Sitemap", description: "Add all active categories to sitemap.xml", group: "seo", defaultValue: true },
+  sitemap_include_blog: { label: "Include Blog Posts in Sitemap", description: "Add published blog posts to sitemap.xml", group: "seo", defaultValue: true },
+  sitemap_include_comparisons: { label: "Include Comparisons in Sitemap", description: "Add published comparisons to sitemap.xml", group: "seo", defaultValue: true },
 };
 
 export default function AdminSettingsPage() {
@@ -95,6 +106,16 @@ export default function AdminSettingsPage() {
         </div>
       );
     }
+    // Multiline fields
+    if (key === "robots_txt") {
+      return (
+        <div key={key} className="space-y-1.5">
+          <Label>{def.label}</Label>
+          <Textarea value={val || ""} onChange={(e) => updateField(key, e.target.value)} rows={8} className="font-mono text-xs" placeholder={def.description} />
+          <p className="text-[11px] text-muted-foreground">{def.description}</p>
+        </div>
+      );
+    }
     return (
       <div key={key} className="space-y-1.5">
         <Label>{def.label}</Label>
@@ -109,6 +130,7 @@ export default function AdminSettingsPage() {
     { id: "moderation", label: "Moderation", icon: Shield, keys: ["reviews_require_approval", "allow_anonymous_reviews", "max_reviews_per_user_per_product"] },
     { id: "appearance", label: "Appearance", icon: Palette, keys: ["primary_color", "footer_text"] },
     { id: "email", label: "Email", icon: Mail, keys: ["smtp_from_email", "smtp_from_name"] },
+    { id: "seo", label: "SEO", icon: Search, keys: ["seo_default_title", "seo_default_description", "seo_default_keywords", "seo_default_og_image", "seo_google_verification", "seo_bing_verification", "robots_txt", "sitemap_include_products", "sitemap_include_categories", "sitemap_include_blog", "sitemap_include_comparisons"] },
   ];
 
   return (
