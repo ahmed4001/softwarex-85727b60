@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { NotificationsTab } from "@/components/dashboard/NotificationsTab";
+import { ReviewActivityChart } from "@/components/dashboard/ReviewActivityChart";
+import { RecommendationsWidget } from "@/components/dashboard/RecommendationsWidget";
+import { ComparisonHistoryWidget } from "@/components/dashboard/ComparisonHistoryWidget";
+import { SocialFeedWidget } from "@/components/dashboard/SocialFeedWidget";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus, Flame, TrendingUp } from "lucide-react";
+import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus, Flame, TrendingUp, BarChart3, GitCompareArrows, Users } from "lucide-react";
 import { BadgeShowcase } from "@/components/dashboard/BadgeShowcase";
 import { StreakTracker } from "@/components/dashboard/StreakTracker";
 import { Link } from "react-router-dom";
@@ -139,6 +143,15 @@ export default function DashboardPage() {
                     <TabsTrigger value="reviews" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
                       <Star className="h-3.5 w-3.5" /> {t("dashboard.myReviews")}
                     </TabsTrigger>
+                    <TabsTrigger value="analytics" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
+                      <BarChart3 className="h-3.5 w-3.5" /> Analytics
+                    </TabsTrigger>
+                    <TabsTrigger value="discover" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
+                      <GitCompareArrows className="h-3.5 w-3.5" /> Discover
+                    </TabsTrigger>
+                    <TabsTrigger value="community" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
+                      <Users className="h-3.5 w-3.5" /> Community
+                    </TabsTrigger>
                     <TabsTrigger value="lists" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
                       <List className="h-3.5 w-3.5" /> Lists
                     </TabsTrigger>
@@ -159,6 +172,21 @@ export default function DashboardPage() {
                     <TabsContent value="reviews" asChild forceMount={undefined}>
                       <motion.div key="reviews" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                         <MyReviewsTab userId={user.id} />
+                      </motion.div>
+                    </TabsContent>
+                    <TabsContent value="analytics" asChild forceMount={undefined}>
+                      <motion.div key="analytics" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                        <AnalyticsTab userId={user.id} />
+                      </motion.div>
+                    </TabsContent>
+                    <TabsContent value="discover" asChild forceMount={undefined}>
+                      <motion.div key="discover" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                        <DiscoverTab userId={user.id} savedProductIds={savedProductIds} />
+                      </motion.div>
+                    </TabsContent>
+                    <TabsContent value="community" asChild forceMount={undefined}>
+                      <motion.div key="community" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                        <CommunityTab />
                       </motion.div>
                     </TabsContent>
                     <TabsContent value="lists" asChild forceMount={undefined}>
@@ -521,6 +549,59 @@ function MyListsTab({ userId }: { userId: string }) {
           </Card>
         </motion.div>
       ))}
+    </div>
+  );
+}
+
+function AnalyticsTab({ userId }: { userId: string }) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-base font-bold text-foreground mb-1">Your Analytics</h3>
+        <p className="text-sm text-muted-foreground">Track your review activity and engagement over time.</p>
+      </div>
+      <ReviewActivityChart userId={userId} />
+    </div>
+  );
+}
+
+function DiscoverTab({ userId, savedProductIds }: { userId: string; savedProductIds: string[] }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-base font-bold text-foreground mb-1">Discover</h3>
+        <p className="text-sm text-muted-foreground">Recommendations and comparisons based on your interests.</p>
+      </div>
+      <RecommendationsWidget userId={userId} savedProductIds={savedProductIds} />
+      <Card className="border-border/50">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <GitCompareArrows className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">Comparisons For You</h3>
+          </div>
+          <ComparisonHistoryWidget userId={userId} savedProductIds={savedProductIds} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function CommunityTab() {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-base font-bold text-foreground mb-1">Community Feed</h3>
+        <p className="text-sm text-muted-foreground">See what others are reviewing and sharing.</p>
+      </div>
+      <Card className="border-border/50">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">Recent Activity</h3>
+          </div>
+          <SocialFeedWidget />
+        </CardContent>
+      </Card>
     </div>
   );
 }
