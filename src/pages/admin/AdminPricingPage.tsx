@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Plus, Trash2, Pencil, Search, Check, Minus, GripVertical, Layers, Package } from "lucide-react";
+import { DollarSign, Plus, Trash2, Pencil, Search, Check, Minus, GripVertical, Layers, Package, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -243,6 +243,105 @@ export default function AdminPricingPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Bulk migrate ALL products with JSON pricing_tiers
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number; errors: number } | null>(null);
+  const bulkMigrate = useMutation({
+    mutationFn: async () => {
+      // Fetch all products that have non-empty JSON pricing_tiers
+      const { data: allProducts } = await supabase
+        .from("products")
+        .select("id, name, pricing_tiers")
+        .eq("is_active", true);
+      if (!allProducts) return { migrated: 0, skipped: 0, errors: 0 };
+
+      // Filter to products with actual JSON tiers
+      const candidates = allProducts.filter((p: any) => {
+        const tiers = p.pricing_tiers;
+        return Array.isArray(tiers) && tiers.length > 0;
+      });
+
+      // Check which already have normalized tiers
+      const candidateIds = candidates.map((c: any) => c.id);
+      if (candidateIds.length === 0) return { migrated: 0, skipped: 0, errors: 0 };
+
+      const { data: existingTiers } = await supabase
+        .from("product_pricing_tiers")
+        .select("product_id")
+        .in("product_id", candidateIds);
+      const alreadyMigrated = new Set((existingTiers || []).map((t: any) => t.product_id));
+
+      const toMigrate = candidates.filter((c: any) => !alreadyMigrated.has(c.id));
+      let migrated = 0;
+      let errors = 0;
+      setBulkProgress({ done: 0, total: toMigrate.length, errors: 0 });
+
+      for (const product of toMigrate) {
+        try {
+          const jsonTiers = product.pricing_tiers as any[];
+          for (let i = 0; i < jsonTiers.length; i++) {
+            const jt: any = jsonTiers[i];
+            const { data: newTier, error: tierErr } = await supabase
+              .from("product_pricing_tiers")
+              .insert({
+                product_id: product.id,
+                name: jt.name || `Plan ${i + 1}`,
+                price: typeof jt.price === "number" ? jt.price : 0,
+                period: jt.period || "month",
+                description: jt.description || null,
+                is_popular: !!jt.is_popular,
+                sort_order: i,
+                cta_label: jt.cta_label || null,
+                cta_url: jt.cta_url || null,
+              })
+              .select("id")
+              .single();
+            if (tierErr) throw tierErr;
+
+            const featureNames: string[] = Array.isArray(jt.features)
+              ? jt.features.filter((f: any) => typeof f === "string")
+              : [];
+            for (let fi = 0; fi < featureNames.length; fi++) {
+              let { data: existing } = await supabase
+                .from("pricing_features")
+                .select("id")
+                .eq("product_id", product.id)
+                .eq("name", featureNames[fi])
+                .maybeSingle();
+
+              let featureId: string;
+              if (existing) {
+                featureId = existing.id;
+              } else {
+                const { data: newFeat, error: featErr } = await supabase
+                  .from("pricing_features")
+                  .insert({ product_id: product.id, name: featureNames[fi], sort_order: fi })
+                  .select("id")
+                  .single();
+                if (featErr) throw featErr;
+                featureId = newFeat.id;
+              }
+              await supabase.from("pricing_tier_features").insert({ tier_id: newTier!.id, feature_id: featureId });
+            }
+          }
+          migrated++;
+        } catch {
+          errors++;
+        }
+        setBulkProgress({ done: migrated + errors, total: toMigrate.length, errors });
+      }
+
+      return { migrated, skipped: alreadyMigrated.size, errors };
+    },
+    onSuccess: (result) => {
+      if (result) {
+        toast.success(`Bulk migration complete: ${result.migrated} migrated, ${result.skipped} already done, ${result.errors} errors`);
+      }
+      setBulkProgress(null);
+      invalidateAll();
+    },
+    onError: (e: any) => { toast.error(e.message); setBulkProgress(null); },
+  });
+
   const selectedProduct = products.find((p: any) => p.id === selectedProductId);
 
   return (
@@ -253,6 +352,23 @@ export default function AdminPricingPage() {
             <DollarSign className="h-6 w-6 text-primary" /> Pricing Management
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Manage pricing tiers and feature matrices for products</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {bulkProgress && (
+            <span className="text-xs text-muted-foreground">
+              {bulkProgress.done}/{bulkProgress.total} processed{bulkProgress.errors > 0 ? ` (${bulkProgress.errors} errors)` : ""}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => bulkMigrate.mutate()}
+            disabled={bulkMigrate.isPending}
+            className="gap-1.5"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            {bulkMigrate.isPending ? "Migrating All..." : "Bulk Migrate All JSON"}
+          </Button>
         </div>
       </div>
 
