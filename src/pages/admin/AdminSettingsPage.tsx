@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 type SettingRow = {
@@ -47,6 +49,24 @@ const DEFAULT_SETTINGS: Record<string, { label: string; description: string; gro
 export default function AdminSettingsPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Record<string, any>>({});
+  const [seoPreview, setSeoPreview] = useState<{ open: boolean; title: string; content: string; loading: boolean }>({
+    open: false, title: "", content: "", loading: false,
+  });
+
+  const fetchSeoFile = async (type: "robots" | "sitemap") => {
+    setSeoPreview({ open: true, title: type === "robots" ? "robots.txt" : "sitemap.xml", content: "", loading: true });
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/seo-files?type=${type}${type === "sitemap" ? `&base_url=${encodeURIComponent(window.location.origin)}` : ""}`;
+      const res = await fetch(url, {
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      setSeoPreview((p) => ({ ...p, content: text, loading: false }));
+    } catch (err: any) {
+      setSeoPreview((p) => ({ ...p, content: `Error: ${err.message}`, loading: false }));
+    }
+  };
 
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ["admin-site-settings"],
@@ -165,11 +185,40 @@ export default function AdminSettingsPage() {
               <TabsContent key={g.id} value={g.id}>
                 <div className="glass-card p-6 space-y-5">
                   {g.keys.map((key) => renderField(key))}
+                  {g.id === "seo" && (
+                    <div className="flex gap-3 pt-2 border-t border-border">
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchSeoFile("robots")}>
+                        <Eye className="h-3.5 w-3.5" /> Preview robots.txt
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchSeoFile("sitemap")}>
+                        <Eye className="h-3.5 w-3.5" /> Preview sitemap.xml
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             ))}
           </Tabs>
         )}
+
+        <Dialog open={seoPreview.open} onOpenChange={(open) => setSeoPreview((p) => ({ ...p, open }))}>
+          <DialogContent className="max-w-2xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>{seoPreview.title}</DialogTitle>
+            </DialogHeader>
+            {seoPreview.loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <ScrollArea className="max-h-[60vh]">
+                <pre className="text-xs font-mono whitespace-pre-wrap bg-muted/50 rounded-lg p-4 text-foreground">
+                  {seoPreview.content}
+                </pre>
+              </ScrollArea>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
