@@ -1,24 +1,31 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 
+function avatarUrl(name: string, bg: string) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bg}&color=fff&size=72&bold=true&format=png`;
+}
+
 const testimonials = [
   {
     name: "Sarah Chen",
     role: "CTO, TechScale",
     text: "SoftwareHub saved us weeks of research. The comparison tools are incredibly powerful — we found the perfect project management solution in under an hour.",
     rating: 5,
+    avatar: avatarUrl("Sarah Chen", "6366f1"),
   },
   {
     name: "Marcus Rodriguez",
     role: "Product Manager, Flowline",
     text: "The verified reviews gave us confidence in our purchasing decision. No more guessing — real feedback from real teams using these tools daily.",
     rating: 5,
+    avatar: avatarUrl("Marcus Rodriguez", "0891b2"),
   },
   {
     name: "Emily Watson",
     role: "VP Engineering, DataBridge",
     text: "We switched our entire analytics stack based on reviews here. Best decision we made all year — the side-by-side comparisons are game-changing.",
     rating: 5,
+    avatar: avatarUrl("Emily Watson", "059669"),
   },
 ];
 
@@ -59,9 +66,7 @@ export function TestimonialsSection() {
               </p>
 
               <div className="flex items-center gap-3 pt-4 border-t border-border">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                  {t.name.split(" ").map(n => n[0]).join("")}
-                </div>
+                <img src={t.avatar} alt={t.name} className="h-9 w-9 rounded-full object-cover" loading="lazy" />
                 <div>
                   <p className="font-semibold text-foreground text-sm">{t.name}</p>
                   <p className="text-xs text-muted-foreground">{t.role}</p>
