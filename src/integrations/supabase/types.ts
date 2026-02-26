@@ -152,6 +152,56 @@ export type Database = {
           },
         ]
       }
+      alternative_pages: {
+        Row: {
+          created_at: string
+          faq_schema: Json | null
+          id: string
+          intro_text: string | null
+          is_published: boolean
+          meta_description: string | null
+          product_id: string
+          slug: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          faq_schema?: Json | null
+          id?: string
+          intro_text?: string | null
+          is_published?: boolean
+          meta_description?: string | null
+          product_id: string
+          slug: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          faq_schema?: Json | null
+          id?: string
+          intro_text?: string | null
+          is_published?: boolean
+          meta_description?: string | null
+          product_id?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alternative_pages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alternatives: {
         Row: {
           alternative_product_id: string
@@ -670,6 +720,53 @@ export type Database = {
           },
         ]
       }
+      category_trend_reports: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          falling_products: Json | null
+          id: string
+          is_published: boolean
+          period: string
+          report_date: string
+          rising_products: Json | null
+          stats: Json | null
+          summary: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          falling_products?: Json | null
+          id?: string
+          is_published?: boolean
+          period?: string
+          report_date?: string
+          rising_products?: Json | null
+          stats?: Json | null
+          summary?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          falling_products?: Json | null
+          id?: string
+          is_published?: boolean
+          period?: string
+          report_date?: string
+          rising_products?: Json | null
+          stats?: Json | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_trend_reports_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       changelog_subscriptions: {
         Row: {
           created_at: string
@@ -1050,6 +1147,48 @@ export type Database = {
           name?: string
           thumbnail_html?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      glossary_terms: {
+        Row: {
+          category: string | null
+          created_at: string
+          definition: string
+          extended_description: string | null
+          id: string
+          is_published: boolean
+          related_terms: Json | null
+          slug: string
+          term: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          definition: string
+          extended_description?: string | null
+          id?: string
+          is_published?: boolean
+          related_terms?: Json | null
+          slug: string
+          term: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          definition?: string
+          extended_description?: string | null
+          id?: string
+          is_published?: boolean
+          related_terms?: Json | null
+          slug?: string
+          term?: string
+          updated_at?: string
+          view_count?: number
         }
         Relationships: []
       }
@@ -1955,6 +2094,7 @@ export type Database = {
           company: string | null
           company_size: string | null
           created_at: string | null
+          display_title: string | null
           email: string | null
           helpful_votes_received: number | null
           id: string
@@ -1966,6 +2106,8 @@ export type Database = {
           linkedin_verified: boolean | null
           name: string | null
           preferred_language: string | null
+          referral_code: string | null
+          referred_by: string | null
           review_count: number | null
           total_points: number
           user_id: string
@@ -1977,6 +2119,7 @@ export type Database = {
           company?: string | null
           company_size?: string | null
           created_at?: string | null
+          display_title?: string | null
           email?: string | null
           helpful_votes_received?: number | null
           id?: string
@@ -1988,6 +2131,8 @@ export type Database = {
           linkedin_verified?: boolean | null
           name?: string | null
           preferred_language?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           review_count?: number | null
           total_points?: number
           user_id: string
@@ -1999,6 +2144,7 @@ export type Database = {
           company?: string | null
           company_size?: string | null
           created_at?: string | null
+          display_title?: string | null
           email?: string | null
           helpful_votes_received?: number | null
           id?: string
@@ -2010,6 +2156,8 @@ export type Database = {
           linkedin_verified?: boolean | null
           name?: string | null
           preferred_language?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           review_count?: number | null
           total_points?: number
           user_id?: string
@@ -2134,6 +2282,39 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          points_awarded: number | null
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -2348,6 +2529,38 @@ export type Database = {
             columns: ["qa_id"]
             isOneToOne: false
             referencedRelation: "review_qa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_reactions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -2860,6 +3073,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          description: string | null
+          icon: string
+          id: string
+          title: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          description?: string | null
+          icon?: string
+          id?: string
+          title: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          title?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           awarded_at: string
@@ -3029,6 +3272,8 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          intent_score: number | null
+          intent_signals: Json | null
           message: string | null
           name: string
           notes: string | null
@@ -3043,6 +3288,8 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          intent_score?: number | null
+          intent_signals?: Json | null
           message?: string | null
           name: string
           notes?: string | null
@@ -3057,6 +3304,8 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          intent_score?: number | null
+          intent_signals?: Json | null
           message?: string | null
           name?: string
           notes?: string | null

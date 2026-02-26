@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ReviewReactions } from "@/components/ReviewReactions";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,6 +157,11 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_o
           <p className="text-sm text-foreground leading-relaxed">{vendorResponse.body}</p>
         </div>
       )}
+
+      {/* Reactions */}
+      <div className="mb-3">
+        <ReviewReactions reviewId={id} />
+      </div>
 
       {/* Footer with reviewer info, votes, comments toggle */}
       <div className="flex items-center justify-between pt-4 border-t border-border/50">
