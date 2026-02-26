@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign } from "lucide-react";
+import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign, MessageCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ const resourceLinks = [
   { to: "/leaderboard", label: "nav.leaderboard", icon: Trophy },
   { to: "/activity", label: "nav.activityFeed", icon: Activity },
   { to: "/awards", label: "nav.awards", icon: Trophy },
+  { to: "/discussions", label: "Discussions", icon: MessageCircle },
 ];
 
 export function PublicHeader() {

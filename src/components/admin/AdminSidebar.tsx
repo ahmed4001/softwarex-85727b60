@@ -61,6 +61,7 @@ const sidebarItems = [
   { label: "Import/Export", icon: Database, to: "/admin/import-export" },
   { label: "Broadcast", icon: Megaphone, to: "/admin/broadcast" },
   { label: "Brevo Email", icon: Mail, to: "/admin/brevo" },
+  { label: "Landing Pages", icon: Globe, to: "/admin/landing-pages" },
 ];
 
 interface SidebarItemProps {

@@ -20,7 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus, Flame, TrendingUp, BarChart3, GitCompareArrows, Users, Eye } from "lucide-react";
+import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus, Flame, TrendingUp, BarChart3, GitCompareArrows, Users, Eye, Zap } from "lucide-react";
+import { PointsHistory } from "@/components/PointsHistory";
 import { BadgeShowcase } from "@/components/dashboard/BadgeShowcase";
 import { StreakTracker } from "@/components/dashboard/StreakTracker";
 import { WeeklyChallenges } from "@/components/dashboard/WeeklyChallenges";
@@ -81,7 +82,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("name, review_count, helpful_votes_received")
+        .select("name, review_count, helpful_votes_received, total_points")
         .eq("user_id", user!.id)
         .single();
       return data;
@@ -133,6 +134,7 @@ export default function DashboardPage() {
               <StatCard icon={Star} label="Reviews" value={profile?.review_count || 0} color="bg-[hsl(var(--star))]/10 text-[hsl(var(--star))]" />
               <StatCard icon={Bookmark} label="Saved" value={savedProductIds.length} color="bg-primary/10 text-primary" />
               <StatCard icon={Award} label="Badges" value={badgeCounts || 0} color="bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]" />
+              <StatCard icon={Zap} label="Points" value={(profile as any)?.total_points || 0} color="bg-primary/10 text-primary" />
               <StatCard icon={TrendingUp} label="Helpful Votes" value={profile?.helpful_votes_received || 0} color="bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]" />
             </div>
 
@@ -165,6 +167,9 @@ export default function DashboardPage() {
                     </TabsTrigger>
                     <TabsTrigger value="notifications" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
                       <Bell className="h-3.5 w-3.5" /> Activity
+                    </TabsTrigger>
+                    <TabsTrigger value="points" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
+                      <Zap className="h-3.5 w-3.5" /> Points
                     </TabsTrigger>
                     <TabsTrigger value="profile" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
                       <Settings className="h-3.5 w-3.5" /> {t("dashboard.profile")}
@@ -210,6 +215,11 @@ export default function DashboardPage() {
                     <TabsContent value="notifications" asChild forceMount={undefined}>
                       <motion.div key="notifications" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                         <NotificationsTab userId={user.id} />
+                      </motion.div>
+                    </TabsContent>
+                    <TabsContent value="points" asChild forceMount={undefined}>
+                      <motion.div key="points" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                        <PointsHistory userId={user.id} />
                       </motion.div>
                     </TabsContent>
                     <TabsContent value="profile" asChild forceMount={undefined}>

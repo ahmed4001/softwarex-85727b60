@@ -639,6 +639,156 @@ export type Database = {
         }
         Relationships: []
       }
+      discussion_replies: {
+        Row: {
+          body: string
+          created_at: string
+          discussion_id: string
+          id: string
+          is_vendor_answer: boolean
+          parent_id: string | null
+          updated_at: string
+          upvote_count: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          discussion_id: string
+          id?: string
+          is_vendor_answer?: boolean
+          parent_id?: string | null
+          updated_at?: string
+          upvote_count?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          discussion_id?: string
+          id?: string
+          is_vendor_answer?: boolean
+          parent_id?: string | null
+          updated_at?: string
+          upvote_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_replies_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "discussions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_replies_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "discussion_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discussion_votes: {
+        Row: {
+          created_at: string
+          discussion_id: string | null
+          id: string
+          reply_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discussion_id?: string | null
+          id?: string
+          reply_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discussion_id?: string | null
+          id?: string
+          reply_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_votes_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "discussions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_votes_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: false
+            referencedRelation: "discussion_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discussions: {
+        Row: {
+          body: string
+          category_id: string | null
+          created_at: string
+          id: string
+          is_locked: boolean
+          is_pinned: boolean
+          product_id: string | null
+          reply_count: number
+          title: string
+          updated_at: string
+          upvote_count: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          is_pinned?: boolean
+          product_id?: string | null
+          reply_count?: number
+          title: string
+          updated_at?: string
+          upvote_count?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          is_pinned?: boolean
+          product_id?: string | null
+          reply_count?: number
+          title?: string
+          updated_at?: string
+          upvote_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           blocks: Json
@@ -983,6 +1133,33 @@ export type Database = {
         }
         Relationships: []
       }
+      point_transactions: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          id: string
+          points: number
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          points: number
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          points?: number
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pricing_features: {
         Row: {
           category: string | null
@@ -1094,6 +1271,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_claims_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_integrations: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          integrates_with_product_id: string
+          product_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          integrates_with_product_id: string
+          product_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          integrates_with_product_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_integrations_integrates_with_product_id_fkey"
+            columns: ["integrates_with_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_integrations_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1384,6 +1603,7 @@ export type Database = {
           name: string | null
           preferred_language: string | null
           review_count: number | null
+          total_points: number
           user_id: string
         }
         Insert: {
@@ -1405,6 +1625,7 @@ export type Database = {
           name?: string | null
           preferred_language?: string | null
           review_count?: number | null
+          total_points?: number
           user_id: string
         }
         Update: {
@@ -1426,6 +1647,7 @@ export type Database = {
           name?: string | null
           preferred_language?: string | null
           review_count?: number | null
+          total_points?: number
           user_id?: string
         }
         Relationships: []
@@ -1828,6 +2050,59 @@ export type Database = {
           },
         ]
       }
+      seo_landing_pages: {
+        Row: {
+          audience: string | null
+          body: string | null
+          category_id: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          product_ids: Json
+          slug: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          audience?: string | null
+          body?: string | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          product_ids?: Json
+          slug: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          audience?: string | null
+          body?: string | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          product_ids?: Json
+          slug?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_landing_pages_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
           created_at: string | null
@@ -1860,6 +2135,69 @@ export type Database = {
           value?: Json | null
         }
         Relationships: []
+      }
+      sponsored_bids: {
+        Row: {
+          bid_amount: number
+          category_id: string | null
+          clicks: number
+          created_at: string
+          daily_budget: number
+          end_date: string | null
+          id: string
+          impressions: number
+          product_id: string
+          start_date: string | null
+          status: string
+          updated_at: string
+          vendor_user_id: string
+        }
+        Insert: {
+          bid_amount?: number
+          category_id?: string | null
+          clicks?: number
+          created_at?: string
+          daily_budget?: number
+          end_date?: string | null
+          id?: string
+          impressions?: number
+          product_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          vendor_user_id: string
+        }
+        Update: {
+          bid_amount?: number
+          category_id?: string | null
+          clicks?: number
+          created_at?: string
+          daily_budget?: number
+          end_date?: string | null
+          id?: string
+          impressions?: number
+          product_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          vendor_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsored_bids_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsored_bids_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ui_translations: {
         Row: {
@@ -2229,6 +2567,15 @@ export type Database = {
       }
     }
     Functions: {
+      award_points: {
+        Args: {
+          _entity_id?: string
+          _points: number
+          _reason: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       get_best_brevo_account: { Args: never; Returns: string }
       has_role: {
         Args: {

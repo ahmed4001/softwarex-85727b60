@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.weekly-digest]
 verify_jwt = false
+
+[functions.generate-landing-pages]
+verify_jwt = false

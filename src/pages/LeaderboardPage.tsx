@@ -2,7 +2,7 @@ import { SeoHead } from "@/components/SeoHead";
 import { useLeaderboard, useAllBadges } from "@/hooks/useBadges";
 import { BadgeIcon } from "@/components/BadgeDisplay";
 import { motion } from "framer-motion";
-import { Trophy, Medal, Award, Star, Crown, TrendingUp } from "lucide-react";
+import { Trophy, Medal, Award, Star, Crown, TrendingUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -64,8 +64,8 @@ export default function LeaderboardPage() {
         )}
 
         <div className="glass-card overflow-hidden">
-          <div className="grid grid-cols-[3rem_1fr_5rem_5rem_4rem] gap-2 px-5 py-3 border-b border-border/50 text-xs font-semibold text-muted-foreground">
-            <span>#</span><span>{t("leaderboard.reviewer")}</span><span className="text-center">{t("leaderboard.reviews")}</span><span className="text-center">{t("leaderboard.helpful")}</span><span className="text-center">{t("leaderboard.badges")}</span>
+          <div className="grid grid-cols-[3rem_1fr_5rem_5rem_4rem_4rem] gap-2 px-5 py-3 border-b border-border/50 text-xs font-semibold text-muted-foreground">
+            <span>#</span><span>{t("leaderboard.reviewer")}</span><span className="text-center">{t("leaderboard.reviews")}</span><span className="text-center">{t("leaderboard.helpful")}</span><span className="text-center">Pts</span><span className="text-center">{t("leaderboard.badges")}</span>
           </div>
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">{t("common.loading")}</div>
@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.02 }}
                 className={cn(
-                  "grid grid-cols-[3rem_1fr_5rem_5rem_4rem] gap-2 px-5 py-3 items-center border-b border-border/30 last:border-0",
+                  "grid grid-cols-[3rem_1fr_5rem_5rem_4rem_4rem] gap-2 px-5 py-3 items-center border-b border-border/30 last:border-0",
                   i < 3 && "bg-primary/[0.02]"
                 )}
               >
@@ -99,6 +99,7 @@ export default function LeaderboardPage() {
                 </div>
                 <span className="text-sm text-center font-medium text-foreground">{l.review_count || 0}</span>
                 <span className="text-sm text-center font-medium text-foreground">{l.helpful_votes_received || 0}</span>
+                <span className="text-sm text-center font-medium text-primary flex items-center justify-center gap-0.5"><Zap className="h-3 w-3" />{(l as any).total_points || 0}</span>
                 <span className="text-sm text-center font-medium text-primary">{l.badge_count}</span>
               </motion.div>
             ))
