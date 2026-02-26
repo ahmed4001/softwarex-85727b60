@@ -1,113 +1,132 @@
 
 
-# User-Generated Lists & Collections
+# Vendor Marketplace
 
 ## Overview
-Allow authenticated users to create, share, and vote on curated software lists (e.g., "Best Tools for Startups 2026"). Lists are public and browsable, with upvote/downvote support and a dedicated browse page.
+Extend the existing Vendor Portal with subscription plans, lead capture forms, a CRM-lite dashboard for managing leads, sponsored placement management, and ROI reporting -- all integrated with the current claim-based vendor system.
 
-## Database Schema (Migration)
+## Database Changes (Migration)
 
-### Table: `lists`
+### Table: `vendor_subscriptions`
+Tracks which plan each vendor is on.
+
 | Column | Type | Notes |
 |--------|------|-------|
-| id | uuid PK | default gen_random_uuid() |
-| user_id | uuid NOT NULL | creator |
-| title | text NOT NULL | e.g. "Best Tools for Startups 2026" |
-| slug | text NOT NULL UNIQUE | URL-friendly |
-| description | text | optional longer description |
-| cover_image | text | optional |
-| is_published | boolean | default true |
-| upvote_count | integer | default 0 (denormalized) |
-| product_count | integer | default 0 (denormalized) |
-| view_count | integer | default 0 |
+| id | uuid PK | |
+| user_id | uuid NOT NULL | vendor |
+| plan | text NOT NULL | 'free', 'starter', 'pro', 'enterprise' |
+| status | text NOT NULL | 'active', 'canceled', 'expired' (default 'active') |
+| started_at | timestamptz | default now() |
+| expires_at | timestamptz | nullable |
+| metadata | jsonb | default '{}' -- store Stripe sub ID etc. |
+| created_at | timestamptz | default now() |
+
+RLS: Owner SELECT/UPDATE; Admin ALL.
+
+### Table: `vendor_leads`
+Captures inbound interest from product pages.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid PK | |
+| product_id | uuid NOT NULL | |
+| vendor_user_id | uuid NOT NULL | owner of the product |
+| name | text NOT NULL | lead's name |
+| email | text NOT NULL | lead's email |
+| company | text | nullable |
+| message | text | nullable |
+| source | text | default 'product_page' |
+| status | text | default 'new' -- new/contacted/qualified/closed |
+| notes | text | vendor private notes |
 | created_at | timestamptz | default now() |
 | updated_at | timestamptz | default now() |
 
-### Table: `list_items`
+RLS: Vendor owner SELECT/UPDATE (where vendor_user_id = auth.uid()); public INSERT with check (email is not null); Admin ALL.
+
+### Table: `vendor_sponsored_requests`
+Vendors can request/manage their own sponsored placements (admin-approved).
+
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid PK | |
-| list_id | uuid NOT NULL | FK to lists |
-| product_id | uuid NOT NULL | FK to products |
-| note | text | optional curator note |
-| sort_order | integer | default 0 |
+| user_id | uuid NOT NULL | vendor |
+| product_id | uuid NOT NULL | |
+| tier | text NOT NULL | 'bronze', 'silver', 'gold' |
+| start_date | date | |
+| end_date | date | |
+| status | text | default 'pending' -- pending/active/expired/rejected |
+| budget | numeric | nullable |
 | created_at | timestamptz | default now() |
-| UNIQUE(list_id, product_id) | | prevent duplicates |
 
-### Table: `list_votes`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| list_id | uuid NOT NULL | FK to lists |
-| user_id | uuid NOT NULL | voter |
-| created_at | timestamptz | default now() |
-| UNIQUE(list_id, user_id) | | one vote per user |
+RLS: Owner SELECT/INSERT; Admin ALL.
 
-### RLS Policies
-- **lists**: Public SELECT where `is_published = true`; authenticated INSERT with `auth.uid() = user_id`; owner UPDATE/DELETE
-- **list_items**: Public SELECT (via published list join); owner INSERT/UPDATE/DELETE
-- **list_votes**: Public SELECT; authenticated INSERT/DELETE for own votes
-- Admin override on all three tables
+## New Pages
 
-### Trigger
-- `update_updated_at_column` trigger on `lists`
+### 1. Vendor Subscription Plans Page (`/vendor/plans`)
+- Displays 4 tiers: Free, Starter ($49/mo), Pro ($149/mo), Enterprise ($499/mo)
+- Feature comparison matrix (lead capture, sponsored slots, analytics depth, response templates, priority support)
+- Current plan badge highlighting
+- CTA buttons (upgrade flow -- initially just records intent; Stripe integration can be layered later)
 
-## New Pages & Routes
+### 2. Vendor Leads / CRM Page (`/vendor/leads`)
+- Table of captured leads with columns: Name, Email, Company, Product, Status, Date
+- Status pipeline dropdown (New -> Contacted -> Qualified -> Closed)
+- Inline notes editing
+- Search and filter by product/status
+- Lead count stat cards at top
+- CSV export button
 
-### 1. Browse Lists Page (`/lists`)
-- Grid of published lists sorted by upvotes/newest
-- Each card shows: title, description snippet, product count, upvote count, creator name/avatar
-- Search/filter bar
-- "Create New List" CTA button (links to `/lists/new`)
+### 3. Vendor Sponsored Placements Page (`/vendor/sponsored`)
+- List of vendor's current/past sponsorship requests with status badges
+- "Request Sponsorship" form: select product, pick tier, date range, budget
+- Shows existing product sponsor status from products table
 
-### 2. List Detail Page (`/lists/:slug`)
-- Header with title, description, creator info, upvote button, share button
-- Product grid showing all items in the list with curator notes
-- Owner sees edit/delete controls inline
-- Visitors can upvote the list (toggle)
+### 4. Vendor ROI Report Page (`/vendor/roi`)
+- Aggregated metrics: views, clicks, CTR, leads captured, reviews received, response rate
+- Time period selector (7d, 30d, 90d, all)
+- Per-product ROI breakdown table
+- Charts: views/clicks over time (area chart), lead funnel (bar chart), review sentiment trend
+- Estimated lead value calculator (configurable $/lead)
 
-### 3. Create/Edit List Page (`/lists/new` and `/lists/:slug/edit`)
-- Form: title, description, cover image URL
-- Product picker (search products, add with optional note, drag to reorder)
-- Save as draft or publish
-- Protected route (requires auth)
+## Component: Lead Capture Form (on Product Detail Page)
+- Small card in the product sidebar: "Get a Quote" / "Contact Vendor"
+- Fields: Name, Email, Company (optional), Message (optional)
+- Only shown for claimed products
+- Submits to `vendor_leads` table
+- Success toast confirmation
 
-## New Components
+## Route & Navigation Updates
 
-### `ListCard.tsx`
-Card component for the browse grid showing list title, description, product thumbnails (first 3-4), upvote count, and creator badge.
-
-### `ListVoteButton.tsx`
-Toggle upvote button that checks auth state, optimistically updates count, and syncs with `list_votes` table.
-
-## Hooks
-
-### `useListVote(listId)`
-Manages vote state: checks if user voted, handles toggle with optimistic updates, invalidates queries.
-
-## Route Registration (App.tsx)
-Add within the PublicLayout routes:
+### New routes under `/vendor`:
 ```
-/lists              -> ListsPage
-/lists/new          -> ListEditorPage (auth required)
-/lists/:slug        -> ListDetailPage
-/lists/:slug/edit   -> ListEditorPage (auth required, owner only)
+/vendor/plans       -> VendorPlansPage
+/vendor/leads       -> VendorLeadsPage
+/vendor/sponsored   -> VendorSponsoredPage
+/vendor/roi         -> VendorROIPage
 ```
 
-## Dashboard Integration
-Add a "My Lists" tab to the existing DashboardPage tabs so users can manage their lists alongside saved products and reviews.
+### VendorLayout nav additions:
+Add 4 new nav items: Plans (CreditCard icon), Leads (UserPlus icon), Sponsored (Megaphone icon), ROI (PieChart icon).
 
-## Files Changed/Created
+## Files to Create/Modify
 
 | File | Action |
 |------|--------|
 | Migration SQL | New (3 tables, RLS, trigger) |
-| `src/pages/ListsPage.tsx` | New |
-| `src/pages/ListDetailPage.tsx` | New |
-| `src/pages/ListEditorPage.tsx` | New |
-| `src/components/ListCard.tsx` | New |
-| `src/components/ListVoteButton.tsx` | New |
-| `src/hooks/useListVote.ts` | New |
+| `src/pages/vendor/VendorPlansPage.tsx` | New |
+| `src/pages/vendor/VendorLeadsPage.tsx` | New |
+| `src/pages/vendor/VendorSponsoredPage.tsx` | New |
+| `src/pages/vendor/VendorROIPage.tsx` | New |
+| `src/components/LeadCaptureForm.tsx` | New |
+| `src/components/VendorLayout.tsx` | Modified (add 4 nav items) |
 | `src/App.tsx` | Modified (add 4 routes) |
-| `src/pages/DashboardPage.tsx` | Modified (add My Lists tab) |
+| `src/pages/ProductDetailPage.tsx` | Modified (add LeadCaptureForm in sidebar) |
+
+## Technical Notes
+- Lead capture form uses public INSERT policy so unauthenticated visitors can submit leads
+- `vendor_user_id` in `vendor_leads` is populated by looking up the product's approved claim owner at insert time via the form logic
+- ROI page reuses existing `view_count`/`click_count` from products table and counts from `vendor_leads` and `reviews`
+- Subscription plans are stored locally for now; Stripe checkout can be wired in later via the existing Stripe integration tooling
+- All new tables get an `update_updated_at_column` trigger where applicable
+- Charts use Recharts (already installed)
 
