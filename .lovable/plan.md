@@ -1,182 +1,123 @@
 
 
-# Plan: Build All 8 Feature Tracks
+# Plan: Build 5 New Feature Tracks
 
-This is a large implementation spanning database tables, backend functions, and frontend components. I'll build them in a logical order where dependencies flow naturally.
-
----
-
-## Feature 1: Product Comparison Tables
-
-Enhance the existing `/compare` page with a structured side-by-side feature/pricing matrix.
-
-**Database**: No new tables needed -- uses existing `products` (features, pricing_tiers) and `comparisons` data.
-
-**Frontend changes**:
-- Enhance `ComparePage.tsx` to add a structured **Feature Matrix** tab showing features side-by-side for selected products
-- Add a **Pricing Matrix** section pulling from `product_pricing_tiers`
-- Add shareable URL support (already partially exists via `?products=` query param)
-- Create a `ComparisonMatrix` component with toggleable feature rows and check/cross indicators
-
----
-
-## Feature 2: Review Verification Badges
-
-Add trust indicators to reviews and reviewer profiles.
+## 1. Integration Marketplace
 
 **Database**:
-- Add `linkedin_verified` boolean column to `profiles` table
-- Add `verification_method` text column to `reviews` table (values: `purchase`, `linkedin`, `manual`)
+- Create `product_integrations` table: `id`, `product_id`, `integrates_with_product_id`, `description`, `category` (e.g. "CRM", "API"), `created_at`
+- RLS: public read, admin manage
 
-**Frontend changes**:
-- Update `ReviewCard.tsx` to display verification badges (Verified Purchase, LinkedIn Verified) with distinct icons and tooltips
-- Update `UserProfilePage.tsx` to show verification status
-- Add a "Verify via LinkedIn" placeholder button on the dashboard profile tab
-
----
-
-## Feature 3: Vendor Response System
-
-Let claimed vendors publicly reply to reviews.
-
-**Database**:
-- Create `vendor_responses` table: `id`, `review_id` (unique), `vendor_user_id`, `body`, `created_at`, `updated_at`
-- RLS: vendors can insert/update own responses; publicly readable
-- Add a trigger or function to notify the reviewer when a vendor responds
-
-**Frontend changes**:
-- Update `ReviewCard.tsx` to display vendor responses below each review with a "Vendor Reply" badge
-- Update `VendorReviewsPage.tsx` to add inline response form with template picker from existing templates
-- Wire up existing `VendorResponseTemplatesPage.tsx` template system
+**Frontend**:
+- Create `IntegrationGraph` component on `ProductDetailPage.tsx` showing connected products as a visual network (simple grid/list with links, not a full force-directed graph -- keep it practical)
+- Add "Integrations" tab to product detail page listing all integrated products with logos
+- Add filter on `SearchPage.tsx`: "Integrates with..." dropdown
 
 ---
 
-## Feature 4: Weekly Email Digest
-
-Automated newsletter with trending products, new reviews, and top comparisons.
+## 2. Review Incentive Program (Points System)
 
 **Database**:
-- Create `digest_logs` table: `id`, `sent_at`, `recipient_count`, `status`
+- Create `point_transactions` table: `id`, `user_id`, `points`, `reason` (e.g. "review_posted", "comment_added", "vote_cast", "daily_streak"), `entity_id` (nullable), `created_at`
+- Add `total_points` integer column to `profiles` table (denormalized for fast reads)
+- Create a DB function `award_points(user_id, points, reason, entity_id)` that inserts a transaction and increments `profiles.total_points`
+- Create triggers on `reviews`, `review_comments`, `review_qa` tables to auto-award points on insert
+
+**Frontend**:
+- Create `PointsDisplay` component showing user's total points in the dashboard header
+- Add "Points History" section in Dashboard showing recent transactions
+- Show points balance on `LeaderboardPage.tsx` alongside badge count
+- Add point values: review = 50pts, comment = 10pts, vote = 5pts, daily streak = 25pts
+
+---
+
+## 3. Vendor Bidding / Sponsored Slots
+
+**Database**:
+- Create `sponsored_bids` table: `id`, `vendor_user_id`, `product_id`, `category_id`, `bid_amount` (numeric), `daily_budget` (numeric), `status` (pending/active/paused/expired), `start_date`, `end_date`, `impressions`, `clicks`, `created_at`, `updated_at`
+- RLS: vendors can CRUD own bids, admins can manage all, public read for active bids
+
+**Frontend**:
+- Enhance `VendorSponsoredPage.tsx` with a new "Bidding" tab showing a bid form (select product, category, bid amount, daily budget, date range)
+- Show bid status, impressions, clicks, and spend in a table
+- Admin: add bid management view in `AdminAdsPage.tsx` to approve/reject bids
+- On category pages, show top-bid products with a subtle "Sponsored" badge
+
+---
+
+## 4. Community Discussion Forums
+
+**Database**:
+- Create `discussions` table: `id`, `title`, `body`, `user_id`, `product_id` (nullable), `category_id` (nullable), `is_pinned`, `is_locked`, `upvote_count`, `reply_count`, `created_at`, `updated_at`
+- Create `discussion_replies` table: `id`, `discussion_id`, `user_id`, `body`, `is_vendor_answer`, `upvote_count`, `parent_id` (nullable for nested replies), `created_at`, `updated_at`
+- Create `discussion_votes` table: `id`, `user_id`, `discussion_id` (nullable), `reply_id` (nullable), `created_at` -- unique per user per target
+- RLS: public read, authenticated insert/update own, admin manage + pin/lock
+
+**Frontend**:
+- Create `/discussions` page listing threads with filters (product, category, popular, recent)
+- Create `/discussions/:id` detail page with replies, voting, and vendor-flagged answers
+- Add "New Discussion" form for authenticated users
+- Add "Discussions" tab on `ProductDetailPage.tsx` showing threads linked to that product
+- Add nav link in `PublicHeader.tsx` under Resources
+
+---
+
+## 5. SEO & Growth (Programmatic Landing Pages)
+
+**Database**:
+- Create `seo_landing_pages` table: `id`, `title`, `slug`, `meta_description`, `body` (HTML/markdown), `category_id` (nullable), `audience` (text, e.g. "startups", "enterprise"), `product_ids` (jsonb), `is_published`, `view_count`, `created_at`, `updated_at`
+- RLS: public read published, admin manage
 
 **Backend**:
-- Create `weekly-digest` edge function that:
-  - Queries users with `notification_preferences.weekly_digest = true`
-  - Gathers trending products (by view_count last 7 days), new reviews, top comparisons
-  - Sends via existing Brevo integration using `get_best_brevo_account()`
-  - Logs to `digest_logs`
+- Create `generate-landing-pages` edge function that uses Lovable AI (gemini-3-flash-preview) to bulk-generate pages from category + audience combos (e.g. "Best CRM for Startups 2026")
+- Pulls top products per category, generates SEO-optimized content
 
-**Frontend changes**:
-- Already have the `weekly_digest` toggle in `NotificationPreferences` -- no UI changes needed
-- Add a "Send Test Digest" button in admin dashboard
-
----
-
-## Feature 5: Product Watchlists and Alerts
-
-Users follow products/categories and get notified on changes.
-
-**Database**:
-- Create `product_watches` table: `id`, `user_id`, `product_id`, `category_id` (nullable), `watch_type` (product/category), `created_at`
-- RLS: users can CRUD own watches; no public read
-
-**Frontend changes**:
-- Add a "Watch" bell icon button on `ProductDetailPage.tsx` and `CategoryPage.tsx`
-- Create `useProductWatch` hook for toggle logic
-- Add a "Watchlist" tab on the dashboard showing watched products with latest activity
-- When new reviews are posted, insert a notification for watchers (via DB trigger)
-
----
-
-## Feature 6: Rating Trend Timeline
-
-Interactive chart showing rating trends over time per product.
-
-**Database**: No new tables -- queries `reviews` table grouped by month.
-
-**Frontend changes**:
-- Create `RatingTrendChart` component using Recharts (already installed)
-- Show on `ProductDetailPage.tsx` in the reviews section -- a line chart of average monthly rating over time
-- Include data points for review count per month as a bar overlay
-
----
-
-## Feature 7: AI Product Q&A Chatbot
-
-AI chatbot on product pages that answers questions from review data.
-
-**Backend**:
-- Create `product-qa-chat` edge function that:
-  - Accepts `product_id` and `question`
-  - Fetches all approved reviews for the product
-  - Uses Lovable AI (gemini-2.5-flash) to answer the question based on review content
-  - Returns the AI-generated answer
-
-**Frontend changes**:
-- Create `ProductAIChatbot` component: a floating chat bubble on product pages
-- Expandable panel with message history (local state, not persisted)
-- Input field to ask questions; responses rendered with `react-markdown`
-- Place on `ProductDetailPage.tsx`
-
----
-
-## Feature 8: Annual Awards / Voting
-
-Community-driven "Best of 2026" awards with nominations and voting.
-
-**Database**:
-- Create `award_categories` table: `id`, `name`, `slug`, `description`, `year`, `is_active`, `created_at`
-- Create `award_nominations` table: `id`, `award_category_id`, `product_id`, `nominated_by`, `created_at`
-- Create `award_votes` table: `id`, `award_category_id`, `product_id`, `user_id`, `created_at` (unique on category+user)
-- RLS: public read on all; authenticated insert on nominations/votes; admin manage on categories
-
-**Frontend changes**:
-- Create `AwardsPage.tsx` at `/awards` showing active award categories with nominated products and vote counts
-- Each category card shows top 5 products by vote count with a "Vote" button
-- Add nomination form for authenticated users
-- Add link in public header navigation
-- Admin: simple page to create/manage award categories
+**Frontend**:
+- Create `/best/:slug` route rendering landing pages with product cards, comparison tables, and CTAs
+- Admin: create `AdminLandingPagesPage.tsx` with a "Generate" button that triggers bulk generation, plus a table to manage existing pages
+- Add admin sidebar link for "Landing Pages"
 
 ---
 
 ## Technical Details
 
-### Migration SQL (single migration covering all features):
-1. `profiles` -- add `linkedin_verified` boolean
-2. `reviews` -- add `verification_method` text
-3. `vendor_responses` table with RLS
-4. `digest_logs` table with RLS
-5. `product_watches` table with RLS + notification trigger
-6. `award_categories`, `award_nominations`, `award_votes` tables with RLS
+### Single Migration (all 5 features):
+1. `product_integrations` table + RLS
+2. `point_transactions` table + RLS + `award_points()` function + triggers
+3. `profiles` -- add `total_points` column
+4. `sponsored_bids` table + RLS
+5. `discussions`, `discussion_replies`, `discussion_votes` tables + RLS
+6. `seo_landing_pages` table + RLS
 
-### New Edge Functions:
-1. `weekly-digest` -- scheduled email digest via Brevo
-2. `product-qa-chat` -- AI chatbot answering from reviews
+### New Edge Function:
+- `generate-landing-pages` -- AI-powered SEO page generation via Lovable AI
 
-### New Components (approx 10):
-- `ComparisonMatrix.tsx`
-- `RatingTrendChart.tsx`
-- `ProductAIChatbot.tsx`
-- `ProductWatchButton.tsx`
-- `VendorResponseDisplay.tsx`
-- `AwardsPage.tsx`
+### New Pages/Components (~12):
+- `IntegrationGraph.tsx` -- product integration display
+- `PointsDisplay.tsx` -- points badge/counter
+- `PointsHistory.tsx` -- transaction list
+- `DiscussionsPage.tsx` -- forum listing
+- `DiscussionDetailPage.tsx` -- thread view
+- `DiscussionForm.tsx` -- new thread form
+- `LandingPageView.tsx` -- public SEO page renderer
+- `AdminLandingPagesPage.tsx` -- admin management
+- Enhanced `VendorSponsoredPage.tsx` -- bidding UI
 
 ### Modified Files:
-- `ReviewCard.tsx` -- vendor responses + verification badges
-- `ProductDetailPage.tsx` -- watch button, rating trend, AI chatbot
-- `ComparePage.tsx` -- feature/pricing matrix
-- `VendorReviewsPage.tsx` -- response form
-- `DashboardPage.tsx` -- watchlist tab
-- `App.tsx` -- `/awards` route
-- `PublicHeader.tsx` -- awards nav link
+- `ProductDetailPage.tsx` -- integrations tab, discussions tab
+- `PublicHeader.tsx` -- discussions nav link
+- `LeaderboardPage.tsx` -- points column
+- `DashboardPage.tsx` -- points history tab
+- `VendorSponsoredPage.tsx` -- bidding form
+- `AdminAdsPage.tsx` -- bid management
+- `AdminSidebar.tsx` -- landing pages link
+- `App.tsx` -- new routes
 
 ### Implementation Order:
-1. Database migration (all tables at once)
-2. Review verification badges (small, self-contained)
-3. Vendor response system (builds on ReviewCard)
-4. Product comparison tables (enhances existing page)
-5. Product watchlists and alerts
-6. Rating trend timeline
-7. AI product Q&A chatbot
-8. Annual awards / voting
-9. Weekly email digest (last, as it ties everything together)
+1. Database migration (all tables)
+2. Review Incentive Program (points system + triggers)
+3. Integration Marketplace (product connections)
+4. Community Discussion Forums (largest feature)
+5. Vendor Bidding / Sponsored Slots
+6. SEO Landing Pages (edge function + admin + public pages)
 
