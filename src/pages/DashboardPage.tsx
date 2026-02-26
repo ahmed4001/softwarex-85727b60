@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus, Flame, TrendingUp, BarChart3, GitCompareArrows, Users, Eye, Zap, Link2 } from "lucide-react";
+import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus, Flame, TrendingUp, BarChart3, GitCompareArrows, Users, Eye, Zap, Link2, BellRing } from "lucide-react";
 import { PointsHistory } from "@/components/PointsHistory";
 import { AIRecommendationsWidget } from "@/components/dashboard/AIRecommendationsWidget";
 import { ReferralDashboard } from "@/components/dashboard/ReferralDashboard";
@@ -28,6 +28,7 @@ import { BadgeShowcase } from "@/components/dashboard/BadgeShowcase";
 import { StreakTracker } from "@/components/dashboard/StreakTracker";
 import { WeeklyChallenges } from "@/components/dashboard/WeeklyChallenges";
 import { NotificationPreferences } from "@/components/dashboard/NotificationPreferences";
+import { SmartAlertsTab } from "@/components/dashboard/SmartAlertsTab";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -179,6 +180,9 @@ export default function DashboardPage() {
                     <TabsTrigger value="ai-recs" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
                       <Sparkles className="h-3.5 w-3.5" /> For You
                     </TabsTrigger>
+                    <TabsTrigger value="alerts" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
+                      <BellRing className="h-3.5 w-3.5" /> Alerts
+                    </TabsTrigger>
                     <TabsTrigger value="profile" className="gap-1.5 flex-1 min-w-0 rounded-lg text-xs sm:text-sm">
                       <Settings className="h-3.5 w-3.5" /> {t("dashboard.profile")}
                     </TabsTrigger>
@@ -243,6 +247,11 @@ export default function DashboardPage() {
                     <TabsContent value="ai-recs" asChild forceMount={undefined}>
                       <motion.div key="ai-recs" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                         <AIRecommendationsWidget userId={user.id} />
+                      </motion.div>
+                    </TabsContent>
+                    <TabsContent value="alerts" asChild forceMount={undefined}>
+                      <motion.div key="alerts" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                        <SmartAlertsTab userId={user.id} />
                       </motion.div>
                     </TabsContent>
                   </AnimatePresence>

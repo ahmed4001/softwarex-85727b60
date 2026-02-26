@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { RequireAuth } from "@/components/RequireAuth";
-import { BarChart3, Package, MessageSquare, ShieldCheck, ArrowLeft, TrendingUp, FileText, Users, CreditCard, UserPlus, Megaphone, PieChart } from "lucide-react";
+import { BarChart3, Package, MessageSquare, ShieldCheck, ArrowLeft, TrendingUp, FileText, Users, CreditCard, UserPlus, Megaphone, PieChart, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const vendorNav = [
@@ -14,6 +14,7 @@ const vendorNav = [
   { to: "/vendor/plans", label: "Plans", icon: CreditCard },
   { to: "/vendor/templates", label: "Templates", icon: FileText },
   { to: "/vendor/competitors", label: "Competitors", icon: Users },
+  { to: "/vendor/war-room", label: "War Room", icon: Swords },
   { to: "/vendor/claim", label: "Claim", icon: ShieldCheck },
 ];
 

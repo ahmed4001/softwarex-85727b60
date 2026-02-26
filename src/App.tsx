@@ -82,6 +82,12 @@ const DiscussionsPage = lazy(() => import("./pages/DiscussionsPage"));
 const DiscussionDetailPage = lazy(() => import("./pages/DiscussionDetailPage"));
 const LandingPageView = lazy(() => import("./pages/LandingPageView"));
 const AdminLandingPagesPage = lazy(() => import("./pages/admin/AdminLandingPagesPage"));
+const TechStacksPage = lazy(() => import("./pages/TechStacksPage"));
+const TechStackDetailPage = lazy(() => import("./pages/TechStackDetailPage"));
+const BuyerGuidesListPage = lazy(() => import("./pages/BuyerGuidesListPage"));
+const BuyerGuidePage = lazy(() => import("./pages/BuyerGuidePage"));
+const VendorWarRoomPage = lazy(() => import("./pages/vendor/VendorWarRoomPage"));
+const AdminBuyerGuidesPage = lazy(() => import("./pages/admin/AdminBuyerGuidesPage"));
 
 const queryClient = new QueryClient();
 
@@ -120,6 +126,10 @@ function AppContent() {
           <Route path="/discussions" element={<ErrorBoundary><DiscussionsPage /></ErrorBoundary>} />
           <Route path="/discussions/:id" element={<ErrorBoundary><DiscussionDetailPage /></ErrorBoundary>} />
           <Route path="/best/:slug" element={<ErrorBoundary><LandingPageView /></ErrorBoundary>} />
+          <Route path="/stacks" element={<ErrorBoundary><TechStacksPage /></ErrorBoundary>} />
+          <Route path="/stacks/:slug" element={<ErrorBoundary><TechStackDetailPage /></ErrorBoundary>} />
+          <Route path="/guides" element={<ErrorBoundary><BuyerGuidesListPage /></ErrorBoundary>} />
+          <Route path="/guides/:slug" element={<ErrorBoundary><BuyerGuidePage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
@@ -159,6 +169,7 @@ function AppContent() {
           <Route path="subscribers" element={<ErrorBoundary><AdminSubscribersPage /></ErrorBoundary>} />
           <Route path="pricing" element={<ErrorBoundary><AdminPricingPage /></ErrorBoundary>} />
           <Route path="landing-pages" element={<ErrorBoundary><AdminLandingPagesPage /></ErrorBoundary>} />
+          <Route path="buyer-guides" element={<ErrorBoundary><AdminBuyerGuidesPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}
@@ -176,6 +187,7 @@ function AppContent() {
           <Route path="leads/analytics" element={<ErrorBoundary><VendorLeadAnalyticsPage /></ErrorBoundary>} />
           <Route path="sponsored" element={<ErrorBoundary><VendorSponsoredPage /></ErrorBoundary>} />
           <Route path="roi" element={<ErrorBoundary><VendorROIPage /></ErrorBoundary>} />
+          <Route path="war-room" element={<ErrorBoundary><VendorWarRoomPage /></ErrorBoundary>} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
