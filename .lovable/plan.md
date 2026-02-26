@@ -1,30 +1,55 @@
 
-# Add Focus Keyword Analyzer to Product SEO Tab
+
+# Dynamic robots.txt and sitemap.xml Edge Function
 
 ## Overview
-Add a focus keyword analyzer to the Vendor Product Editor's SEO tab, matching the pattern already used in the Blog Editor. The analyzer will check if the primary keyword appears in the SEO title, meta description, product name/slug, and product description.
+Create a single edge function `seo-files` that serves both `/robots.txt` and `/sitemap.xml` dynamically, reading configuration from the `site_settings` table and querying products, categories, blog posts, and comparisons for sitemap generation.
 
-## Changes
+## Architecture
 
-**File: `src/pages/vendor/VendorProductEditorPage.tsx`**
+The function receives a `type` query parameter (`robots` or `sitemap`) and returns the appropriate content.
 
-1. Add a "Focus Keyword" input field at the top of the SEO tab that extracts the first keyword from `seo_keywords`
-2. Add a keyword analysis panel that checks presence in 4 areas:
-   - SEO title (falls back to product name)
-   - Meta description
-   - Product name (equivalent to slug in blog context)
-   - Product description (equivalent to body in blog context)
-3. Display a progress bar and score (X/4 checks passed)
-4. Add character count warnings for SEO title (>60) and meta description (>160) with destructive color styling
-5. Add a helper note under the keywords field explaining the focus keyword feature
+**File:** `supabase/functions/seo-files/index.ts`
+
+### robots.txt Handler
+- Reads `robots_txt` from `site_settings` table
+- Falls back to the default value if not configured
+- Returns `text/plain` content type
+
+### sitemap.xml Handler
+- Reads `sitemap_include_products`, `sitemap_include_categories`, `sitemap_include_blog`, `sitemap_include_comparisons` toggles from `site_settings`
+- Conditionally queries each table:
+  - `products` where `is_active = true` -- uses `/product/{slug}`
+  - `categories` where `is_active = true` -- uses `/category/{slug}`
+  - `blog_posts` where `status = 'published'` -- uses `/blog/{slug}`
+  - `comparisons` where `is_published = true` -- uses `/compare/{slug}`
+- Builds XML sitemap with `<lastmod>` from `updated_at` where available
+- Includes static pages (/, /categories, /compare, /blog, /leaderboard)
+- Returns `application/xml` content type
+
+### Config
+Add to `supabase/config.toml`:
+```toml
+[functions.seo-files]
+verify_jwt = false
+```
+
+This must be public (no auth) since search engine crawlers need access.
+
+### Frontend Integration
+No frontend changes needed initially. The function can be called at:
+```
+https://{project}.supabase.co/functions/v1/seo-files?type=robots
+https://{project}.supabase.co/functions/v1/seo-files?type=sitemap
+```
+
+The admin can point their domain's `/robots.txt` and `/sitemap.xml` to these URLs, or they can be referenced directly in the robots.txt Sitemap directive.
 
 ## Technical Details
 
-The focus keyword analyzer logic:
-- Extracts the first comma-separated keyword from `seo_keywords`
-- Converts to lowercase for case-insensitive matching
-- Checks 4 fields: `seo_title` (fallback `product.name`), `seo_description`, `product.name`, `description`
-- Renders a color-coded grid (green checkmark / red X) with a progress bar
-- Progress bar color: green (3-4 passes), yellow (2), red (0-1)
+- Uses `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (already configured) to query the database
+- No new secrets required
+- No database changes required
+- Responses are cached-friendly with appropriate headers
+- The base URL for sitemap entries will be derived from the request's origin or a configurable setting
 
-No database changes required -- this is purely a UI enhancement using existing fields.
