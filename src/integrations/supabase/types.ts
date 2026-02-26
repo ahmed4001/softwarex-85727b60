@@ -1217,6 +1217,45 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_queue: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          moderator_id: string | null
+          moderator_note: string | null
+          reason: string
+          reported_by: string | null
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          moderator_id?: string | null
+          moderator_note?: string | null
+          reason?: string
+          reported_by?: string | null
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          moderator_id?: string | null
+          moderator_note?: string | null
+          reason?: string
+          reported_by?: string | null
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string | null
@@ -3057,6 +3096,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vendor_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_review_responses: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_official: boolean
+          review_id: string
+          updated_at: string
+          vendor_user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_official?: boolean
+          review_id: string
+          updated_at?: string
+          vendor_user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_official?: boolean
+          review_id?: string
+          updated_at?: string
+          vendor_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_review_responses_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: true
             referencedRelation: "reviews"
