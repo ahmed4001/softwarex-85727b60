@@ -12,7 +12,7 @@ import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award } from "lucide-react";
+import { Bookmark, Star, Settings, User, LogOut, Loader2, Search, ArrowRight, Heart, Sparkles, MessageSquarePlus, Bell, Award, List, Plus } from "lucide-react";
 import { BadgeShowcase } from "@/components/dashboard/BadgeShowcase";
 import { StreakTracker } from "@/components/dashboard/StreakTracker";
 import { Link } from "react-router-dom";
@@ -70,6 +70,7 @@ export default function DashboardPage() {
                 <TabsTrigger value="saved" className="gap-1.5"><Bookmark className="h-4 w-4" /> {t("dashboard.saved")}</TabsTrigger>
                 <TabsTrigger value="notifications" className="gap-1.5"><Bell className="h-4 w-4" /> Activity</TabsTrigger>
                 <TabsTrigger value="reviews" className="gap-1.5"><Star className="h-4 w-4" /> {t("dashboard.myReviews")}</TabsTrigger>
+                <TabsTrigger value="lists" className="gap-1.5"><List className="h-4 w-4" /> My Lists</TabsTrigger>
                 <TabsTrigger value="profile" className="gap-1.5"><Settings className="h-4 w-4" /> {t("dashboard.profile")}</TabsTrigger>
               </TabsList>
 
@@ -87,6 +88,11 @@ export default function DashboardPage() {
                 <TabsContent value="reviews" asChild forceMount={undefined}>
                   <motion.div key="reviews" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                     <MyReviewsTab userId={user.id} />
+                  </motion.div>
+                </TabsContent>
+                <TabsContent value="lists" asChild forceMount={undefined}>
+                  <motion.div key="lists" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                    <MyListsTab userId={user.id} />
                   </motion.div>
                 </TabsContent>
                 <TabsContent value="profile" asChild forceMount={undefined}>
@@ -356,6 +362,72 @@ function ProfileTab({ user, onSignOut }: { user: any; onSignOut: () => void }) {
       <Button variant="outline" onClick={onSignOut} className="w-full gap-2 text-destructive hover:text-destructive">
         <LogOut className="h-4 w-4" /> {t("auth.signOut")}
       </Button>
+    </div>
+  );
+}
+
+function MyListsTab({ userId }: { userId: string }) {
+  const { data: lists, isLoading } = useQuery({
+    queryKey: ["my-lists", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lists")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+  });
+
+  if (isLoading) {
+    return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-muted/50 animate-pulse" />)}</div>;
+  }
+
+  if (!lists || lists.length === 0) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
+        <div className="relative mx-auto w-24 h-24 mb-6">
+          <div className="absolute inset-0 rounded-2xl bg-primary/5 rotate-6" />
+          <div className="absolute inset-0 rounded-2xl bg-primary/10 -rotate-3" />
+          <div className="relative h-full w-full rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center">
+            <List className="h-10 w-10 text-primary/50" />
+          </div>
+        </div>
+        <h3 className="text-lg font-bold text-foreground mb-1">No lists yet</h3>
+        <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">Create curated software lists to share with the community.</p>
+        <Link to="/lists/new">
+          <Button className="gap-2 rounded-xl"><Plus className="h-4 w-4" /> Create Your First List</Button>
+        </Link>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end mb-2">
+        <Link to="/lists/new"><Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" /> New List</Button></Link>
+      </div>
+      {lists.map((list: any) => (
+        <motion.div key={list.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Link to={`/lists/${list.slug}`} className="font-semibold text-sm text-foreground hover:text-primary transition-colors">
+                {list.title}
+              </Link>
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                <span>{list.product_count} products</span>
+                <span>{list.upvote_count} upvotes</span>
+                <span className={list.is_published ? "text-[hsl(var(--success))]" : "text-muted-foreground"}>
+                  {list.is_published ? "Published" : "Draft"}
+                </span>
+              </div>
+            </div>
+            <Link to={`/lists/${list.slug}/edit`}>
+              <Button variant="outline" size="sm">Edit</Button>
+            </Link>
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 }

@@ -57,6 +57,9 @@ const AdminSubscribersPage = lazy(() => import("./pages/admin/AdminSubscribersPa
 const StaticPage = lazy(() => import("./pages/StaticPage"));
 const ActivityFeedPage = lazy(() => import("./pages/ActivityFeedPage"));
 const PricingComparisonPage = lazy(() => import("./pages/PricingComparisonPage"));
+const ListsPage = lazy(() => import("./pages/ListsPage"));
+const ListDetailPage = lazy(() => import("./pages/ListDetailPage"));
+const ListEditorPage = lazy(() => import("./pages/ListEditorPage"));
 
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
@@ -96,6 +99,10 @@ function AppContent() {
           <Route path="/page/:slug" element={<ErrorBoundary><StaticPage /></ErrorBoundary>} />
           <Route path="/activity" element={<ErrorBoundary><ActivityFeedPage /></ErrorBoundary>} />
           <Route path="/compare-pricing" element={<ErrorBoundary><PricingComparisonPage /></ErrorBoundary>} />
+          <Route path="/lists" element={<ErrorBoundary><ListsPage /></ErrorBoundary>} />
+          <Route path="/lists/new" element={<ErrorBoundary><ListEditorPage /></ErrorBoundary>} />
+          <Route path="/lists/:slug" element={<ErrorBoundary><ListDetailPage /></ErrorBoundary>} />
+          <Route path="/lists/:slug/edit" element={<ErrorBoundary><ListEditorPage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
