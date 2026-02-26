@@ -114,12 +114,12 @@ export default function ProductDetailPage() {
     enabled: !!slug,
   });
 
-  const { data: reviews } = useQuery({
+  const { data: rawReviews } = useQuery({
     queryKey: ["reviews", product?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("reviews")
-        .select("*, profiles(name, avatar_url)")
+        .select("*")
         .eq("product_id", product!.id)
         .eq("status", "approved")
         .order("created_at", { ascending: false })
@@ -128,6 +128,32 @@ export default function ProductDetailPage() {
     },
     enabled: !!product?.id,
   });
+
+  // Fetch profiles for review authors
+  const reviewUserIds = useMemo(() => {
+    const ids = (rawReviews || []).map((r: any) => r.user_id).filter(Boolean);
+    return [...new Set(ids)] as string[];
+  }, [rawReviews]);
+
+  const { data: reviewProfiles } = useQuery({
+    queryKey: ["review-profiles", reviewUserIds],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, name, avatar_url")
+        .in("user_id", reviewUserIds);
+      return data || [];
+    },
+    enabled: reviewUserIds.length > 0,
+  });
+
+  const reviews = useMemo(() => {
+    const profileMap = new Map((reviewProfiles || []).map((p: any) => [p.user_id, p]));
+    return (rawReviews || []).map((r: any) => ({
+      ...r,
+      profiles: profileMap.get(r.user_id) || { name: "Anonymous", avatar_url: null },
+    }));
+  }, [rawReviews, reviewProfiles]);
 
   // Fetch review media
   const reviewIds2 = (reviews || []).map((r: any) => r.id);
@@ -201,9 +227,19 @@ export default function ProductDetailPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("vendor_responses")
-        .select("*, profiles!vendor_responses_user_id_fkey(name)")
+        .select("*")
         .in("review_id", reviewIds);
-      return data || [];
+      if (!data || data.length === 0) return [];
+      const vUserIds = [...new Set(data.map((r: any) => r.user_id).filter(Boolean))];
+      const { data: vProfiles } = await supabase
+        .from("profiles")
+        .select("user_id, name")
+        .in("user_id", vUserIds);
+      const vpMap = new Map((vProfiles || []).map((p: any) => [p.user_id, p]));
+      return data.map((r: any) => ({
+        ...r,
+        profiles: vpMap.get(r.user_id) || { name: "Vendor" },
+      }));
     },
     enabled: reviewIds.length > 0,
   });
