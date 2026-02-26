@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StarRating } from "@/components/StarRating";
+import { ProductLogo } from "@/components/ProductLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +119,34 @@ export default function ComparePage() {
   });
 
   const totalPages = Math.ceil((totalCount || 0) / PAGE_SIZE);
+
+  // Fetch product logos for directory comparison cards
+  const dirProductIds = useMemo(() => {
+    return (comparisons || []).flatMap((c) => {
+      const ids = Array.isArray(c.product_ids) ? c.product_ids : [];
+      return ids.slice(0, 2) as string[];
+    });
+  }, [comparisons]);
+
+  const { data: dirProductLogos = {} } = useQuery({
+    queryKey: ["dir-comparison-logos", dirProductIds],
+    queryFn: async () => {
+      if (dirProductIds.length === 0) return {};
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, logo_url")
+        .in("id", dirProductIds);
+      const map: Record<string, { name: string; logo_url: string | null }> = {};
+      (data || []).forEach((p: any) => { map[p.id] = p; });
+      return map;
+    },
+    enabled: dirProductIds.length > 0,
+  });
+
+  const getDirLogos = (c: DirectoryComparison) => {
+    const ids = Array.isArray(c.product_ids) ? c.product_ids.slice(0, 2) : [];
+    return ids.map((id: string) => dirProductLogos[id] || null).filter(Boolean);
+  };
 
   // Manual compare tool queries
   const { data: products } = useQuery({
@@ -531,8 +560,23 @@ export default function ComparePage() {
                       aria-label={`Compare ${a} vs ${b}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-primary">{a.charAt(0)}</span>
+                        <div className="flex items-center -space-x-2 flex-shrink-0">
+                          {(() => {
+                            const logos = getDirLogos(c);
+                            if (logos.length >= 2) {
+                              return (
+                                <>
+                                  <ProductLogo name={logos[0].name} logoUrl={logos[0].logo_url} size="sm" className="ring-2 ring-background z-10" />
+                                  <ProductLogo name={logos[1].name} logoUrl={logos[1].logo_url} size="sm" className="ring-2 ring-background" />
+                                </>
+                              );
+                            }
+                            return (
+                              <div className="h-9 w-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                                <span className="text-xs font-bold text-primary">{a.charAt(0)}</span>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">
