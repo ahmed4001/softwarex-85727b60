@@ -98,6 +98,60 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_history: {
+        Row: {
+          alert_id: string
+          alert_type: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          new_value: number | null
+          old_value: number | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          new_value?: number | null
+          old_value?: number | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          new_value?: number | null
+          old_value?: number | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_history_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "price_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alternatives: {
         Row: {
           alternative_product_id: string
@@ -457,6 +511,94 @@ export type Database = {
           },
         ]
       }
+      buyer_guide_completions: {
+        Row: {
+          answers: Json
+          created_at: string
+          guide_id: string
+          id: string
+          recommended_product_ids: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          guide_id: string
+          id?: string
+          recommended_product_ids?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          guide_id?: string
+          id?: string
+          recommended_product_ids?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_guide_completions_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_guides: {
+        Row: {
+          category_id: string | null
+          completion_count: number
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          result_product_ids: Json | null
+          slug: string
+          steps: Json
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category_id?: string | null
+          completion_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          result_product_ids?: Json | null
+          slug: string
+          steps?: Json
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category_id?: string | null
+          completion_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          result_product_ids?: Json | null
+          slug?: string
+          steps?: Json
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_guides_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           banner_image: string | null
@@ -641,6 +783,66 @@ export type Database = {
           {
             foreignKeyName: "comparisons_winner_product_id_fkey"
             columns: ["winner_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitive_battlecards: {
+        Row: {
+          competitor_product_id: string
+          created_at: string
+          generated_at: string | null
+          id: string
+          objection_handling: Json | null
+          product_id: string
+          strengths: Json | null
+          talking_points: Json | null
+          updated_at: string
+          vendor_user_id: string
+          weaknesses: Json | null
+          win_rate: number | null
+        }
+        Insert: {
+          competitor_product_id: string
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          objection_handling?: Json | null
+          product_id: string
+          strengths?: Json | null
+          talking_points?: Json | null
+          updated_at?: string
+          vendor_user_id: string
+          weaknesses?: Json | null
+          win_rate?: number | null
+        }
+        Update: {
+          competitor_product_id?: string
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          objection_handling?: Json | null
+          product_id?: string
+          strengths?: Json | null
+          talking_points?: Json | null
+          updated_at?: string
+          vendor_user_id?: string
+          weaknesses?: Json | null
+          win_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitive_battlecards_competitor_product_id_fkey"
+            columns: ["competitor_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitive_battlecards_product_id_fkey"
+            columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
@@ -1188,6 +1390,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      price_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          product_id: string
+          threshold_value: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          product_id: string
+          threshold_value?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          product_id?: string
+          threshold_value?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pricing_features: {
         Row: {
@@ -2435,6 +2681,119 @@ export type Database = {
           },
         ]
       }
+      tech_stack_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          role_description: string | null
+          sort_order: number
+          stack_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          role_description?: string | null
+          sort_order?: number
+          stack_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          role_description?: string | null
+          sort_order?: number
+          stack_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_stack_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_stack_items_stack_id_fkey"
+            columns: ["stack_id"]
+            isOneToOne: false
+            referencedRelation: "tech_stacks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_stack_votes: {
+        Row: {
+          created_at: string
+          id: string
+          stack_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stack_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stack_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_stack_votes_stack_id_fkey"
+            columns: ["stack_id"]
+            isOneToOne: false
+            referencedRelation: "tech_stacks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_stacks: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+          upvote_count: number
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+          upvote_count?: number
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+          upvote_count?: number
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       ui_translations: {
         Row: {
           created_at: string
@@ -2564,6 +2923,66 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vendor_deals: {
+        Row: {
+          closed_at: string | null
+          competitor_product_id: string | null
+          created_at: string
+          deal_name: string
+          deal_value: number | null
+          id: string
+          loss_reason: string | null
+          notes: string | null
+          outcome: string
+          product_id: string
+          updated_at: string
+          vendor_user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          competitor_product_id?: string | null
+          created_at?: string
+          deal_name: string
+          deal_value?: number | null
+          id?: string
+          loss_reason?: string | null
+          notes?: string | null
+          outcome?: string
+          product_id: string
+          updated_at?: string
+          vendor_user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          competitor_product_id?: string | null
+          created_at?: string
+          deal_name?: string
+          deal_value?: number | null
+          id?: string
+          loss_reason?: string | null
+          notes?: string | null
+          outcome?: string
+          product_id?: string
+          updated_at?: string
+          vendor_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_deals_competitor_product_id_fkey"
+            columns: ["competitor_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendor_leads: {
         Row: {
