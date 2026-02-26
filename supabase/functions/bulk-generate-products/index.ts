@@ -16,10 +16,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
+    if (!FIRECRAWL_API_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: "AI not configured" }),
+        JSON.stringify({ success: false, error: "Firecrawl not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { category_id, category_name, batch_size = 25, offset = 0 } = await req.json();
+    const { category_id, category_name, batch_size = 50, offset = 0 } = await req.json();
 
     if (!category_id || !category_name) {
       return new Response(
@@ -37,124 +37,229 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get existing product names in this category to avoid duplicates
+    // Get existing product names/slugs to avoid duplicates
     const { data: existingProducts } = await supabase
       .from("products")
       .select("name, slug")
       .eq("category_id", category_id);
-    
+
     const existingNames = new Set((existingProducts || []).map((p: any) => p.name.toLowerCase()));
     const existingSlugs = new Set((existingProducts || []).map((p: any) => p.slug));
 
-    console.log(`Generating ${batch_size} ${category_name} products (offset ${offset}, ${existingNames.size} existing)`);
+    console.log(`Discovering real ${category_name} products via Firecrawl (${existingNames.size} existing)`);
 
-    const pricingModels = ["free", "freemium", "paid", "subscription", "one-time"];
+    // Search multiple queries to get diverse results
+    const searchQueries = [
+      `best ${category_name} software tools 2025 2026`,
+      `top ${category_name} apps alternatives`,
+      `${category_name} software reviews ratings`,
+    ];
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: "You are a software industry database expert. Generate ONLY valid JSON arrays of real software products. No markdown, no explanation, just the JSON array.",
+    const allProducts: Array<{
+      name: string;
+      slug: string;
+      website_url: string | null;
+      description: string;
+    }> = [];
+    const seenSlugs = new Set<string>();
+
+    for (const query of searchQueries) {
+      try {
+        const searchRes = await fetch("https://api.firecrawl.dev/v1/search", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+            "Content-Type": "application/json",
           },
-          {
-            role: "user",
-            content: `Generate ${batch_size} REAL, existing ${category_name} software products (batch ${offset / batch_size + 1}, skip first ${offset} most popular ones).
+          body: JSON.stringify({
+            query,
+            limit: 10,
+            scrapeOptions: { formats: ["markdown"] },
+          }),
+        });
 
-Each product must be a real software that exists. Include lesser-known and niche products too, not just the top ones.
+        const searchData = await searchRes.json();
+        const results = searchData?.data || [];
 
-Return a JSON array where each item has:
-- name: exact real product name
-- tagline: one-line description (max 100 chars)  
-- description: 2-3 sentence description
-- website_url: real official website URL
-- pricing_model: one of "free", "freemium", "paid", "subscription", "one-time"
-- starting_price: monthly price in USD (null if free)
-- features: array of 4-6 key features as strings
-- avg_rating: realistic rating between 3.0-5.0 (one decimal)
-- total_reviews: realistic review count (10-10000)
-- founded_year: year company was founded (or null)
-- headquarters: city, country (or null)
-- company_size: one of "1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5000+"
+        for (const result of results) {
+          const markdown = result.markdown || result.description || "";
+          const title = result.title || "";
 
-Do NOT include these already-existing products: ${Array.from(existingNames).slice(0, 100).join(", ")}
+          // Extract product names from search results using common patterns
+          // Look for numbered lists, bold names, H2/H3 headings with product names
+          const patterns = [
+            /(?:^|\n)\d+[\.\)]\s*\*?\*?([A-Z][A-Za-z0-9\s\.\-&+!]+?)(?:\*?\*?)\s*[-–—:|]/gm,
+            /(?:^|\n)#{2,3}\s*\d*\.?\s*([A-Z][A-Za-z0-9\s\.\-&+!]+?)(?:\s*[-–—:])/gm,
+            /\*\*([A-Z][A-Za-z0-9\s\.\-&+!]{2,30})\*\*/g,
+            /(?:^|\n)\d+[\.\)]\s*\[?([A-Z][A-Za-z0-9\s\.\-&+!]+?)\]?\s*(?:\(|–|-|:)/gm,
+          ];
 
-Return ONLY the JSON array, no wrapping object.`,
-          },
-        ],
-        temperature: 0.7,
-      }),
-    });
+          for (const pattern of patterns) {
+            let match;
+            while ((match = pattern.exec(markdown)) !== null) {
+              let name = match[1].trim();
+              // Clean up common suffixes
+              name = name
+                .replace(/\s*(Review|Pricing|Features|Overview|Best|Top|Software|Platform|Tool)s?\s*$/i, "")
+                .replace(/\s+$/, "")
+                .trim();
 
-    const aiData = await aiRes.json();
-    const content = aiData?.choices?.[0]?.message?.content || "";
+              if (name.length < 2 || name.length > 40) continue;
+              if (/^(the|a|an|best|top|free|why|how|what|our|this|these|those|some|many|most|more|other|each|every)\b/i.test(name)) continue;
+              if (/\d{4}/.test(name)) continue; // Skip names with years
 
-    let products: any[] = [];
-    try {
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
-      const parsed = JSON.parse(jsonMatch[1]?.trim() || content.trim());
-      products = Array.isArray(parsed) ? parsed : parsed.products || [];
-    } catch (e) {
-      console.error("Failed to parse AI response:", content.substring(0, 300));
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to parse AI response", raw: content.substring(0, 500) }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+              const slug = slugify(name);
+              if (slug.length < 2 || seenSlugs.has(slug) || existingSlugs.has(slug) || existingNames.has(name.toLowerCase())) continue;
+
+              seenSlugs.add(slug);
+
+              // Try to find a website URL for this product from the links
+              let websiteUrl: string | null = null;
+              const nameLower = name.toLowerCase().replace(/\s+/g, "");
+              // Check if the result URL might be the product's site
+              const resultUrl = result.url || "";
+              if (resultUrl && !resultUrl.includes("g2.com") && !resultUrl.includes("capterra.com") && !resultUrl.includes("trustradius")) {
+                // It might be a listicle, not the product site itself
+              }
+
+              allProducts.push({
+                name,
+                slug,
+                website_url: websiteUrl,
+                description: `${name} is a ${category_name.toLowerCase()} solution.`,
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`Search error for query "${query}":`, e);
+      }
     }
+
+    // Also try G2 search for this category
+    try {
+      const g2Res = await fetch("https://api.firecrawl.dev/v1/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `site:g2.com/products ${category_name} software`,
+          limit: 20,
+        }),
+      });
+
+      const g2Data = await g2Res.json();
+      for (const result of (g2Data?.data || [])) {
+        const url = result.url || "";
+        const g2Match = url.match(/g2\.com\/products\/([^\/]+)/);
+        if (!g2Match) continue;
+
+        let name = result.title || g2Match[1];
+        name = name
+          .replace(/\s*\|?\s*G2\s*$/i, "")
+          .replace(/\s*-\s*G2\s*$/i, "")
+          .replace(/\s+Reviews?\s*\d*\s*$/i, "")
+          .replace(/\s+Alternatives?\s*.*$/i, "")
+          .replace(/\s+Competitors?\s*.*$/i, "")
+          .trim();
+
+        if (!name || name.length < 2 || name.length > 40) continue;
+
+        const slug = slugify(name);
+        if (seenSlugs.has(slug) || existingSlugs.has(slug) || existingNames.has(name.toLowerCase())) continue;
+        seenSlugs.add(slug);
+
+        allProducts.push({
+          name,
+          slug,
+          website_url: null,
+          description: result.description || `${name} is a ${category_name.toLowerCase()} tool.`,
+        });
+      }
+    } catch (e) {
+      console.warn("G2 search error:", e);
+    }
+
+    // Also try Capterra search
+    try {
+      const capRes = await fetch("https://api.firecrawl.dev/v1/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `site:capterra.com ${category_name} software reviews`,
+          limit: 20,
+        }),
+      });
+
+      const capData = await capRes.json();
+      for (const result of (capData?.data || [])) {
+        const url = result.url || "";
+        // Capterra product URLs: capterra.com/p/XXXXX/ProductName or capterra.com/reviews/XXXXX/ProductName
+        const capMatch = url.match(/capterra\.com\/(?:p|reviews)\/\d+\/([^\/\?]+)/);
+        if (!capMatch) continue;
+
+        let name = capMatch[1].replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+        // Also try title
+        if (result.title) {
+          const titleName = result.title
+            .replace(/\s*[-|]\s*Capterra\s*$/i, "")
+            .replace(/\s*Reviews?\s*\d*\s*$/i, "")
+            .replace(/\s*Pricing.*$/i, "")
+            .trim();
+          if (titleName.length > 1 && titleName.length < 40) name = titleName;
+        }
+
+        const slug = slugify(name);
+        if (slug.length < 2 || seenSlugs.has(slug) || existingSlugs.has(slug) || existingNames.has(name.toLowerCase())) continue;
+        seenSlugs.add(slug);
+
+        allProducts.push({
+          name,
+          slug,
+          website_url: null,
+          description: result.description || `${name} is a ${category_name.toLowerCase()} solution.`,
+        });
+      }
+    } catch (e) {
+      console.warn("Capterra search error:", e);
+    }
+
+    // Limit to batch_size
+    const productsToInsert = allProducts.slice(0, batch_size);
 
     let inserted = 0;
     let skipped = 0;
     let errors = 0;
 
-    for (const p of products) {
-      if (!p.name) { skipped++; continue; }
-
-      const slug = slugify(p.name);
-      if (existingSlugs.has(slug) || existingNames.has(p.name.toLowerCase())) {
-        skipped++;
-        continue;
-      }
-
-      // Generate logo URL from website
+    for (const p of productsToInsert) {
+      // Try to get logo from Clearbit if we know a likely domain
       let logoUrl: string | null = null;
-      if (p.website_url) {
-        try {
-          const domain = new URL(p.website_url).hostname;
-          logoUrl = `https://logo.clearbit.com/${domain}`;
-        } catch {}
-      }
+      const possibleDomain = `${p.slug.replace(/-/g, "")}.com`;
+      logoUrl = `https://logo.clearbit.com/${possibleDomain}`;
 
       const record = {
         name: p.name,
-        slug,
+        slug: p.slug,
         category_id,
-        tagline: p.tagline || `${p.name} - ${category_name} solution`,
-        description: p.description || `${p.name} is a ${category_name.toLowerCase()} software product.`,
-        website_url: p.website_url || null,
+        tagline: `${p.name} - ${category_name} solution`,
+        description: p.description,
+        website_url: p.website_url,
         logo_url: logoUrl,
-        pricing_model: pricingModels.includes(p.pricing_model) ? p.pricing_model : "freemium",
-        starting_price: p.starting_price || null,
-        features: Array.isArray(p.features) ? p.features : [],
-        avg_rating: p.avg_rating ? Math.min(5, Math.max(0, Number(p.avg_rating))) : null,
-        total_reviews: p.total_reviews ? Math.max(0, Number(p.total_reviews)) : null,
-        founded_year: p.founded_year || null,
-        headquarters: p.headquarters || null,
-        company_size: p.company_size || null,
+        pricing_model: "freemium",
+        features: [],
         is_active: true,
         published_at: new Date().toISOString(),
       };
 
       const { error } = await supabase.from("products").insert(record);
       if (error) {
-        // Try with modified slug if duplicate
         if (error.message?.includes("duplicate") || error.code === "23505") {
-          record.slug = `${slug}-${Math.random().toString(36).substring(2, 6)}`;
+          record.slug = `${p.slug}-${Math.random().toString(36).substring(2, 6)}`;
           const { error: retryError } = await supabase.from("products").insert(record);
           if (retryError) { errors++; } else { inserted++; }
         } else {
@@ -168,10 +273,10 @@ Return ONLY the JSON array, no wrapping object.`,
       existingNames.add(p.name.toLowerCase());
     }
 
-    console.log(`Batch done: ${inserted} inserted, ${skipped} skipped, ${errors} errors`);
+    console.log(`Done: ${inserted} inserted, ${skipped} skipped, ${errors} errors from ${allProducts.length} discovered`);
 
     return new Response(
-      JSON.stringify({ success: true, inserted, skipped, errors, total_generated: products.length }),
+      JSON.stringify({ success: true, inserted, skipped, errors, total_discovered: allProducts.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

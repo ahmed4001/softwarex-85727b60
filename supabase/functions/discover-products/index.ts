@@ -64,67 +64,78 @@ const G2_CATEGORY_MAP: Record<string, string> = {
   "tax": "tax-compliance",
   "text-to-speech": "text-to-speech",
   "proposal": "proposal",
+  "chrome-extensions": "chrome-extensions",
+  "apple-apps": "mac-software",
+  "google-play-apps": "android-apps",
+  "browser-extensions": "browser-extension",
+  "mobile-apps": "mobile-app-development",
+  "affiliate-marketing": "affiliate-marketing",
+  "app-development": "mobile-development",
+  "appointment-scheduling": "appointment-scheduling",
+  "asset-management": "digital-asset-management",
+  "audio-editing": "audio-editing",
+  "billing-invoicing": "billing",
+  "board-management": "board-management",
+  "business-phone": "business-voip",
+  "cad-software": "cad",
+  "church-management": "church-management",
+  "clinical-trials": "clinical-trial-management",
+  "cloud-security": "cloud-security",
+  "commission-management": "commission",
+  "compliance-management": "compliance",
+  "construction-management": "construction-management",
+  "content-creation": "content-creation",
+  "conversational-ai": "conversational-ai",
+  "cdp": "customer-data-platform",
+  "data-integration": "data-integration",
+  "data-privacy": "data-privacy",
+  "digital-adoption": "digital-adoption-platform",
+  "digital-signage": "digital-signage",
+  "dns-management": "dns-management",
+  "email-deliverability": "email-deliverability",
+  "event-management": "event-management",
+  "field-service": "field-service-management",
+  "file-sharing": "file-sharing",
+  "fleet-management": "fleet-management",
+  "form-builder": "form-builder",
+  "fraud-detection": "fraud-detection",
+  "fundraising": "fundraising",
+  "gantt-chart": "gantt-chart",
+  "gis-software": "gis",
+  "gym-management": "gym-management",
+  "hipaa-compliance": "hipaa-compliance",
+  "home-design": "home-design",
+  "hotel-management": "hotel-management",
+  "identity-management": "identity-management",
+  "influencer-marketing": "influencer-marketing",
+  "insurance-software": "insurance",
+  "iot-platforms": "iot",
+  "itsm": "it-service-management-itsm",
+  "knowledge-base": "knowledge-management",
+  "landing-page-builder": "landing-page",
+  "legal-practice": "legal-case-management",
+  "localization": "localization",
+  "logistics": "logistics",
+  "low-code": "low-code-development",
+  "marketplace-software": "marketplace",
+  "mental-health": "mental-health",
+  "monitoring": "application-performance-management-apm",
+  "note-taking": "note-taking",
+  "ocr-software": "ocr",
+  "okr-software": "okr",
+  "photo-editing": "photo-editing",
+  "podcast-hosting": "podcast-hosting",
+  "pos-systems": "point-of-sale",
+  "product-analytics": "product-analytics",
+  "rpa": "robotic-process-automation-rpa",
+  "sales-enablement": "sales-enablement",
+  "subscription-management": "subscription-management",
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  "project-management": "Project Management",
-  "crm": "CRM",
-  "communication": "Team Communication",
-  "ecommerce": "E-Commerce",
-  "analytics": "Analytics",
-  "marketing": "Marketing Automation",
-  "help-desk": "Help Desk",
-  "hr": "HR Management",
-  "accounting": "Accounting",
-  "seo": "SEO",
-  "social-media": "Social Media Management",
-  "cms": "Content Management",
-  "development": "Developer Tools",
-  "security": "Cybersecurity",
-  "collaboration": "Collaboration",
-  "lms": "Learning Management",
-  "time-tracking": "Time Tracking",
-  "video-conferencing": "Video Conferencing",
-  "email-marketing": "Email Marketing",
-  "live-chat": "Live Chat",
-  "no-code": "No-Code Development",
-  "ai-writing": "AI Writing",
-  "ai-chatbots": "AI Chatbots",
-  "ai-code": "AI Code Generation",
-  "ai-image-generators": "AI Image Generation",
-  "cloud-hosting": "Cloud Hosting",
-  "database-management": "Database Management",
-  "ci-cd": "CI/CD",
-  "bug-tracking": "Bug Tracking",
-  "api-management": "API Management",
-  "erp": "ERP",
-  "payroll": "Payroll",
-  "recruitment": "Recruitment",
-  "employee-engagement": "Employee Engagement",
-  "expense-management": "Expense Management",
-  "contract-management": "Contract Management",
-  "e-signature": "E-Signature",
-  "document-management": "Document Management",
-  "survey": "Survey",
-  "webinar": "Webinar",
-  "graphic-design": "Graphic Design",
-  "data-visualization": "Data Visualization",
-  "business-intelligence": "Business Intelligence",
-  "inventory-management": "Inventory Management",
-  "invoicing": "Invoicing",
-  "lead-generation": "Lead Generation",
-  "sales-engagement": "Sales Engagement",
-  "sales-intelligence": "Sales Intelligence",
-  "customer-success": "Customer Success",
-  "password-management": "Password Management",
-  "antivirus": "Antivirus",
-  "vpn": "VPN",
-  "backup": "Backup",
-  "supply-chain": "Supply Chain",
-  "tax": "Tax",
-  "text-to-speech": "Text to Speech",
-  "proposal": "Proposal",
-};
+// Auto-generate labels from slugs
+function categoryLabel(slug: string): string {
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -159,7 +170,7 @@ Deno.serve(async (req) => {
     // ========== ACTION: DISCOVER ==========
     if (action === "discover") {
       const g2Cat = g2_category || G2_CATEGORY_MAP[category_slug];
-      const categoryLabel = CATEGORY_LABELS[category_slug] || category_slug;
+      const catLabel = categoryLabel(category_slug);
 
       if (!g2Cat) {
         return new Response(
@@ -176,7 +187,7 @@ Deno.serve(async (req) => {
       if (FIRECRAWL_API_KEY) {
         try {
           // Use Firecrawl search to find products on G2 for this category
-          const searchQuery = `site:g2.com/products best ${categoryLabel} software`;
+          const searchQuery = `site:g2.com/products best ${catLabel} software`;
           console.log(`Searching Firecrawl for: ${searchQuery}`);
 
           const searchRes = await fetch("https://api.firecrawl.dev/v1/search", {
@@ -240,7 +251,7 @@ Deno.serve(async (req) => {
       if (products.length < 10 && LOVABLE_API_KEY) {
         try {
           const offset = (pageNum - 1) * 20;
-          console.log(`Using AI to discover ${categoryLabel} products (offset ${offset})`);
+          console.log(`Using AI to discover ${catLabel} products (offset ${offset})`);
 
           const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
@@ -257,7 +268,7 @@ Deno.serve(async (req) => {
                 },
                 {
                   role: "user",
-                  content: `List 20 real, well-known ${categoryLabel} software products (skip the first ${offset}). For each, provide:
+                  content: `List 20 real, well-known ${catLabel} software products (skip the first ${offset}). For each, provide:
 - name: exact product name
 - g2_slug: the G2.com URL slug (e.g., "slack" for g2.com/products/slack)
 - rating: approximate G2 rating (1-5, one decimal)
@@ -322,7 +333,7 @@ Return as JSON: { "products": [...] }`,
         }));
       }
 
-      console.log(`Discovered ${products.length} products for ${categoryLabel}`);
+      console.log(`Discovered ${products.length} products for ${catLabel}`);
 
       return new Response(
         JSON.stringify({

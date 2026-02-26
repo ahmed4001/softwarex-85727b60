@@ -73,9 +73,9 @@ function BulkAIGeneratePanel() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> AI Bulk Product Generator</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> Bulk Product Discovery</CardTitle>
           <CardDescription>
-            Generate real software products using AI across all {categories?.length || 0} categories. Each batch generates ~{batchSize} products per category.
+            Discover real software products via G2, Capterra & web scraping across all {categories?.length || 0} categories. Each batch discovers up to ~{batchSize} real products per category.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
