@@ -528,6 +528,35 @@ export type Database = {
           },
         ]
       }
+      changelog_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comparisons: {
         Row: {
           best_for_a: string | null
@@ -1234,6 +1263,56 @@ export type Database = {
           },
         ]
       }
+      product_changelogs: {
+        Row: {
+          body: string | null
+          change_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_published: boolean
+          product_id: string
+          published_at: string | null
+          title: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          body?: string | null
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean
+          product_id: string
+          published_at?: string | null
+          title: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          body?: string | null
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean
+          product_id?: string
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_changelogs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_claims: {
         Row: {
           admin_note: string | null
@@ -1652,6 +1731,127 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          referral_link_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          referral_link_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          referral_link_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_events_referral_link_id_fkey"
+            columns: ["referral_link_id"]
+            isOneToOne: false
+            referencedRelation: "referral_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_links: {
+        Row: {
+          clicks: number
+          code: string
+          conversions: number
+          created_at: string
+          id: string
+          is_active: boolean
+          product_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clicks?: number
+          code: string
+          conversions?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clicks?: number
+          code?: string
+          conversions?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_payouts: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          referral_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          referral_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          referral_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       review_comments: {
         Row: {
           body: string
@@ -1899,6 +2099,39 @@ export type Database = {
           },
         ]
       }
+      reviewer_verifications: {
+        Row: {
+          created_at: string
+          evidence: string | null
+          id: string
+          method: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          method: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          method?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           body: string | null
@@ -1914,6 +2147,7 @@ export type Database = {
           industry: string | null
           is_featured_review: boolean | null
           is_pinned: boolean | null
+          is_verified_purchase: boolean | null
           moderated_at: string | null
           moderated_by: string | null
           moderation_note: string | null
@@ -1951,6 +2185,7 @@ export type Database = {
           industry?: string | null
           is_featured_review?: boolean | null
           is_pinned?: boolean | null
+          is_verified_purchase?: boolean | null
           moderated_at?: string | null
           moderated_by?: string | null
           moderation_note?: string | null
@@ -1988,6 +2223,7 @@ export type Database = {
           industry?: string | null
           is_featured_review?: boolean | null
           is_pinned?: boolean | null
+          is_verified_purchase?: boolean | null
           moderated_at?: string | null
           moderated_by?: string | null
           moderation_note?: string | null
@@ -2275,6 +2511,41 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      user_recommendations: {
+        Row: {
+          generated_at: string
+          id: string
+          product_id: string
+          reason: string | null
+          score: number
+          user_id: string
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          product_id: string
+          reason?: string | null
+          score?: number
+          user_id: string
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          product_id?: string
+          reason?: string | null
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_recommendations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
