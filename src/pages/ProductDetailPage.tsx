@@ -8,7 +8,7 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare, Loader2, Wand2, ArrowLeftRight, HelpCircle } from "lucide-react";
+import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare, Loader2, Wand2, ArrowLeftRight, HelpCircle } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star } from "lucide-react";
@@ -22,6 +22,7 @@ import { LeadCaptureForm } from "@/components/LeadCaptureForm";
 import { ProductQASection } from "@/components/ProductQASection";
 import { PricingComparisonWidget } from "@/components/PricingComparisonWidget";
 import { AlsoViewedSection } from "@/components/AlsoViewedSection";
+import { ReviewDigestCard } from "@/components/ReviewDigestCard";
 
 function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]; productName: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -396,28 +397,7 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
-            {(product.pros_summary || product.cons_summary) && (
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">AI-Generated Summary</span>
-                </div>
-                <div className="grid md:grid-cols-2 gap-5">
-                  {product.pros_summary && (
-                    <div className="glass-card p-8 border-l-4 border-l-success">
-                      <h3 className="font-display font-bold text-success mb-3">👍 {t("productDetail.pros")}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{product.pros_summary}</p>
-                    </div>
-                  )}
-                  {product.cons_summary && (
-                    <div className="glass-card p-8 border-l-4 border-l-destructive">
-                      <h3 className="font-display font-bold text-destructive mb-3">👎 {t("productDetail.cons")}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{product.cons_summary}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <ReviewDigestCard productId={product.id} isAdmin={!!isAdmin} />
           </TabsContent>
 
           <TabsContent value="screenshots">

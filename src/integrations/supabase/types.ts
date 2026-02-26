@@ -1301,6 +1301,56 @@ export type Database = {
           },
         ]
       }
+      review_digests: {
+        Row: {
+          avg_sub_ratings: Json | null
+          cons_summary: string | null
+          created_at: string
+          id: string
+          overall_verdict: string | null
+          product_id: string
+          pros_summary: string | null
+          review_count: number | null
+          sentiment_pct: Json | null
+          top_themes: Json | null
+          updated_at: string
+        }
+        Insert: {
+          avg_sub_ratings?: Json | null
+          cons_summary?: string | null
+          created_at?: string
+          id?: string
+          overall_verdict?: string | null
+          product_id: string
+          pros_summary?: string | null
+          review_count?: number | null
+          sentiment_pct?: Json | null
+          top_themes?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          avg_sub_ratings?: Json | null
+          cons_summary?: string | null
+          created_at?: string
+          id?: string
+          overall_verdict?: string | null
+          product_id?: string
+          pros_summary?: string | null
+          review_count?: number | null
+          sentiment_pct?: Json | null
+          top_themes?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_digests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_media: {
         Row: {
           alt_text: string | null

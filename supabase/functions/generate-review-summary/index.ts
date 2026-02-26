@@ -59,6 +59,18 @@ Deno.serve(async (req) => {
       `Review ${i + 1} (${r.overall_rating}/5): ${r.title || ""}\nPros: ${r.pros || "N/A"}\nCons: ${r.cons || "N/A"}\n${r.body || ""}`
     ).join("\n---\n");
 
+    // Calculate average sub-ratings
+    const avg = (field: string) => {
+      const vals = reviews.map((r: any) => r[field]).filter((v: any) => v != null && v > 0);
+      return vals.length > 0 ? Math.round((vals.reduce((a: number, b: number) => a + b, 0) / vals.length) * 10) / 10 : null;
+    };
+    const avgSubRatings: Record<string, number | null> = {
+      ease_of_use: avg("ease_of_use"),
+      customer_support: avg("customer_support"),
+      value_for_money: avg("value_for_money"),
+      features: avg("features_rating"),
+    };
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -66,26 +78,52 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: "You generate concise product review summaries. Return ONLY valid JSON, no markdown.",
+            content: "You are a review analysis assistant. Analyze product reviews and return structured digest data using the provided tool.",
           },
           {
             role: "user",
-            content: `Analyze these ${reviews.length} reviews for "${product?.name || "this product"}" and generate a summary.
-
-Return a JSON object with:
-- "pros_summary": A 2-3 sentence summary of the most commonly praised aspects
-- "cons_summary": A 2-3 sentence summary of the most common criticisms
-- "overall_summary": A 1-2 sentence overall verdict
-
-Reviews:
-${reviewTexts}`,
+            content: `Analyze these ${reviews.length} reviews for "${product?.name || "this product"}" and generate a comprehensive review digest.\n\nReviews:\n${reviewTexts}`,
           },
         ],
-        temperature: 0.3,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "return_review_digest",
+              description: "Return the structured review digest analysis",
+              parameters: {
+                type: "object",
+                properties: {
+                  overall_verdict: { type: "string", description: "1-2 sentence overall verdict of the product based on reviews" },
+                  pros_summary: { type: "string", description: "2-3 sentence summary of the most commonly praised aspects" },
+                  cons_summary: { type: "string", description: "2-3 sentence summary of the most common criticisms" },
+                  top_themes: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Top 5 keywords/themes extracted from reviews (e.g. 'Easy setup', 'Great support', 'Pricey')",
+                  },
+                  sentiment_pct: {
+                    type: "object",
+                    properties: {
+                      positive: { type: "number", description: "Percentage of positive reviews (0-100)" },
+                      neutral: { type: "number", description: "Percentage of neutral reviews (0-100)" },
+                      negative: { type: "number", description: "Percentage of negative reviews (0-100)" },
+                    },
+                    required: ["positive", "neutral", "negative"],
+                    additionalProperties: false,
+                  },
+                },
+                required: ["overall_verdict", "pros_summary", "cons_summary", "top_themes", "sentiment_pct"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "return_review_digest" } },
       }),
     });
 
@@ -108,28 +146,41 @@ ${reviewTexts}`,
     }
 
     const aiData = await aiRes.json();
-    const content = aiData?.choices?.[0]?.message?.content || "";
+    const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall) throw new Error("No tool call in AI response");
 
-    let summary;
-    try {
-      const cleaned = content.replace(/```(?:json)?\s*/g, "").replace(/```/g, "").trim();
-      summary = JSON.parse(cleaned);
-    } catch {
-      throw new Error("Failed to parse AI response");
-    }
+    const digest = JSON.parse(toolCall.function.arguments);
 
-    // Update product with summaries
-    const { error: updateErr } = await supabase
+    // Upsert into review_digests
+    const { error: upsertErr } = await supabase
+      .from("review_digests")
+      .upsert(
+        {
+          product_id,
+          overall_verdict: digest.overall_verdict || null,
+          pros_summary: digest.pros_summary || null,
+          cons_summary: digest.cons_summary || null,
+          top_themes: digest.top_themes || [],
+          sentiment_pct: digest.sentiment_pct || { positive: 0, neutral: 0, negative: 0 },
+          avg_sub_ratings: avgSubRatings,
+          review_count: reviews.length,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "product_id" }
+      );
+
+    if (upsertErr) throw upsertErr;
+
+    // Backward compatibility: update products table
+    await supabase
       .from("products")
       .update({
-        pros_summary: summary.pros_summary || null,
-        cons_summary: summary.cons_summary || null,
+        pros_summary: digest.pros_summary || null,
+        cons_summary: digest.cons_summary || null,
       })
       .eq("id", product_id);
 
-    if (updateErr) throw updateErr;
-
-    return new Response(JSON.stringify({ success: true, summary }), {
+    return new Response(JSON.stringify({ success: true, digest }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
