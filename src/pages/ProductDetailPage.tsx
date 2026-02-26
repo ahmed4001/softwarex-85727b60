@@ -8,12 +8,14 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare, Loader2, Wand2 } from "lucide-react";
+import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare, Loader2, Wand2, ArrowLeftRight } from "lucide-react";
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { PricingTiersDisplay } from "@/components/PricingTiersDisplay";
+import { TCOCalculator } from "@/components/TCOCalculator";
 
 function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]; productName: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -400,14 +402,19 @@ export default function ProductDetailPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="pricing">
-            <div className="glass-card p-8">
-              <h2 className="text-xl font-display font-bold mb-4">{t("productDetail.pricing")}</h2>
-              <div className="flex items-center gap-4 mb-6">
-                <Badge variant="outline" className="capitalize rounded-lg text-base px-4 py-2">{product.pricing_model}</Badge>
-                {product.starting_price && <span className="text-4xl font-display font-bold text-foreground">${product.starting_price}<span className="text-lg font-normal text-muted-foreground">{t("product.perMonth")}</span></span>}
-              </div>
-              {product.pricing_description && <p className="text-muted-foreground leading-relaxed">{product.pricing_description}</p>}
+          <TabsContent value="pricing" className="space-y-6">
+            <PricingTiersDisplay
+              tiers={Array.isArray(product.pricing_tiers) ? (product.pricing_tiers as any[]).filter((t: any) => t && typeof t === "object" && t.name) : []}
+              productName={product.name}
+              pricingModel={product.pricing_model || undefined}
+              startingPrice={product.starting_price}
+              pricingDescription={product.pricing_description}
+            />
+            <TCOCalculator products={[{ name: product.name, logo_url: product.logo_url, starting_price: product.starting_price, pricing_model: product.pricing_model, pricing_tiers: product.pricing_tiers as any }]} />
+            <div className="text-center">
+              <Link to={`/compare-pricing?products=${product.id}`}>
+                <Button variant="outline" className="rounded-xl gap-2"><ArrowLeftRight className="h-4 w-4" /> Compare with Other Products</Button>
+              </Link>
             </div>
           </TabsContent>
 

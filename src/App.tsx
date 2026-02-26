@@ -56,6 +56,7 @@ const AdminSentimentPage = lazy(() => import("./pages/admin/AdminSentimentPage")
 const AdminSubscribersPage = lazy(() => import("./pages/admin/AdminSubscribersPage"));
 const StaticPage = lazy(() => import("./pages/StaticPage"));
 const ActivityFeedPage = lazy(() => import("./pages/ActivityFeedPage"));
+const PricingComparisonPage = lazy(() => import("./pages/PricingComparisonPage"));
 
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
@@ -94,6 +95,7 @@ function AppContent() {
           <Route path="/user/:id" element={<ErrorBoundary><UserProfilePage /></ErrorBoundary>} />
           <Route path="/page/:slug" element={<ErrorBoundary><StaticPage /></ErrorBoundary>} />
           <Route path="/activity" element={<ErrorBoundary><ActivityFeedPage /></ErrorBoundary>} />
+          <Route path="/compare-pricing" element={<ErrorBoundary><PricingComparisonPage /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
