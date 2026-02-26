@@ -1,17 +1,19 @@
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { SeoHead } from "@/components/SeoHead";
 import { StarRating } from "@/components/StarRating";
 import { ReviewCard } from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { ExternalLink, CheckCircle, Globe, Calendar, Users, Building2, Sparkles, ArrowLeft, X, ChevronLeft, ChevronRight, MessageSquare, Loader2, Wand2 } from "lucide-react";
 import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]; productName: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -85,6 +87,17 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user!.id).in("role", ["admin", "superadmin"]);
+      return (data || []).length > 0;
+    },
+  });
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -110,6 +123,26 @@ export default function ProductDetailPage() {
     enabled: !!product?.id,
   });
 
+  // Fetch review media
+  const reviewIds2 = (reviews || []).map((r: any) => r.id);
+  const { data: reviewMedia = [] } = useQuery({
+    queryKey: ["review-media", reviewIds2],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("review_media")
+        .select("review_id, url, file_type")
+        .in("review_id", reviewIds2)
+        .order("sort_order");
+      return data || [];
+    },
+    enabled: reviewIds2.length > 0,
+  });
+  const mediaByReview = new Map<string, { url: string; file_type?: string }[]>();
+  (reviewMedia as any[]).forEach((m: any) => {
+    if (!mediaByReview.has(m.review_id)) mediaByReview.set(m.review_id, []);
+    mediaByReview.get(m.review_id)!.push({ url: m.url, file_type: m.file_type });
+  });
+
   // Fetch alternatives
   const { data: alternatives = [] } = useQuery({
     queryKey: ["product-alternatives", product?.id],
@@ -122,6 +155,22 @@ export default function ProductDetailPage() {
       return data || [];
     },
     enabled: !!product?.id,
+  });
+
+  const generateSummary = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("generate-review-summary", {
+        body: { product_id: product!.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("AI summary generated!");
+      queryClient.invalidateQueries({ queryKey: ["product", slug] });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to generate summary"),
   });
 
   // Fetch vendor responses for the reviews
@@ -263,15 +312,25 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
-            {product.pros_summary && (
-              <div className="grid md:grid-cols-2 gap-5">
-                <div className="glass-card p-8 border-l-4 border-l-success">
-                  <h3 className="font-display font-bold text-success mb-3">👍 {t("productDetail.pros")}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{product.pros_summary}</p>
+            {(product.pros_summary || product.cons_summary) && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">AI-Generated Summary</span>
                 </div>
-                <div className="glass-card p-8 border-l-4 border-l-destructive">
-                  <h3 className="font-display font-bold text-destructive mb-3">👎 {t("productDetail.cons")}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{product.cons_summary}</p>
+                <div className="grid md:grid-cols-2 gap-5">
+                  {product.pros_summary && (
+                    <div className="glass-card p-8 border-l-4 border-l-success">
+                      <h3 className="font-display font-bold text-success mb-3">👍 {t("productDetail.pros")}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{product.pros_summary}</p>
+                    </div>
+                  )}
+                  {product.cons_summary && (
+                    <div className="glass-card p-8 border-l-4 border-l-destructive">
+                      <h3 className="font-display font-bold text-destructive mb-3">👎 {t("productDetail.cons")}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{product.cons_summary}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -289,17 +348,37 @@ export default function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value="reviews" className="space-y-5">
+            {/* Admin: Generate AI Summary */}
+            {isAdmin && reviews && reviews.length > 0 && (
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => generateSummary.mutate()}
+                  disabled={generateSummary.isPending}
+                  className="gap-1.5 text-xs rounded-lg"
+                >
+                  {generateSummary.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                  Generate AI Summary
+                </Button>
+              </div>
+            )}
             {reviews?.map((r: any) => {
               const vendorResponse = responseMap.get(r.id);
               return (
                 <div key={r.id}>
                   <ReviewCard
                     id={r.id} title={r.title} body={r.body} pros={r.pros} cons={r.cons}
-                    overall_rating={r.overall_rating} reviewer_name={r.profiles?.name}
+                    overall_rating={r.overall_rating}
+                    ease_of_use={r.ease_of_use} customer_support={r.customer_support}
+                    value_for_money={r.value_for_money} features_rating={r.features_rating}
+                    reviewer_name={r.profiles?.name}
                     reviewer_user_id={r.user_id}
                     reviewer_role={r.reviewer_role} company_size={r.company_size}
                     verified_reviewer={r.verified_reviewer}
+                    verified_purchase={r.verified_purchase}
                     created_at={r.created_at}
+                    media={mediaByReview.get(r.id)}
                   />
                   {vendorResponse && (
                     <div className="ml-8 mt-2 p-4 rounded-xl bg-primary/5 border border-primary/10">

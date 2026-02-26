@@ -22,15 +22,21 @@ interface ReviewCardProps {
   pros?: string;
   cons?: string;
   overall_rating: number;
+  ease_of_use?: number | null;
+  customer_support?: number | null;
+  value_for_money?: number | null;
+  features_rating?: number | null;
   reviewer_name?: string;
   reviewer_user_id?: string;
   reviewer_role?: string;
   company_size?: string;
   verified_reviewer?: boolean;
+  verified_purchase?: boolean;
   created_at: string;
+  media?: { url: string; file_type?: string }[];
 }
 
-export function ReviewCard({ id, title, body, pros, cons, overall_rating, reviewer_name, reviewer_user_id, reviewer_role, company_size, verified_reviewer, created_at }: ReviewCardProps) {
+export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_of_use, customer_support, value_for_money, features_rating, reviewer_name, reviewer_user_id, reviewer_role, company_size, verified_reviewer, verified_purchase, created_at, media }: ReviewCardProps) {
   const { user } = useAuth();
   const { up, down, userVote, vote, isVoting } = useReviewVotes(id);
   const { data: reviewerBadges = [] } = useUserBadges(reviewer_user_id);
@@ -83,6 +89,11 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, review
             <CheckCircle className="h-3.5 w-3.5" /> Verified
           </div>
         )}
+        {verified_purchase && !verified_reviewer && (
+          <div className="flex items-center gap-1.5 text-primary text-xs font-semibold bg-primary/8 px-3 py-1.5 rounded-full">
+            <CheckCircle className="h-3.5 w-3.5" /> Verified Purchase
+          </div>
+        )}
       </div>
 
       {pros && (
@@ -98,6 +109,27 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, review
         </div>
       )}
       {body && <p className="text-sm text-muted-foreground leading-relaxed mb-4">{body}</p>}
+
+      {/* Multi-criteria breakdown */}
+      {(ease_of_use || customer_support || value_for_money || features_rating) && (
+        <div className="flex flex-wrap gap-x-6 gap-y-1.5 mb-4 text-xs text-muted-foreground">
+          {ease_of_use && <div className="flex items-center gap-1.5"><span>Ease of Use</span><StarRating rating={ease_of_use} size="sm" /></div>}
+          {customer_support && <div className="flex items-center gap-1.5"><span>Support</span><StarRating rating={customer_support} size="sm" /></div>}
+          {value_for_money && <div className="flex items-center gap-1.5"><span>Value</span><StarRating rating={value_for_money} size="sm" /></div>}
+          {features_rating && <div className="flex items-center gap-1.5"><span>Features</span><StarRating rating={features_rating} size="sm" /></div>}
+        </div>
+      )}
+
+      {/* Media attachments */}
+      {media && media.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {media.map((m, i) => (
+            <a key={i} href={m.url} target="_blank" rel="noopener noreferrer" className="h-16 w-16 rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary/40 transition-all">
+              <img src={m.url} alt={`Review attachment ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Vendor Response */}
       {vendorResponse && (

@@ -16,6 +16,7 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const AllCategoriesPage = lazy(() => import("./pages/AllCategoriesPage"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
+const WriteReviewPage = lazy(() => import("./pages/WriteReviewPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const ComparisonDetailPage = lazy(() => import("./pages/ComparisonDetailPage"));
@@ -80,6 +81,7 @@ function AppContent() {
           <Route path="/categories" element={<ErrorBoundary><AllCategoriesPage /></ErrorBoundary>} />
           <Route path="/category/:slug" element={<ErrorBoundary><CategoryPage /></ErrorBoundary>} />
           <Route path="/product/:slug" element={<ErrorBoundary><ProductDetailPage /></ErrorBoundary>} />
+          <Route path="/product/:slug/write-review" element={<ErrorBoundary><WriteReviewPage /></ErrorBoundary>} />
           <Route path="/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
           <Route path="/compare" element={<ErrorBoundary><ComparePage /></ErrorBoundary>} />
           <Route path="/compare/:slug" element={<ErrorBoundary><ComparisonDetailPage /></ErrorBoundary>} />

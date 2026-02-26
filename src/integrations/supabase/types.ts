@@ -1019,6 +1019,50 @@ export type Database = {
           },
         ]
       }
+      review_media: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          review_id: string
+          sort_order: number | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          review_id: string
+          sort_order?: number | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          review_id?: string
+          sort_order?: number | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_media_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_votes: {
         Row: {
           created_at: string
