@@ -1,7 +1,9 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { RequireAuth } from "@/components/RequireAuth";
-import { BarChart3, Package, MessageSquare, ShieldCheck, ArrowLeft, TrendingUp, FileText, Users, CreditCard, UserPlus, Megaphone, PieChart, Swords } from "lucide-react";
+import { BarChart3, Package, MessageSquare, ShieldCheck, ArrowLeft, TrendingUp, FileText, Users, CreditCard, UserPlus, Megaphone, PieChart, Swords, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const vendorNav = [
   { to: "/vendor", label: "Dashboard", icon: BarChart3, end: true },
@@ -20,6 +22,7 @@ const vendorNav = [
 
 export function VendorLayout() {
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <RequireAuth>
@@ -37,7 +40,41 @@ export function VendorLayout() {
                 <span className="text-sm font-bold text-foreground">Vendor Portal</span>
               </div>
             </div>
-            <nav className="flex items-center gap-1">
+            {/* Desktop nav - horizontal scroll */}
+            <ScrollArea className="hidden md:block max-w-[60vw]">
+              <nav className="flex items-center gap-1 py-1">
+                {vendorNav.map((n) => {
+                  const isActive = n.end
+                    ? location.pathname === n.to
+                    : location.pathname.startsWith(n.to);
+                  return (
+                    <Link
+                      key={n.to}
+                      to={n.to}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap",
+                        isActive ? "text-primary bg-primary/8" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <n.icon className="h-4 w-4" />
+                      {n.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+            {/* Mobile toggle */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+          {/* Mobile nav */}
+          {mobileOpen && (
+            <div className="md:hidden border-t border-border bg-card p-3 grid grid-cols-3 gap-1">
               {vendorNav.map((n) => {
                 const isActive = n.end
                   ? location.pathname === n.to
@@ -46,21 +83,22 @@ export function VendorLayout() {
                   <Link
                     key={n.to}
                     to={n.to}
+                    onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
+                      "flex flex-col items-center gap-1 px-2 py-2.5 text-xs font-medium rounded-lg transition-colors",
                       isActive ? "text-primary bg-primary/8" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <n.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{n.label}</span>
+                    {n.label}
                   </Link>
                 );
               })}
-            </nav>
-          </div>
+            </div>
+          )}
         </header>
 
-        <main className="container py-8 max-w-6xl">
+        <main className="container py-6 md:py-8 max-w-6xl">
           <Outlet />
         </main>
       </div>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeftRight, BarChart3, Bot, Box, ChevronDown, DollarSign, FileText, FolderOpen,
   Image, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings,
-  Star, Users, Activity, Mail, Database, Sparkles, Globe, Inbox, Compass
+  Star, Users, Activity, Mail, Database, Sparkles, Globe, Inbox, Compass, Shield
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -63,6 +63,7 @@ const sidebarItems = [
   { label: "Brevo Email", icon: Mail, to: "/admin/brevo" },
   { label: "Landing Pages", icon: Globe, to: "/admin/landing-pages" },
   { label: "Buyer Guides", icon: Compass, to: "/admin/buyer-guides" },
+  { label: "Moderation", icon: Shield, to: "/admin/moderation" },
 ];
 
 interface SidebarItemProps {

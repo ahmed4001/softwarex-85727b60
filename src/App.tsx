@@ -88,6 +88,7 @@ const BuyerGuidesListPage = lazy(() => import("./pages/BuyerGuidesListPage"));
 const BuyerGuidePage = lazy(() => import("./pages/BuyerGuidePage"));
 const VendorWarRoomPage = lazy(() => import("./pages/vendor/VendorWarRoomPage"));
 const AdminBuyerGuidesPage = lazy(() => import("./pages/admin/AdminBuyerGuidesPage"));
+const AdminModerationPage = lazy(() => import("./pages/admin/AdminModerationPage"));
 
 const queryClient = new QueryClient();
 
@@ -170,6 +171,7 @@ function AppContent() {
           <Route path="pricing" element={<ErrorBoundary><AdminPricingPage /></ErrorBoundary>} />
           <Route path="landing-pages" element={<ErrorBoundary><AdminLandingPagesPage /></ErrorBoundary>} />
           <Route path="buyer-guides" element={<ErrorBoundary><AdminBuyerGuidesPage /></ErrorBoundary>} />
+          <Route path="moderation" element={<ErrorBoundary><AdminModerationPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}

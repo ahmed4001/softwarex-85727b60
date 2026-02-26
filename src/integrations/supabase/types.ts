@@ -3103,44 +3103,6 @@ export type Database = {
           },
         ]
       }
-      vendor_review_responses: {
-        Row: {
-          body: string
-          created_at: string
-          id: string
-          is_official: boolean
-          review_id: string
-          updated_at: string
-          vendor_user_id: string
-        }
-        Insert: {
-          body: string
-          created_at?: string
-          id?: string
-          is_official?: boolean
-          review_id: string
-          updated_at?: string
-          vendor_user_id: string
-        }
-        Update: {
-          body?: string
-          created_at?: string
-          id?: string
-          is_official?: boolean
-          review_id?: string
-          updated_at?: string
-          vendor_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_review_responses_review_id_fkey"
-            columns: ["review_id"]
-            isOneToOne: true
-            referencedRelation: "reviews"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       vendor_sponsored_requests: {
         Row: {
           budget: number | null
