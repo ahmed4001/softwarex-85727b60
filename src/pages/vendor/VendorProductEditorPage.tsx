@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { SeoHead } from "@/components/SeoHead";
+import { FocusKeywordAnalyzer } from "@/components/FocusKeywordAnalyzer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -219,49 +220,17 @@ export default function VendorProductEditorPage() {
 
           <TabsContent value="seo" className="space-y-6">
             <div className="glass-card p-6 space-y-5">
-              {/* Focus Keyword Analyzer */}
-              <div className="space-y-2">
-                <Label>Focus Keyword</Label>
-                <Input
-                  value={form.seo_keywords.split(",")[0]?.trim() || ""}
-                  onChange={(e) => {
-                    const rest = form.seo_keywords.split(",").slice(1).map(k => k.trim()).filter(Boolean);
-                    update("seo_keywords", [e.target.value.trim(), ...rest].filter(Boolean).join(", "));
-                  }}
-                  placeholder="Primary keyword for this product"
-                />
-                {form.seo_keywords.split(",")[0]?.trim() && (() => {
-                  const keyword = form.seo_keywords.split(",")[0].trim().toLowerCase();
-                  const titleHas = (form.seo_title || product?.name || "").toLowerCase().includes(keyword);
-                  const descHas = form.seo_description.toLowerCase().includes(keyword);
-                  const nameHas = (product?.name || "").toLowerCase().includes(keyword);
-                  const bodyHas = form.description.toLowerCase().includes(keyword);
-                  const score = [titleHas, descHas, nameHas, bodyHas].filter(Boolean).length;
-                  return (
-                    <div className="rounded-lg border border-border p-3 bg-muted/30 space-y-1.5">
-                      <p className="text-xs font-semibold text-foreground">Keyword Analysis — "{keyword}"</p>
-                      <div className="grid grid-cols-2 gap-1.5 text-xs">
-                        <span className={titleHas ? "text-emerald-600" : "text-destructive"}>
-                          {titleHas ? "✓" : "✗"} In SEO title
-                        </span>
-                        <span className={descHas ? "text-emerald-600" : "text-destructive"}>
-                          {descHas ? "✓" : "✗"} In meta description
-                        </span>
-                        <span className={nameHas ? "text-emerald-600" : "text-destructive"}>
-                          {nameHas ? "✓" : "✗"} In product name
-                        </span>
-                        <span className={bodyHas ? "text-emerald-600" : "text-destructive"}>
-                          {bodyHas ? "✓" : "✗"} In description
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-1">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${score * 25}%`, backgroundColor: score >= 3 ? "hsl(var(--primary))" : score >= 2 ? "hsl(45, 90%, 50%)" : "hsl(var(--destructive))" }} />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">{score}/4 checks passed</p>
-                    </div>
-                  );
-                })()}
-              </div>
+              <FocusKeywordAnalyzer
+                keywords={form.seo_keywords}
+                onKeywordsChange={(v) => update("seo_keywords", v)}
+                placeholder="Primary keyword for this product"
+                checks={[
+                  { label: "In SEO title", content: form.seo_title || product?.name || "" },
+                  { label: "In meta description", content: form.seo_description },
+                  { label: "In product name", content: product?.name || "" },
+                  { label: "In description", content: form.description },
+                ]}
+              />
 
               <div className="space-y-2">
                 <Label>SEO Title</Label>

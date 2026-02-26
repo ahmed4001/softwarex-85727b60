@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { FocusKeywordAnalyzer } from "@/components/FocusKeywordAnalyzer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -414,50 +415,17 @@ export default function AdminBlogEditorPage() {
             <div className="product-card space-y-5">
               <h2 className="text-sm font-semibold text-foreground">Search Engine Optimization</h2>
 
-              {/* Focus Keyword */}
-              <div className="space-y-2">
-                <Label htmlFor="focus_keyword">Focus Keyword</Label>
-                <Input
-                  id="focus_keyword"
-                  value={form.seo_keywords.split(",")[0]?.trim() || ""}
-                  onChange={(e) => {
-                    const rest = form.seo_keywords.split(",").slice(1).map(k => k.trim()).filter(Boolean);
-                    updateField("seo_keywords", [e.target.value.trim(), ...rest].filter(Boolean).join(", "));
-                  }}
-                  placeholder="Primary keyword for this post"
-                />
-                {form.seo_keywords.split(",")[0]?.trim() && (() => {
-                  const keyword = form.seo_keywords.split(",")[0].trim().toLowerCase();
-                  const titleHas = (form.seo_title || form.title).toLowerCase().includes(keyword);
-                  const descHas = form.seo_description.toLowerCase().includes(keyword);
-                  const slugHas = form.slug.toLowerCase().includes(keyword.replace(/\s+/g, "-"));
-                  const bodyHas = form.body.toLowerCase().includes(keyword);
-                  const score = [titleHas, descHas, slugHas, bodyHas].filter(Boolean).length;
-                  return (
-                    <div className="rounded-lg border border-border p-3 bg-muted/30 space-y-1.5">
-                      <p className="text-xs font-semibold text-foreground">Keyword Analysis — "{keyword}"</p>
-                      <div className="grid grid-cols-2 gap-1.5 text-xs">
-                        <span className={titleHas ? "text-emerald-600" : "text-destructive"}>
-                          {titleHas ? "✓" : "✗"} In SEO title
-                        </span>
-                        <span className={descHas ? "text-emerald-600" : "text-destructive"}>
-                          {descHas ? "✓" : "✗"} In meta description
-                        </span>
-                        <span className={slugHas ? "text-emerald-600" : "text-destructive"}>
-                          {slugHas ? "✓" : "✗"} In URL slug
-                        </span>
-                        <span className={bodyHas ? "text-emerald-600" : "text-destructive"}>
-                          {bodyHas ? "✓" : "✗"} In body content
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-1">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${score * 25}%`, backgroundColor: score >= 3 ? "hsl(var(--primary))" : score >= 2 ? "hsl(45, 90%, 50%)" : "hsl(var(--destructive))" }} />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">{score}/4 checks passed</p>
-                    </div>
-                  );
-                })()}
-              </div>
+              <FocusKeywordAnalyzer
+                keywords={form.seo_keywords}
+                onKeywordsChange={(v) => updateField("seo_keywords", v)}
+                placeholder="Primary keyword for this post"
+                checks={[
+                  { label: "In SEO title", content: form.seo_title || form.title },
+                  { label: "In meta description", content: form.seo_description },
+                  { label: "In URL slug", content: form.slug, slugMatch: true },
+                  { label: "In body content", content: form.body },
+                ]}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="seo_title">SEO Title</Label>
