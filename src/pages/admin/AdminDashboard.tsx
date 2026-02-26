@@ -6,6 +6,9 @@ import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Package, Star, Users, MessageSquare, Eye, Sparkles, TrendingUp, ArrowUpRight, Clock, FileText, ShieldCheck, Globe } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { QuickActionsPanel } from "@/components/admin/QuickActionsPanel";
+import { SystemHealthPanel } from "@/components/admin/SystemHealthPanel";
+import { ContentPipelineWidget } from "@/components/admin/ContentPipelineWidget";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -214,6 +217,13 @@ export default function AdminDashboard() {
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.21 }}>
             <StatCard title="Submissions" value={stats?.pendingSubmissions ?? 0} icon={ShieldCheck} color="warning" />
           </motion.div>
+        </div>
+
+        {/* Quick Actions + System Health + Content Pipeline */}
+        <div className="grid xl:grid-cols-3 gap-4">
+          <QuickActionsPanel />
+          <SystemHealthPanel />
+          <ContentPipelineWidget />
         </div>
 
         {/* Growth cards */}

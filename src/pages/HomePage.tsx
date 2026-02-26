@@ -27,6 +27,8 @@ import { VendorCTASection } from "@/components/home/VendorCTASection";
 import { MostPopularCategoriesSection } from "@/components/home/MostPopularCategoriesSection";
 import { ResearchDirectorySection } from "@/components/home/ResearchDirectorySection";
 import { ProductShowcaseSection } from "@/components/home/ProductShowcaseSection";
+import { TrendingProductsSection } from "@/components/home/TrendingProductsSection";
+import { LiveStatsCounter } from "@/components/home/LiveStatsCounter";
 
 const SITE_URL = "https://softwarehub.com";
 
@@ -193,6 +195,7 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <StatsSection stats={stats} />
+        <LiveStatsCounter />
         <TrustedBySection />
 
         {/* Real Product Screenshots Showcase */}
@@ -243,6 +246,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        <TrendingProductsSection />
         <PopularComparisonsSection />
 
         <div className="section-gradient-divider" aria-hidden="true" />

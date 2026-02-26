@@ -9,6 +9,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
+import { VendorResponseMetrics } from "@/components/vendor/VendorResponseMetrics";
+import { VendorCompetitorBenchmark } from "@/components/vendor/VendorCompetitorBenchmark";
 
 function VendorDashboardSkeleton() {
   return (
@@ -146,6 +148,11 @@ export default function VendorDashboard() {
               <StatCard title="Unanswered" value={unanswered} icon={MessageSquare} />
             </div>
 
+            {/* Response Metrics */}
+            <div className="mb-8">
+              <VendorResponseMetrics userId={user!.id} productIds={productIds} />
+            </div>
+
             {/* Review Trend Chart */}
             {reviews.length > 0 && (
               <div className="glass-card p-6 mb-8">
@@ -176,6 +183,11 @@ export default function VendorDashboard() {
                 </div>
               </div>
             )}
+
+            {/* Competitor Benchmark */}
+            <div className="mb-8">
+              <VendorCompetitorBenchmark productIds={productIds} />
+            </div>
 
             <h2 className="text-lg font-display font-bold text-foreground mb-4">Your Products</h2>
             <div className="grid md:grid-cols-2 gap-4">

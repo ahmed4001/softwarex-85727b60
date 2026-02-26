@@ -5,6 +5,9 @@ import { ReviewActivityChart } from "@/components/dashboard/ReviewActivityChart"
 import { RecommendationsWidget } from "@/components/dashboard/RecommendationsWidget";
 import { ComparisonHistoryWidget } from "@/components/dashboard/ComparisonHistoryWidget";
 import { SocialFeedWidget } from "@/components/dashboard/SocialFeedWidget";
+import { RatingDistributionChart } from "@/components/dashboard/RatingDistributionChart";
+import { EngagementCalendar } from "@/components/dashboard/EngagementCalendar";
+import { ReviewImpactScore } from "@/components/dashboard/ReviewImpactScore";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -560,7 +563,12 @@ function AnalyticsTab({ userId }: { userId: string }) {
         <h3 className="text-base font-bold text-foreground mb-1">Your Analytics</h3>
         <p className="text-sm text-muted-foreground">Track your review activity and engagement over time.</p>
       </div>
-      <ReviewActivityChart userId={userId} />
+      <ReviewImpactScore userId={userId} />
+      <div className="grid md:grid-cols-2 gap-4">
+        <ReviewActivityChart userId={userId} />
+        <RatingDistributionChart userId={userId} />
+      </div>
+      <EngagementCalendar userId={userId} />
     </div>
   );
 }
