@@ -20,6 +20,7 @@ import { PricingTiersDisplay } from "@/components/PricingTiersDisplay";
 import { TCOCalculator } from "@/components/TCOCalculator";
 import { LeadCaptureForm } from "@/components/LeadCaptureForm";
 import { ProductQASection } from "@/components/ProductQASection";
+import { PricingComparisonWidget } from "@/components/PricingComparisonWidget";
 
 function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]; productName: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -546,11 +547,17 @@ export default function ProductDetailPage() {
               pricingDescription={product.pricing_description}
             />
             <TCOCalculator products={[{ name: product.name, logo_url: product.logo_url, starting_price: product.starting_price, pricing_model: product.pricing_model, pricing_tiers: product.pricing_tiers as any }]} />
-            <div className="text-center">
-              <Link to={`/compare-pricing?products=${product.id}`}>
-                <Button variant="outline" className="rounded-xl gap-2"><ArrowLeftRight className="h-4 w-4" /> Compare with Other Products</Button>
-              </Link>
-            </div>
+            <PricingComparisonWidget
+              currentProduct={{
+                id: product.id,
+                name: product.name,
+                slug: product.slug,
+                logo_url: product.logo_url,
+                pricing_model: product.pricing_model,
+                starting_price: product.starting_price ? Number(product.starting_price) : null,
+                pricing_tiers: product.pricing_tiers,
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="alternatives">
