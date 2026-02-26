@@ -78,6 +78,11 @@ const VendorLeadAnalyticsPage = lazy(() => import("./pages/vendor/VendorLeadAnal
 const VendorSponsoredPage = lazy(() => import("./pages/vendor/VendorSponsoredPage"));
 const VendorROIPage = lazy(() => import("./pages/vendor/VendorROIPage"));
 
+const DiscussionsPage = lazy(() => import("./pages/DiscussionsPage"));
+const DiscussionDetailPage = lazy(() => import("./pages/DiscussionDetailPage"));
+const LandingPageView = lazy(() => import("./pages/LandingPageView"));
+const AdminLandingPagesPage = lazy(() => import("./pages/admin/AdminLandingPagesPage"));
+
 const queryClient = new QueryClient();
 
 const Loading = () => <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground">Loading...</div>;
@@ -112,6 +117,9 @@ function AppContent() {
           <Route path="/lists/:slug" element={<ErrorBoundary><ListDetailPage /></ErrorBoundary>} />
           <Route path="/lists/:slug/edit" element={<ErrorBoundary><ListEditorPage /></ErrorBoundary>} />
           <Route path="/awards" element={<ErrorBoundary><AwardsPage /></ErrorBoundary>} />
+          <Route path="/discussions" element={<ErrorBoundary><DiscussionsPage /></ErrorBoundary>} />
+          <Route path="/discussions/:id" element={<ErrorBoundary><DiscussionDetailPage /></ErrorBoundary>} />
+          <Route path="/best/:slug" element={<ErrorBoundary><LandingPageView /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes */}
@@ -150,6 +158,7 @@ function AppContent() {
           <Route path="emails" element={<ErrorBoundary><AdminBrevoPage /></ErrorBoundary>} />
           <Route path="subscribers" element={<ErrorBoundary><AdminSubscribersPage /></ErrorBoundary>} />
           <Route path="pricing" element={<ErrorBoundary><AdminPricingPage /></ErrorBoundary>} />
+          <Route path="landing-pages" element={<ErrorBoundary><AdminLandingPagesPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}
