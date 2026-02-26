@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { seedProducts, popularComparisons, type SeedProduct } from "@/lib/seed-products";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, SkipForward, Loader2, Play, Zap, BarChart3, Globe, BookOpen } from "lucide-react";
+import { CheckCircle2, XCircle, SkipForward, Loader2, Play, Zap, BarChart3, Globe, BookOpen, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import G2DiscoveryPanel from "@/components/admin/G2DiscoveryPanel";
 import CapterraDiscoveryPanel from "@/components/admin/CapterraDiscoveryPanel";
@@ -18,6 +19,151 @@ interface ScrapeResult {
 }
 
 const BATCH_SIZE = 3;
+
+function BulkAIGeneratePanel() {
+  const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genLog, setGenLog] = useState<{ cat: string; inserted: number; skipped: number; errors: number }[]>([]);
+  const [currentCat, setCurrentCat] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [batchSize, setBatchSize] = useState(50);
+
+  const { data: categories } = useQuery({
+    queryKey: ["all-categories-for-gen"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id, name, slug, product_count").eq("is_active", true).order("name");
+      return data || [];
+    },
+  });
+
+  const totalInserted = genLog.reduce((s, l) => s + l.inserted, 0);
+
+  const generateForCategory = async (catId: string, catName: string) => {
+    setCurrentCat(catName);
+    try {
+      const { data, error } = await supabase.functions.invoke("bulk-generate-products", {
+        body: { category_id: catId, category_name: catName, batch_size: batchSize, offset: 0 },
+      });
+      if (error) {
+        setGenLog((prev) => [...prev, { cat: catName, inserted: 0, skipped: 0, errors: 1 }]);
+      } else if (data) {
+        setGenLog((prev) => [...prev, { cat: catName, inserted: data.inserted || 0, skipped: data.skipped || 0, errors: data.errors || 0 }]);
+      }
+    } catch {
+      setGenLog((prev) => [...prev, { cat: catName, inserted: 0, skipped: 0, errors: 1 }]);
+    }
+  };
+
+  const generateAll = async () => {
+    if (!categories?.length) return;
+    setIsGenerating(true);
+    setGenLog([]);
+    setProgress(0);
+    for (let i = 0; i < categories.length; i++) {
+      const cat = categories[i];
+      setProgress(((i + 1) / categories.length) * 100);
+      await generateForCategory(cat.id, cat.name);
+    }
+    setCurrentCat("");
+    setIsGenerating(false);
+    toast({ title: "Bulk generation complete", description: `Generated products across ${categories.length} categories.` });
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> AI Bulk Product Generator</CardTitle>
+          <CardDescription>
+            Generate real software products using AI across all {categories?.length || 0} categories. Each batch generates ~{batchSize} products per category.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium">Products per category:</label>
+            <select
+              value={batchSize}
+              onChange={(e) => setBatchSize(Number(e.target.value))}
+              className="border rounded px-2 py-1 text-sm bg-background"
+              disabled={isGenerating}
+            >
+              <option value={25}>25</option>
+              <option value={50}>50 (recommended)</option>
+              <option value={75}>75</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-muted-foreground">
+              ≈ {(categories?.length || 0) * batchSize} total products
+            </span>
+          </div>
+
+          <div className="flex gap-3">
+            <Button onClick={generateAll} disabled={isGenerating} size="lg">
+              {isGenerating ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating... {Math.round(progress)}%</>
+              ) : (
+                <><Sparkles className="mr-2 h-4 w-4" /> Generate All ({categories?.length || 0} categories)</>
+              )}
+            </Button>
+          </div>
+
+          {isGenerating && (
+            <div className="space-y-2">
+              <Progress value={progress} className="h-2" />
+              <p className="text-sm text-muted-foreground">Processing: <strong>{currentCat}</strong></p>
+            </div>
+          )}
+
+          {genLog.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex gap-4 text-sm">
+                <Badge variant="default">{totalInserted} inserted</Badge>
+                <Badge variant="secondary">{genLog.reduce((s, l) => s + l.skipped, 0)} skipped</Badge>
+                <Badge variant="destructive">{genLog.reduce((s, l) => s + l.errors, 0)} errors</Badge>
+              </div>
+              <div className="max-h-64 overflow-y-auto border rounded-lg divide-y">
+                {genLog.map((l, i) => (
+                  <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                    <span className="font-medium">{l.cat}</span>
+                    <div className="flex gap-2">
+                      <span className="text-green-600">+{l.inserted}</span>
+                      {l.skipped > 0 && <span className="text-amber-600">~{l.skipped}</span>}
+                      {l.errors > 0 && <span className="text-destructive">✕{l.errors}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Categories ({categories?.length || 0})</CardTitle>
+          <CardDescription>Click any category to generate products individually.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {categories?.map((cat) => (
+              <Button
+                key={cat.id}
+                variant="outline"
+                size="sm"
+                className="justify-between"
+                disabled={isGenerating}
+                onClick={() => generateForCategory(cat.id, cat.name)}
+              >
+                <span className="truncate">{cat.name}</span>
+                <Badge variant="secondary" className="ml-2 text-xs">{cat.product_count || 0}</Badge>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function AdminSeedPage() {
   const { toast } = useToast();
@@ -128,6 +274,9 @@ export default function AdminSeedPage() {
           <TabsTrigger value="capterra" className="gap-2">
             <BookOpen className="h-4 w-4" /> Capterra Discovery
           </TabsTrigger>
+          <TabsTrigger value="bulk-ai" className="gap-2">
+            <Sparkles className="h-4 w-4" /> Bulk AI Generate
+          </TabsTrigger>
           <TabsTrigger value="seed" className="gap-2">
             <Play className="h-4 w-4" /> Seed List
           </TabsTrigger>
@@ -139,6 +288,10 @@ export default function AdminSeedPage() {
 
         <TabsContent value="capterra">
           <CapterraDiscoveryPanel />
+        </TabsContent>
+
+        <TabsContent value="bulk-ai">
+          <BulkAIGeneratePanel />
         </TabsContent>
 
         <TabsContent value="seed" className="space-y-6">
