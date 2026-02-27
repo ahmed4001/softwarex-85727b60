@@ -46,13 +46,13 @@ export function PopularComparisonsSection() {
       
       const prodMap = new Map((prods || []).map((p: any) => [p.id, p]));
       
-      // Only keep comparisons where both products have info_score >= 3 and a logo
+      // Keep comparisons where both products exist and have a logo
       const quality = data.filter((c: any) => {
         const ids = Array.isArray(c.product_ids) ? c.product_ids.slice(0, 2) : [];
         if (ids.length < 2) return false;
         return ids.every((id: string) => {
           const p = prodMap.get(id);
-          return p && p.info_score >= 3 && p.logo_url;
+          return p && p.logo_url;
         });
       });
       
