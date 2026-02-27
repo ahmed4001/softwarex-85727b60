@@ -22,8 +22,6 @@ interface CategoryCardProps {
 
 export function CategoryCard({ slug, name, icon, product_count, color, index = 0 }: CategoryCardProps) {
   const IconComponent = iconMap[icon || ""] || LayoutDashboard;
-  // Show a realistic fake count when the real count is 0
-  const displayCount = product_count > 0 ? product_count : Math.abs((name.charCodeAt(0) * 7 + name.length * 13) % 4600) + 400;
 
   return (
     <motion.div
@@ -33,15 +31,12 @@ export function CategoryCard({ slug, name, icon, product_count, color, index = 0
     >
       <Link
         to={`/category/${slug}`}
-        className="glass-card group flex items-center gap-4 p-5"
+        className="glass-card group flex items-center gap-4 p-5 hover:shadow-md transition-all duration-300"
       >
-        <div className="h-10 w-10 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/12 transition-colors">
+        <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
           <IconComponent className="h-5 w-5 text-primary" />
         </div>
-        <div className="min-w-0">
-          <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors truncate">{name}</h3>
-          <p className="text-xs text-muted-foreground">{displayCount} products</p>
-        </div>
+        <h3 className="font-bold text-foreground text-[15px] tracking-tight group-hover:text-primary transition-colors truncate">{name}</h3>
       </Link>
     </motion.div>
   );
