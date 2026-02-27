@@ -140,7 +140,7 @@ export default function HomePage() {
   const { data: categories } = useQuery({
     queryKey: ["categories-featured"],
     queryFn: async () => {
-      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order").limit(8);
+      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order").limit(16);
       return data || [];
     },
   });
