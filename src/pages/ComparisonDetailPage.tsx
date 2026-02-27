@@ -65,11 +65,107 @@ export default function ComparisonDetailPage() {
     </div>
   );
 
+  // Build JSON-LD structured data for SEO
+  const comparisonJsonLd = productA && productB ? [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": comparison.seo_title || comparison.title || `${productA.name} vs ${productB.name}`,
+      "description": comparison.seo_description || comparison.summary?.substring(0, 160) || `Compare ${productA.name} and ${productB.name}`,
+      "url": `${window.location.origin}/compare/${slug}`,
+      "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": 2,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "item": {
+              "@type": "SoftwareApplication",
+              "name": productA.name,
+              "description": productA.tagline || productA.description?.substring(0, 160),
+              "url": `${window.location.origin}/product/${productA.slug}`,
+              ...(productA.logo_url && { "image": productA.logo_url }),
+              ...(productA.avg_rating && {
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": Number(productA.avg_rating).toFixed(1),
+                  "bestRating": "5",
+                  "ratingCount": productA.total_reviews || 1
+                }
+              }),
+              ...(productA.starting_price !== null && {
+                "offers": {
+                  "@type": "Offer",
+                  "price": productA.starting_price || 0,
+                  "priceCurrency": "USD"
+                }
+              })
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "item": {
+              "@type": "SoftwareApplication",
+              "name": productB.name,
+              "description": productB.tagline || productB.description?.substring(0, 160),
+              "url": `${window.location.origin}/product/${productB.slug}`,
+              ...(productB.logo_url && { "image": productB.logo_url }),
+              ...(productB.avg_rating && {
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": Number(productB.avg_rating).toFixed(1),
+                  "bestRating": "5",
+                  "ratingCount": productB.total_reviews || 1
+                }
+              }),
+              ...(productB.starting_price !== null && {
+                "offers": {
+                  "@type": "Offer",
+                  "price": productB.starting_price || 0,
+                  "priceCurrency": "USD"
+                }
+              })
+            }
+          }
+        ]
+      }
+    },
+    // FAQ schema from comparison data
+    ...(comparison.winner_verdict ? [{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": `Which is better: ${productA.name} or ${productB.name}?`,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": comparison.winner_verdict
+          }
+        },
+        ...(comparison.best_for_a ? [{
+          "@type": "Question",
+          "name": `Who is ${productA.name} best for?`,
+          "acceptedAnswer": { "@type": "Answer", "text": comparison.best_for_a }
+        }] : []),
+        ...(comparison.best_for_b ? [{
+          "@type": "Question",
+          "name": `Who is ${productB.name} best for?`,
+          "acceptedAnswer": { "@type": "Answer", "text": comparison.best_for_b }
+        }] : [])
+      ]
+    }] : [])
+  ] : undefined;
+
   return (
     <>
       <SeoHead
-        title={comparison.seo_title || comparison.title || `${productA.name} ${t("comparison.vs")} ${productB.name}`}
-        description={comparison.seo_description || `${productA.name} ${t("comparison.vs")} ${productB.name}`}
+        title={comparison.seo_title || comparison.title || `${productA?.name || 'Product'} vs ${productB?.name || 'Product'} — Comparison`}
+        description={comparison.seo_description || comparison.summary?.substring(0, 155) || `Compare ${productA?.name} and ${productB?.name} features, pricing, and ratings`}
+        canonicalUrl={`${window.location.origin}/compare/${slug}`}
+        jsonLd={comparisonJsonLd}
       />
 
       <div className="container py-8 max-w-5xl">

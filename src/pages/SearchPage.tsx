@@ -7,12 +7,13 @@ import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Sparkles, Wand2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { PaginationControls } from "@/components/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const PAGE_SIZE = 20;
 const PRICING_MODELS = [
@@ -33,11 +34,26 @@ export default function SearchPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [ratingRange, setRatingRange] = useState([0]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [aiMode, setAiMode] = useState(false);
   const { t } = useTranslation();
 
   const hasActiveFilters = pricingFilter !== "all" || categoryFilter !== "all" || ratingRange[0] > 0 || tierFilter !== "all";
 
   useEffect(() => { setPage(0); }, [q, tierFilter, pricingFilter, categoryFilter, ratingRange]);
+
+  // AI-powered search
+  const { data: aiResults, isLoading: aiLoading } = useQuery({
+    queryKey: ["ai-search", q],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("ai-smart-search", {
+        body: { query: q },
+      });
+      if (error) throw error;
+      return data as { results: any[]; interpretation: string; filters: any };
+    },
+    enabled: aiMode && q.length >= 3,
+    staleTime: 60000,
+  });
 
   const { data: categories } = useQuery({
     queryKey: ["search-categories"],
@@ -124,25 +140,56 @@ export default function SearchPage() {
     setTierFilter("all");
   };
 
+  const displayProducts = aiMode ? (aiResults?.results || []) : products;
+  const displayLoading = aiMode ? aiLoading : isLoading;
+
   return (
     <>
       <SeoHead title={q ? `${t("common.search")}: ${q}` : t("common.search")} />
       <div className="container py-8">
         <div className="max-w-2xl mx-auto mb-8">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            {aiMode ? (
+              <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary animate-pulse" />
+            ) : (
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            )}
             <Input
               value={q}
               onChange={(e) => setParams({ q: e.target.value })}
-              placeholder={t("searchPage.searchSoftware")}
-              className="h-14 pl-12 text-lg rounded-2xl"
+              placeholder={aiMode ? "Try: 'best CRM for startups under $50/mo'" : t("searchPage.searchSoftware")}
+              className={cn("h-14 pl-12 pr-32 text-lg rounded-2xl", aiMode && "ring-2 ring-primary/30")}
             />
+            <Button
+              variant={aiMode ? "default" : "outline"}
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 gap-1.5 rounded-xl"
+              onClick={() => setAiMode(!aiMode)}
+            >
+              <Wand2 className="h-3.5 w-3.5" />
+              AI Search
+            </Button>
           </div>
+          {aiMode && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Ask in natural language — AI understands pricing, categories, ratings, and more
+            </p>
+          )}
         </div>
 
-        {q && <p className="text-muted-foreground mb-4">{t("searchPage.resultsFor", { count: totalCount ?? 0, query: q })}</p>}
+        {aiMode && aiResults?.interpretation && (
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm text-muted-foreground">{aiResults.interpretation}</span>
+            {aiResults.filters?.pricing_model && <Badge variant="secondary">{aiResults.filters.pricing_model}</Badge>}
+            {aiResults.filters?.max_price && <Badge variant="secondary">≤${aiResults.filters.max_price}/mo</Badge>}
+            {aiResults.filters?.min_rating && <Badge variant="secondary">{aiResults.filters.min_rating}+ ★</Badge>}
+          </div>
+        )}
 
-        {q && (
+        {!aiMode && q && <p className="text-muted-foreground mb-4">{t("searchPage.resultsFor", { count: totalCount ?? 0, query: q })}</p>}
+
+        {!aiMode && q && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Button
@@ -236,8 +283,8 @@ export default function SearchPage() {
         )}
 
         <div className="grid md:grid-cols-2 gap-4">
-          {isLoading ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />) :
-            products?.map((p: any) => (
+          {displayLoading ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />) :
+            displayProducts?.map((p: any) => (
               <ProductCard
                 key={p.id} id={p.id} slug={p.slug} name={p.name} tagline={p.tagline}
                 logo_url={p.logo_url} avg_rating={Number(p.avg_rating)} total_reviews={p.total_reviews}
@@ -248,14 +295,14 @@ export default function SearchPage() {
           }
         </div>
 
-        {!isLoading && q && products?.length === 0 && (
+        {!displayLoading && q && displayProducts?.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg font-medium mb-2">{t("searchPage.noResults")}</p>
             <p>{t("searchPage.tryDifferent")} <Link to="/categories" className="text-primary hover:underline">{t("searchPage.browseCategories")}</Link></p>
           </div>
         )}
 
-        {q && <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} className="mt-10" />}
+        {!aiMode && q && <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} className="mt-10" />}
       </div>
     </>
   );
