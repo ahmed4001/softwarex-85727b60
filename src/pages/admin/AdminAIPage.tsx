@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bot, Sparkles, Send, Loader2, Copy, Wand2, FileText, MessageSquare,
-  Star, Zap, Settings2, CheckCircle2
+  Star, Zap, Settings2, CheckCircle2, Key, Plus, Trash2, Eye, EyeOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -23,6 +23,7 @@ import ReactMarkdown from "react-markdown";
 const AI_MODELS = [
   { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash", provider: "Google", speed: "Fast", badge: "Recommended" },
   { id: "google/gemini-3-pro-preview", label: "Gemini 3 Pro", provider: "Google", speed: "Medium" },
+  { id: "google/gemini-3-pro-image-preview", label: "Gemini 3 Pro Image", provider: "Google", speed: "Medium", badge: "Image Gen" },
   { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "Google", speed: "Medium" },
   { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google", speed: "Fast" },
   { id: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", provider: "Google", speed: "Fastest" },
@@ -30,6 +31,15 @@ const AI_MODELS = [
   { id: "openai/gpt-5-mini", label: "GPT-5 Mini", provider: "OpenAI", speed: "Fast" },
   { id: "openai/gpt-5-nano", label: "GPT-5 Nano", provider: "OpenAI", speed: "Fastest" },
   { id: "openai/gpt-5.2", label: "GPT-5.2", provider: "OpenAI", speed: "Medium", badge: "Latest" },
+];
+
+const EXTERNAL_PROVIDERS = [
+  { id: "google_gemini", label: "Google Gemini API", secretKey: "GOOGLE_GEMINI_API_KEY", description: "Direct access to Google Gemini models", docsUrl: "https://ai.google.dev/gemini-api/docs/api-key" },
+  { id: "openai", label: "OpenAI API", secretKey: "OPENAI_API_KEY", description: "Direct access to OpenAI GPT models", docsUrl: "https://platform.openai.com/api-keys" },
+  { id: "anthropic", label: "Anthropic API", secretKey: "ANTHROPIC_API_KEY", description: "Access to Claude models", docsUrl: "https://console.anthropic.com/settings/keys" },
+  { id: "mistral", label: "Mistral AI", secretKey: "MISTRAL_API_KEY", description: "Access to Mistral models", docsUrl: "https://console.mistral.ai/api-keys" },
+  { id: "groq", label: "Groq", secretKey: "GROQ_API_KEY", description: "Ultra-fast inference for open models", docsUrl: "https://console.groq.com/keys" },
+  { id: "perplexity", label: "Perplexity AI", secretKey: "PERPLEXITY_API_KEY", description: "AI-powered search and answers", docsUrl: "https://www.perplexity.ai/settings/api" },
 ];
 
 const CONTENT_TEMPLATES = [
@@ -105,80 +115,221 @@ function ProvidersTab() {
   const currentModel = AI_MODELS.find(m => m.id === selectedModel);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Default AI Model</CardTitle>
-          <CardDescription>Choose the default model for all AI features</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Select value={selectedModel} onValueChange={setSelectedModel}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {AI_MODELS.map(m => (
-                <SelectItem key={m.id} value={m.id}>
-                  <span className="flex items-center gap-2">
-                    {m.label}
-                    <span className="text-xs text-muted-foreground">({m.provider})</span>
-                    {m.badge && <Badge variant="secondary" className="text-[10px] h-4">{m.badge}</Badge>}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {currentModel && (
-            <div className="p-3 rounded-xl bg-muted/50 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Provider</span><span className="font-medium">{currentModel.provider}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Speed</span><Badge variant="outline" className="text-xs">{currentModel.speed}</Badge></div>
-            </div>
-          )}
-
-          <Button
-            onClick={() => saveMutation.mutate({ default_model: selectedModel, temperature: 0.7 })}
-            disabled={saveMutation.isPending}
-            className="w-full"
-          >
-            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-            Save Configuration
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Available Models</CardTitle>
-          <CardDescription>All AI models accessible through Lovable AI</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {AI_MODELS.map(m => (
-              <div key={m.id} className={cn(
-                "flex items-center justify-between p-3 rounded-xl border transition-colors",
-                m.id === selectedModel ? "border-primary/30 bg-primary/5" : "border-border/50"
-              )}>
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold",
-                    m.provider === "Google" ? "bg-primary/10 text-primary" : "bg-accent text-accent-foreground"
-                  )}>
-                    {m.provider === "Google" ? "G" : "O"}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium flex items-center gap-1.5">
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Default AI Model</CardTitle>
+            <CardDescription>Choose the default model for all AI features</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {AI_MODELS.map(m => (
+                  <SelectItem key={m.id} value={m.id}>
+                    <span className="flex items-center gap-2">
                       {m.label}
-                      {m.badge && <Badge variant="secondary" className="text-[9px] h-4">{m.badge}</Badge>}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{m.provider} • {m.speed}</p>
+                      <span className="text-xs text-muted-foreground">({m.provider})</span>
+                      {m.badge && <Badge variant="secondary" className="text-[10px] h-4">{m.badge}</Badge>}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {currentModel && (
+              <div className="p-3 rounded-xl bg-muted/50 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Provider</span><span className="font-medium">{currentModel.provider}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Speed</span><Badge variant="outline" className="text-xs">{currentModel.speed}</Badge></div>
+              </div>
+            )}
+
+            <Button
+              onClick={() => saveMutation.mutate({ ...((settings as any) || {}), default_model: selectedModel })}
+              disabled={saveMutation.isPending}
+              className="w-full"
+            >
+              {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Save Configuration
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Available Models</CardTitle>
+            <CardDescription>All AI models accessible through Lovable AI</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+              {AI_MODELS.map(m => (
+                <div key={m.id} className={cn(
+                  "flex items-center justify-between p-3 rounded-xl border transition-colors",
+                  m.id === selectedModel ? "border-primary/30 bg-primary/5" : "border-border/50"
+                )}>
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold",
+                      m.provider === "Google" ? "bg-primary/10 text-primary" : "bg-accent text-accent-foreground"
+                    )}>
+                      {m.provider === "Google" ? "G" : "O"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        {m.label}
+                        {m.badge && <Badge variant="secondary" className="text-[9px] h-4">{m.badge}</Badge>}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{m.provider} • {m.speed}</p>
+                    </div>
+                  </div>
+                  {m.id === selectedModel && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* External API Keys */}
+      <ExternalApiKeysSection settings={settings} saveMutation={saveMutation} />
+    </div>
+  );
+}
+
+/* ─── External API Keys Section ─── */
+function ExternalApiKeysSection({ settings, saveMutation }: { settings: any; saveMutation: any }) {
+  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [newKeys, setNewKeys] = useState<Record<string, string>>({});
+  const [editingProvider, setEditingProvider] = useState<string | null>(null);
+
+  const configuredKeys: Record<string, string> = (settings as any)?.api_keys || {};
+
+  const toggleVisibility = (id: string) => {
+    setVisibleKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const saveKey = (provider: typeof EXTERNAL_PROVIDERS[number]) => {
+    const key = newKeys[provider.id];
+    if (!key?.trim()) return;
+    const updatedKeys = { ...configuredKeys, [provider.id]: key.trim() };
+    saveMutation.mutate({ ...((settings as any) || {}), api_keys: updatedKeys, default_model: (settings as any)?.default_model || "google/gemini-3-flash-preview" });
+    setNewKeys(prev => ({ ...prev, [provider.id]: "" }));
+    setEditingProvider(null);
+    toast.success(`${provider.label} API key saved`);
+  };
+
+  const removeKey = (providerId: string) => {
+    const updatedKeys = { ...configuredKeys };
+    delete updatedKeys[providerId];
+    saveMutation.mutate({ ...((settings as any) || {}), api_keys: updatedKeys, default_model: (settings as any)?.default_model || "google/gemini-3-flash-preview" });
+    toast.success("API key removed");
+  };
+
+  const maskKey = (key: string) => key.slice(0, 8) + "•".repeat(Math.max(0, key.length - 12)) + key.slice(-4);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Key className="h-5 w-5 text-primary" />
+          External API Keys
+        </CardTitle>
+        <CardDescription>
+          Add your own API keys for direct model access. These are used as fallback when Lovable AI credits are exhausted.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {EXTERNAL_PROVIDERS.map(provider => {
+            const isConfigured = !!configuredKeys[provider.id];
+            const isEditing = editingProvider === provider.id;
+            const isVisible = visibleKeys.has(provider.id);
+
+            return (
+              <div key={provider.id} className={cn(
+                "p-4 rounded-xl border transition-colors",
+                isConfigured ? "border-primary/20 bg-primary/5" : "border-border/50"
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-9 w-9 rounded-lg flex items-center justify-center",
+                      isConfigured ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                    )}>
+                      <Key className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        {provider.label}
+                        {isConfigured && <Badge variant="secondary" className="text-[9px] h-4">Configured</Badge>}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{provider.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {isConfigured && !isEditing && (
+                      <>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleVisibility(provider.id)}>
+                          {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeKey(provider.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
+                    {!isEditing && (
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setEditingProvider(provider.id)}>
+                        <Plus className="h-3 w-3" /> {isConfigured ? "Update" : "Add Key"}
+                      </Button>
+                    )}
                   </div>
                 </div>
-                {m.id === selectedModel && <CheckCircle2 className="h-4 w-4 text-primary" />}
+
+                {isConfigured && !isEditing && (
+                  <div className="mt-2 px-12">
+                    <code className="text-xs text-muted-foreground font-mono">
+                      {isVisible ? configuredKeys[provider.id] : maskKey(configuredKeys[provider.id])}
+                    </code>
+                  </div>
+                )}
+
+                {isEditing && (
+                  <div className="mt-3 flex gap-2">
+                    <Input
+                      type="password"
+                      placeholder={`Paste your ${provider.label} key...`}
+                      value={newKeys[provider.id] || ""}
+                      onChange={e => setNewKeys(prev => ({ ...prev, [provider.id]: e.target.value }))}
+                      className="h-9 text-sm font-mono flex-1"
+                    />
+                    <Button size="sm" className="h-9" onClick={() => saveKey(provider)} disabled={!newKeys[provider.id]?.trim()}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingProvider(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+
+                {isEditing && (
+                  <p className="mt-2 text-xs text-muted-foreground px-1">
+                    Get your key from{" "}
+                    <a href={provider.docsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      {provider.label} dashboard →
+                    </a>
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
