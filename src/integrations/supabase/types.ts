@@ -2114,6 +2114,9 @@ export type Database = {
           review_count: number | null
           total_points: number
           user_id: string
+          verification_type: string | null
+          verified_at: string | null
+          verified_domain: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -2139,6 +2142,9 @@ export type Database = {
           review_count?: number | null
           total_points?: number
           user_id: string
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_domain?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -2164,6 +2170,9 @@ export type Database = {
           review_count?: number | null
           total_points?: number
           user_id?: string
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_domain?: string | null
         }
         Relationships: []
       }

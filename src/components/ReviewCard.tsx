@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StarRating } from "./StarRating";
-import { ThumbsUp, ThumbsDown, CheckCircle, MessageCircle, Send, Trash2, ChevronDown, ChevronUp, Store } from "lucide-react";
+import { ThumbsUp, ThumbsDown, CheckCircle, MessageCircle, Send, Trash2, ChevronDown, ChevronUp, Store, ShieldCheck, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
@@ -49,6 +49,20 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_o
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
 
+  // Reviewer verification status
+  const { data: reviewerProfile } = useQuery({
+    queryKey: ["reviewer-verification", reviewer_user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("verification_type, verified_domain")
+        .eq("user_id", reviewer_user_id!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!reviewer_user_id,
+  });
+
   // Vendor response
   const { data: vendorResponse } = useQuery({
     queryKey: ["vendor-response", id],
@@ -90,6 +104,16 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_o
         {verified_reviewer && (
           <div className="flex items-center gap-1.5 text-[hsl(var(--success))] text-xs font-semibold bg-[hsl(var(--success)/0.08)] px-3 py-1.5 rounded-full">
             <CheckCircle className="h-3.5 w-3.5" /> Verified
+          </div>
+        )}
+        {reviewerProfile?.verification_type === 'email_domain' && (
+          <div className="flex items-center gap-1.5 text-primary text-xs font-semibold bg-primary/8 px-3 py-1.5 rounded-full" title={`Verified via ${reviewerProfile.verified_domain}`}>
+            <Building2 className="h-3.5 w-3.5" /> {reviewerProfile.verified_domain}
+          </div>
+        )}
+        {reviewerProfile?.verification_type === 'linkedin' && (
+          <div className="flex items-center gap-1.5 text-[#0A66C2] text-xs font-semibold bg-[#0A66C2]/8 px-3 py-1.5 rounded-full">
+            <ShieldCheck className="h-3.5 w-3.5" /> LinkedIn Verified
           </div>
         )}
         {verified_purchase && !verified_reviewer && (

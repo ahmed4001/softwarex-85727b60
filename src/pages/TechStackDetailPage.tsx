@@ -74,9 +74,34 @@ export default function TechStackDetailPage() {
 
   const items = (stack.tech_stack_items || []).sort((a: any, b: any) => a.sort_order - b.sort_order);
 
+  // JSON-LD for tech stacks
+  const stackJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": stack.title,
+    "description": stack.description || `A curated tech stack`,
+    "url": `${window.location.origin}/stacks/${slug}`,
+    "numberOfItems": items.length,
+    "itemListElement": items.map((item: any, i: number) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "item": {
+        "@type": "SoftwareApplication",
+        "name": item.products?.name || "Software",
+        "description": item.role_description || item.products?.tagline,
+        ...(item.products?.logo_url && { "image": item.products.logo_url }),
+      }
+    }))
+  };
+
   return (
     <>
-      <SeoHead title={`${stack.title} — Tech Stack`} description={stack.description || `A curated tech stack on SoftwareHub`} />
+      <SeoHead
+        title={`${stack.title} — Tech Stack`}
+        description={stack.description || `A curated tech stack on SoftwareHub`}
+        canonicalUrl={`${window.location.origin}/stacks/${slug}`}
+        jsonLd={stackJsonLd}
+      />
       <main className="container py-8 md:py-12 max-w-3xl">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-start justify-between mb-6">
