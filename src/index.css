@@ -462,4 +462,34 @@
   .static-page-content .highlight-box p {
     @apply mb-0;
   }
+
+  /* ── Ghost-style editor ──────────────────────────────── */
+  .ghost-editor .ProseMirror {
+    @apply px-0 py-4;
+    font-family: 'Lora', 'EB Garamond', Georgia, serif;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  .ghost-editor .ProseMirror:focus {
+    outline: none;
+  }
+
+  .ghost-editor .ProseMirror p.is-editor-empty:first-child::before {
+    color: hsl(var(--muted-foreground) / 0.4);
+    font-style: italic;
+  }
+
+  .ghost-editor .ProseMirror h1,
+  .ghost-editor .ProseMirror h2,
+  .ghost-editor .ProseMirror h3 {
+    @apply font-bold text-foreground;
+    font-family: 'Lora', 'EB Garamond', Georgia, serif;
+  }
+
+  .ghost-editor .ProseMirror blockquote {
+    border-left: 3px solid hsl(var(--primary));
+    @apply pl-4 italic text-muted-foreground;
+  }
 }
