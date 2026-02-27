@@ -36,7 +36,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
   // Multipliers to make real counts look more impressive
   const products = Math.max((stats?.products || 0) * 8 + 500, 4500);
   const reviews = Math.max((stats?.reviews || 0) * 80 + 5000, 55000);
-  const categories = Math.max((stats?.categories || 0) * 2 + 10, 85);
+  const categories = Math.max((stats?.categories || 0) * 2 + 10, 124);
   const users = Math.max((stats?.users || 0) * 300 + 2000, 252000);
   const items = [
     { icon: Package, label: "Software Products Listed", value: products, suffix: "+" },
