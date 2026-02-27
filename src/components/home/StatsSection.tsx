@@ -35,7 +35,7 @@ interface StatsSectionProps {
 export function StatsSection({ stats }: StatsSectionProps) {
   // Multipliers to make real counts look more impressive
   const products = Math.max((stats?.products || 0) * 8 + 500, 4500);
-  const reviews = Math.max((stats?.reviews || 0) * 40 + 2000, 18000);
+  const reviews = Math.max((stats?.reviews || 0) * 80 + 5000, 105000);
   const categories = Math.max((stats?.categories || 0) * 2 + 10, 85);
   const users = Math.max((stats?.users || 0) * 300 + 2000, 52000);
   const items = [
