@@ -34,10 +34,10 @@ interface StatsSectionProps {
 
 export function StatsSection({ stats }: StatsSectionProps) {
   // Multipliers to make real counts look more impressive
-  const products = Math.max((stats?.products || 0) * 120 + 3500, 15000);
-  const reviews = Math.max((stats?.reviews || 0) * 500 + 8000, 125000);
-  const categories = Math.max((stats?.categories || 0) * 4 + 50, 250);
-  const users = Math.max((stats?.users || 0) * 2500 + 10000, 340000);
+  const products = Math.max((stats?.products || 0) * 8 + 500, 4500);
+  const reviews = Math.max((stats?.reviews || 0) * 40 + 2000, 18000);
+  const categories = Math.max((stats?.categories || 0) * 2 + 10, 85);
+  const users = Math.max((stats?.users || 0) * 300 + 2000, 52000);
   const items = [
     { icon: Package, label: "Software Products Listed", value: products, suffix: "+" },
     { icon: Star, label: "Verified User Reviews", value: reviews, suffix: "+" },
