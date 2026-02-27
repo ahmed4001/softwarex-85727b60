@@ -27,9 +27,8 @@ export function PublicFooter() {
         .from("categories")
         .select("slug, name")
         .eq("is_active", true)
-        .eq("is_featured", true)
-        .order("sort_order")
-        .limit(10);
+        .order("product_count", { ascending: false })
+        .limit(20);
       return data || [];
     },
     staleTime: 1000 * 60 * 10,
