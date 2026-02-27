@@ -1542,6 +1542,36 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_applications: {
+        Row: {
+          contact_email: string
+          created_at: string
+          id: string
+          message: string | null
+          status: string
+          website_name: string
+          website_url: string
+        }
+        Insert: {
+          contact_email: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          status?: string
+          website_name: string
+          website_url: string
+        }
+        Update: {
+          contact_email?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          status?: string
+          website_name?: string
+          website_url?: string
+        }
+        Relationships: []
+      }
       partner_links: {
         Row: {
           created_at: string
