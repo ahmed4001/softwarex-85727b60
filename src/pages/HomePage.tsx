@@ -148,7 +148,8 @@ export default function HomePage() {
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
     queryKey: ["products-featured"],
     queryFn: async () => {
-      const { data } = await supabase
+      // First get featured products
+      const { data: featured } = await supabase
         .from("products")
         .select("*, categories!products_category_id_fkey(name)")
         .eq("is_active", true)
@@ -156,7 +157,22 @@ export default function HomePage() {
         .order("info_score", { ascending: false })
         .order("avg_rating", { ascending: false })
         .limit(6);
-      return data || [];
+      
+      // If we have fewer than 6, fill with top-rated non-featured products
+      const results = featured || [];
+      if (results.length < 6) {
+        const existingIds = results.map((p: any) => p.id);
+        const { data: extra } = await supabase
+          .from("products")
+          .select("*, categories!products_category_id_fkey(name)")
+          .eq("is_active", true)
+          .not("id", "in", `(${existingIds.join(",")})`)
+          .order("info_score", { ascending: false })
+          .order("avg_rating", { ascending: false })
+          .limit(6 - results.length);
+        if (extra) results.push(...extra);
+      }
+      return results;
     },
   });
 
