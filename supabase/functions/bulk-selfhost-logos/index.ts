@@ -104,14 +104,13 @@ Deno.serve(async (req) => {
     let query = supabase
       .from("products")
       .select("id, slug, website_url, logo_url, screenshots")
-      .eq("is_active", true)
-      .not("website_url", "is", null)
-      .neq("website_url", "");
+      .eq("is_active", true);
 
     if (mode === "logo" || mode === "both") {
+      // Include products with clearbit logos even if no website_url
       query = query.or("logo_url.ilike.%clearbit%,logo_url.is.null,logo_url.eq.");
     } else if (mode === "screenshot") {
-      // Products with empty screenshots array
+      query = query.not("website_url", "is", null).neq("website_url", "");
       query = query.or("screenshots.is.null,screenshots.eq.[]");
     }
 
@@ -129,7 +128,16 @@ Deno.serve(async (req) => {
 
     for (const product of products) {
       try {
-        let formattedUrl = product.website_url!.trim();
+        // Derive URL from website_url or from clearbit logo_url domain
+        let formattedUrl = product.website_url?.trim() || "";
+        if (!formattedUrl && product.logo_url?.includes("clearbit.com/")) {
+          const domain = product.logo_url.split("clearbit.com/")[1];
+          if (domain) formattedUrl = `https://${domain}`;
+        }
+        if (!formattedUrl) {
+          results.push({ id: product.id, slug: product.slug, status: "skipped:no_url" });
+          continue;
+        }
         if (!formattedUrl.startsWith("http")) formattedUrl = `https://${formattedUrl}`;
         const slug = product.slug || product.id;
         let logoStatus = "";
