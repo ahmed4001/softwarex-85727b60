@@ -22,7 +22,7 @@ serve(async (req) => {
     // Fetch products (optionally filtered by category)
     let query = supabase
       .from("products")
-      .select("id, name, short_description, category_id, categories:categories!products_category_id_fkey(name)")
+      .select("id, name, seo_description, category_id, categories:categories!products_category_id_fkey(name)")
       .eq("is_active", true)
       .order("total_reviews", { ascending: false })
       .limit(80);
@@ -49,7 +49,7 @@ serve(async (req) => {
     const productList = products.map((p: any) => ({
       id: p.id,
       name: p.name,
-      description: p.short_description || "",
+      description: p.seo_description || "",
       category: p.categories?.name || "Unknown",
     }));
 
