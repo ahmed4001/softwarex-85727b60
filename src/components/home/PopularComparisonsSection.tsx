@@ -15,6 +15,9 @@ export function PopularComparisonsSection() {
         .select("id, title, slug, product_ids, view_count, summary")
         .eq("is_published", true)
         .not("summary", "is", null)
+        .not("summary", "eq", "")
+        .not("summary", "ilike", "%limited information%")
+        .not("summary", "ilike", "%extremely limited%")
         .order("view_count", { ascending: false })
         .limit(6);
       return data || [];
