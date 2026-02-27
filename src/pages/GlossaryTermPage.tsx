@@ -35,7 +35,20 @@ export default function GlossaryTermPage() {
 
   return (
     <>
-      <SeoHead title={`${term.term} — SaaS Glossary`} description={term.definition} />
+      <SeoHead
+        title={`${term.term} — SaaS Glossary`}
+        description={term.definition}
+        canonicalUrl={`${window.location.origin}/glossary/${slug}`}
+        keywords={`${term.term}, ${term.term} definition, ${term.category || "SaaS"} glossary`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "DefinedTerm",
+          "name": term.term,
+          "description": term.definition,
+          "url": `${window.location.origin}/glossary/${slug}`,
+          ...(term.category && { "inDefinedTermSet": { "@type": "DefinedTermSet", "name": `${term.category} Glossary` } })
+        }}
+      />
       <main className="container py-10 max-w-3xl">
         <Link to="/glossary">
           <Button variant="ghost" size="sm" className="gap-1.5 mb-6 text-muted-foreground">

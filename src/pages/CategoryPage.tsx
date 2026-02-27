@@ -96,7 +96,31 @@ export default function CategoryPage() {
 
   return (
     <>
-      <SeoHead title={category?.name || t("categories.title")} description={category?.description || t("categories.subtitle")} />
+      <SeoHead
+        title={(category as any)?.seo_title || category?.name || t("categories.title")}
+        description={(category as any)?.seo_description || category?.description || t("categories.subtitle")}
+        keywords={(category as any)?.seo_keywords || `${category?.name} software, best ${category?.name} tools, ${category?.name} reviews`}
+        canonicalUrl={`${window.location.origin}/category/${slug}`}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": category?.name || t("categories.title"),
+            "description": category?.description || t("categories.subtitle"),
+            "url": `${window.location.origin}/category/${slug}`,
+            ...(totalCount && { "numberOfItems": totalCount })
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": window.location.origin },
+              { "@type": "ListItem", "position": 2, "name": "Categories", "item": `${window.location.origin}/categories` },
+              { "@type": "ListItem", "position": 3, "name": category?.name || t("categories.title") }
+            ]
+          }
+        ]}
+      />
       <div className="container py-10">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
           <Link to="/" className="hover:text-foreground transition-colors">{t("nav.home")}</Link>

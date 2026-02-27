@@ -55,7 +55,7 @@ export function SeoHead({
       {effectiveOgImage && <meta property="og:image" content={effectiveOgImage} />}
       <meta property="og:type" content={type} />
       <meta property="og:site_name" content={siteName} />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content={lang === "en" ? "en_US" : lang} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 
       {/* Twitter Card */}

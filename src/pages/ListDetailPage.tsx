@@ -79,7 +79,27 @@ export default function ListDetailPage() {
 
   return (
     <>
-      <SeoHead title={list.title} description={list.description || `A curated list of ${list.product_count} software products`} />
+      <SeoHead
+        title={list.title}
+        description={list.description || `A curated list of ${list.product_count} software products`}
+        canonicalUrl={`${window.location.origin}/lists/${slug}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": list.title,
+          "description": list.description,
+          "url": `${window.location.origin}/lists/${slug}`,
+          "numberOfItems": list.product_count,
+          ...(items && items.length > 0 && {
+            "itemListElement": items.map((item: any, i: number) => ({
+              "@type": "ListItem",
+              "position": i + 1,
+              "name": item.products?.name,
+              "url": `${window.location.origin}/product/${item.products?.slug}`
+            }))
+          })
+        }}
+      />
       <main className="container py-10 max-w-4xl">
         <Link to="/lists" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Back to Lists

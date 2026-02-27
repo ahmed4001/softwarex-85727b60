@@ -284,11 +284,46 @@ export default function ProductDetailPage() {
       <SeoHead
         title={product.seo_title || product.name}
         description={product.seo_description || product.tagline || ""}
-        jsonLd={{
-          "@context": "https://schema.org", "@type": "Product", name: product.name,
-          description: product.tagline,
-          aggregateRating: { "@type": "AggregateRating", ratingValue: product.avg_rating, reviewCount: product.total_reviews },
-        }}
+        keywords={product.seo_keywords || `${product.name}, ${product.name} reviews, ${product.name} pricing, ${(product.categories as any)?.name || "software"}`}
+        canonicalUrl={`${window.location.origin}/product/${product.slug}`}
+        ogImage={product.logo_url || undefined}
+        type="product"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": product.name,
+            "description": product.tagline || product.description?.substring(0, 160),
+            "url": `${window.location.origin}/product/${product.slug}`,
+            "applicationCategory": (product.categories as any)?.name || "BusinessApplication",
+            ...(product.logo_url && { "image": product.logo_url }),
+            ...(product.website_url && { "installUrl": product.website_url }),
+            ...(product.avg_rating && product.total_reviews > 0 && {
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": Number(product.avg_rating).toFixed(1),
+                "bestRating": "5",
+                "ratingCount": product.total_reviews
+              }
+            }),
+            ...(product.starting_price !== null && product.starting_price !== undefined && {
+              "offers": {
+                "@type": "Offer",
+                "price": product.starting_price || 0,
+                "priceCurrency": "USD"
+              }
+            })
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": window.location.origin },
+              ...((product.categories as any)?.name ? [{ "@type": "ListItem", "position": 2, "name": (product.categories as any).name, "item": `${window.location.origin}/category/${(product.categories as any).slug}` }] : []),
+              { "@type": "ListItem", "position": (product.categories as any)?.name ? 3 : 2, "name": product.name }
+            ]
+          }
+        ]}
       />
 
       <div className="container py-8">

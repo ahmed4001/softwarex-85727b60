@@ -35,7 +35,33 @@ export default function BlogPostPage() {
 
   return (
     <>
-      <SeoHead title={post.seo_title || post.title} description={post.seo_description || post.excerpt || ""} />
+      <SeoHead
+        title={post.seo_title || post.title}
+        description={post.seo_description || post.excerpt || ""}
+        keywords={post.seo_keywords || tags.join(", ") || undefined}
+        canonicalUrl={post.canonical_url || `${window.location.origin}/blog/${slug}`}
+        ogImage={post.og_image || post.featured_image || undefined}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          "headline": post.title,
+          "description": post.seo_description || post.excerpt,
+          ...(post.featured_image && { "image": post.featured_image }),
+          "url": `${window.location.origin}/blog/${slug}`,
+          "datePublished": post.published_at,
+          "dateModified": post.updated_at || post.published_at,
+          ...(post.reading_time && { "timeRequired": `PT${post.reading_time}M` }),
+          "publisher": {
+            "@type": "Organization",
+            "name": "SoftwareHub"
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": `${window.location.origin}/blog/${slug}`
+          }
+        }}
+      />
 
       <article className="max-w-3xl mx-auto px-4 py-16">
         {/* Back link */}

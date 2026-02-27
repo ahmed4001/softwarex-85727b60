@@ -69,20 +69,28 @@ export default function AlternativesPage() {
       <SeoHead
         title={page.title}
         description={page.meta_description || `Top alternatives to ${product?.name}`}
-      />
-      {faqSchema.length > 0 && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+        canonicalUrl={`${window.location.origin}/alternatives/${slug}`}
+        keywords={`${product?.name} alternatives, software like ${product?.name}, ${product?.name} competitors`}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": page.title,
+            "description": page.meta_description || `Top alternatives to ${product?.name}`,
+            "url": `${window.location.origin}/alternatives/${slug}`,
+            "numberOfItems": alternatives.length
+          },
+          ...(faqSchema.length > 0 ? [{
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: faqSchema.map((faq: any) => ({
+            "mainEntity": faqSchema.map((faq: any) => ({
               "@type": "Question",
-              name: faq.question,
-              acceptedAnswer: { "@type": "Answer", text: faq.answer },
+              "name": faq.question,
+              "acceptedAnswer": { "@type": "Answer", "text": faq.answer },
             })),
-          }),
-        }} />
-      )}
+          }] : [])
+        ]}
+      />
       <main className="container py-10 max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-3 mb-3">
