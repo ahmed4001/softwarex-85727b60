@@ -88,12 +88,11 @@ export default function AdminProductsPage() {
     let countQuery = supabase
       .from("products")
       .select("id", { count: "exact", head: true })
-      .eq("is_active", true)
-      .not("website_url", "is", null)
-      .neq("website_url", "");
+      .eq("is_active", true);
     if (mode === "logo" || mode === "both") {
       countQuery = countQuery.or("logo_url.ilike.%clearbit%,logo_url.is.null,logo_url.eq.");
     } else {
+      countQuery = countQuery.not("website_url", "is", null).neq("website_url", "");
       countQuery = countQuery.or("screenshots.is.null,screenshots.eq.[]");
     }
     const { count: totalCount } = await countQuery;
