@@ -30,6 +30,10 @@ import { ProductShowcaseSection } from "@/components/home/ProductShowcaseSection
 import { TrendingProductsSection } from "@/components/home/TrendingProductsSection";
 import { LiveStatsCounter } from "@/components/home/LiveStatsCounter";
 import { ProductFinderQuiz } from "@/components/home/ProductFinderQuiz";
+import { CategoryLeadersSection } from "@/components/home/CategoryLeadersSection";
+import { RecentReviewsFeed } from "@/components/home/RecentReviewsFeed";
+import { AwardsBannerSection } from "@/components/home/AwardsBannerSection";
+import { QuickCompareSection } from "@/components/home/QuickCompareSection";
 
 const SITE_URL = "https://softwarehub.com";
 
@@ -250,7 +254,9 @@ export default function HomePage() {
         </section>
 
         <TrendingProductsSection />
+        <CategoryLeadersSection />
         <ProductFinderQuiz />
+        <QuickCompareSection />
         <PopularComparisonsSection />
 
         <div className="section-gradient-divider" aria-hidden="true" />
@@ -273,7 +279,9 @@ export default function HomePage() {
         </section>
 
         <SocialProofBanner />
+        <RecentReviewsFeed />
         <RecentlyAddedSection />
+        <AwardsBannerSection />
         <TopCategoriesShowcase />
         <FeaturesGridSection />
         <HowItWorksSection />
