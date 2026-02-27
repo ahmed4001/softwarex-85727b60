@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
 
     if (mode === "logo" || mode === "both") {
       // Include products with clearbit logos even if no website_url
-      query = query.or("logo_url.ilike.%clearbit%,logo_url.is.null,logo_url.eq.");
+      query = query.or("logo_url.ilike.%clearbit%,logo_url.is.null");
     } else if (mode === "screenshot") {
       query = query.not("website_url", "is", null).neq("website_url", "");
       query = query.or("screenshots.is.null,screenshots.eq.[]");
