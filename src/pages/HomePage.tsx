@@ -161,15 +161,16 @@ export default function HomePage() {
       // If we have fewer than 6, fill with top-rated non-featured products
       const results = featured || [];
       if (results.length < 6) {
-        const existingIds = results.map((p: any) => p.id);
-        const { data: extra } = await supabase
+        const needed = 6 - results.length;
+        let query = supabase
           .from("products")
           .select("*, categories!products_category_id_fkey(name)")
           .eq("is_active", true)
-          .not("id", "in", `(${existingIds.join(",")})`)
+          .eq("is_featured", false)
           .order("info_score", { ascending: false })
           .order("avg_rating", { ascending: false })
-          .limit(6 - results.length);
+          .limit(needed);
+        const { data: extra } = await query;
         if (extra) results.push(...extra);
       }
       return results;
