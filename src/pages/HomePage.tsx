@@ -202,14 +202,11 @@ export default function HomePage() {
 
       <main>
         <HeroSection />
-        <StatsSection stats={stats} />
-        <LiveStatsCounter />
-        <TrustedBySection />
 
         {/* Software Ecosystem Visual */}
-        <section className="py-12 bg-muted/20">
+        <section className="py-8 bg-muted/20">
           <div className="container">
-            <div className="rounded-2xl overflow-hidden shadow-lg">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-border/30">
               <img
                 src={softwareCollage}
                 alt="Software ecosystem showcasing popular business tools like Salesforce, Slack, Adobe, AWS, and more"
@@ -219,6 +216,10 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <StatsSection stats={stats} />
+        <LiveStatsCounter />
+        <TrustedBySection />
 
         {/* Real Product Screenshots Showcase */}
         <ProductShowcaseSection />
