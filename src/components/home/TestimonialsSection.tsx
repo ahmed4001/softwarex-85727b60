@@ -3,25 +3,25 @@ import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Sarah Chen",
+    name: "James Okonkwo",
     role: "CTO, TechScale",
     text: "SoftwareHub saved us weeks of research. The comparison tools are incredibly powerful — we found the perfect project management solution in under an hour.",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
+    avatar: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=150&h=150&fit=crop&crop=face",
   },
   {
     name: "Marcus Rodriguez",
     role: "Product Manager, Flowline",
     text: "The verified reviews gave us confidence in our purchasing decision. No more guessing — real feedback from real teams using these tools daily.",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
   },
   {
-    name: "Emily Watson",
+    name: "David Nakamura",
     role: "VP Engineering, DataBridge",
     text: "We switched our entire analytics stack based on reviews here. Best decision we made all year — the side-by-side comparisons are game-changing.",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
   },
 ];
 
