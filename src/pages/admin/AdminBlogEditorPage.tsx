@@ -335,10 +335,31 @@ export default function AdminBlogEditorPage() {
                 <span>{readingTime} min read</span>
               </>
             )}
+            {(autoSaving || lastSavedAt) && (
+              <>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1">
+                  {autoSaving ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>
+                  ) : (
+                    <>Saved {lastSavedAt!.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</>
+                  )}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* SEO score chip */}
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border text-xs"
+            title={`SEO: ${seoScore.score}/100`}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", scoreColor)} />
+            <span className="font-semibold text-foreground">{seoScore.score}</span>
+            <Gauge className="h-3 w-3 text-muted-foreground" />
+          </div>
           {form.slug && (
             <Link to={`/blog/${form.slug}`} target="_blank">
               <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
