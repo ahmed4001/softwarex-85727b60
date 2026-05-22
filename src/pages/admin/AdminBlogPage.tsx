@@ -10,6 +10,7 @@ import {
   ExternalLink, Copy, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { computeSeoScore } from "@/lib/blog-seo-score";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import {
