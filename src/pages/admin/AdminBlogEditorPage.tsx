@@ -298,8 +298,16 @@ export default function AdminBlogEditorPage() {
   const readingTime = estimateReadingTime(form.body);
   const words = wordCount(form.body);
   const statusLabel = form.status === "published" ? "Published" : form.status === "scheduled" ? "Scheduled" : "Draft";
-
-  return (
+  const seoScore = computeSeoScore({
+    title: form.title,
+    seoTitle: form.seo_title,
+    metaDescription: form.seo_description,
+    slug: form.slug,
+    body: form.body,
+    focusKeyword: form.seo_keywords.split(",")[0]?.trim(),
+    featuredImage: form.featured_image,
+  });
+  const scoreColor = seoScore.level === "good" ? "bg-emerald-500" : seoScore.level === "warn" ? "bg-amber-500" : "bg-destructive";
     <>
       <SeoHead title={`${isEdit ? "Edit" : "New"} Post - Admin`} />
 
