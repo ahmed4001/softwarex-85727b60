@@ -398,6 +398,41 @@ function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { 
   // Reset to first page whenever filters/sort/pageSize change
   useEffect(() => { setPage(1); }, [query, statusFilter, scoreFilter, sortKey, sortDir, pageSize]);
 
+  const exportCsv = () => {
+    const esc = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const headers = [
+      "Title", "Slug", "Status", "Views", "Words", "SEO Score",
+      "SEO Title", "Meta Description", "Focus Keyword",
+      "Has Featured Image", "Published At",
+    ];
+    const lines = [headers.join(",")];
+    for (const s of rows) {
+      const p = s.post;
+      lines.push([
+        p.title, p.slug, p.status, p.view_count ?? 0, s.stats.words, s.score,
+        p.seo_title ?? "", p.seo_description ?? "",
+        p.seo_keywords?.split(",")[0]?.trim() ?? "",
+        p.featured_image ? "yes" : "no",
+        p.published_at ?? "",
+      ].map(esc).join(","));
+    }
+    const csv = "\uFEFF" + lines.join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `blog-seo-report-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV exported", description: `${rows.length} ${rows.length === 1 ? "post" : "posts"} exported.` });
+  };
+
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
       <div className="p-6 pb-4 flex flex-wrap items-end justify-between gap-3">
