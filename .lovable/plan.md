@@ -1,90 +1,116 @@
-# Ghost-style Blog & CMS Upgrade Plan
 
-You already have a substantial blog system. This plan **enhances** it rather than rebuilding. Work ships in 4 phases — confirm and I'll start Phase 1.
+## Goal
 
-## What you already have (no rebuild needed)
+Layer an Apploye-style **root-level keyword landing system** on top of the existing G2-style marketplace, plus optional programmatic route families (`/features`, `/use-cases`, `/industry`, `/templates`, `/buyer-guides` already exists). Keep `/product/:slug` commercial, `/blog` informational, and enforce one canonical per intent.
 
-- `blog_posts` table with SEO fields (title, description, keywords, og_image, canonical, reading_time, view_count)
-- Public `/blog` (Ghost-style hero + list) and `/blog/:slug` (serif typography, Article JSON-LD, view counter)
-- `/admin/blog` + `AdminBlogEditorPage` (rich editor, SEO tab, keyword analyzer)
-- Sitemap/robots edge function (`seo-files`), `SeoHead` with global fallbacks
-- Newsletter (Brevo), subscribers dashboard, broadcast composer
-- User roles (admin/editor/author/user), media library bucket
-- AI: `ai-playground`, sentiment, summary, recommendations via Lovable AI gateway
+## Current state (already built)
 
-## Gap analysis vs. your spec
+- `/product/:slug`, `/categories`, `/category/:slug`, `/compare`, `/compare/:slug`, `/alternatives/:slug`, `/blog`, `/blog/:slug`, `/glossary/:slug`, `/author/:id`, `/lists`, `/tech-stacks`, `/leaderboard`, `/discussions`, `/user/:id`, `/login`, `/dashboard`, `/buyer-guides/:slug` — all live.
+- `seo_landing_pages` table + `/best/:slug` programmatic pages + `generate-landing-pages` edge function exist.
+- `seo-files` edge function builds sitemap/robots from DB.
 
-**Missing reader features**: Table of contents, related articles, social share buttons, breadcrumbs, sticky sidebar, comments, author profile pages, infinite scroll, tag pages, category pages (blog-specific).
+What's **missing** vs. the request:
+1. Root-level keyword URLs (`/employee-monitoring-software`, etc.) — today these live under `/best/`.
+2. `/features/:feature`, `/use-cases/:slug`, `/industry/:slug`, `/templates/:slug` route families.
+3. A documented canonical policy so `/product`, `/best/*`, root keyword pages, and `/category` don't cannibalize.
+4. Sitemap coverage + structured internal linking between landing → product → compare.
 
-**Missing CMS features**: Revision history, autosave, scheduled publishing UI, duplicate post, bulk actions, sticky posts, media folders, drag-drop upload, focus keyword density on save.
+## Scope of this plan
 
-**Missing SEO dashboard**: Dedicated `/admin/seo` audit (missing meta, broken links, duplicate content, readability score), redirect manager, GSC integration UI, top-ranking posts.
+### 1. Root-level keyword landing pages (Apploye-style)
 
-**Missing AI assistant**: AI title/meta/outline/content generator inline in the editor (you have AI infra but not editor-integrated).
+- New table `keyword_landing_pages`:
+  - `slug` (root path segment, unique — e.g. `employee-monitoring-software`)
+  - `h1`, `meta_title`, `meta_description`, `focus_keyword`
+  - `hero_body` (markdown), `sections` (jsonb: array of `{heading, body, layout}` blocks for features/benefits/FAQ)
+  - `primary_product_id` (the hero/CTA product — supports the Apploye pattern of one product owning the keyword)
+  - `related_product_ids` (jsonb array) — comparison grid
+  - `related_category_id`, `related_comparison_slugs` (jsonb), `related_blog_slugs` (jsonb) for internal linking
+  - `faq` (jsonb), `schema_jsonld` (jsonb override)
+  - `is_published`, `canonical_override` (nullable), `view_count`
+- New page `src/pages/KeywordLandingPage.tsx` — long-form layout: hero with primary product CTA, feature blocks, comparison grid (related products), FAQ (FAQPage JSON-LD), internal link rail to `/compare/*` and `/blog/*`.
+- New admin page `src/pages/admin/AdminKeywordLandingPage.tsx` — CRUD + AI-assist (reuse `generate-landing-pages` edge function, extended).
+- Router: add a **catch-all root segment route** that resolves against `keyword_landing_pages.slug`. To avoid clashing with existing top-level routes, the route handler does a slug lookup; if no row matches → 404. The 5 launch slugs:
+  - `/employee-monitoring-software`
+  - `/project-time-tracking`
+  - `/time-tracking-software`
+  - `/employee-tracking-software`
+  - `/productivity-monitoring-tool`
 
-**Missing monetization**: Membership tiers, premium content lock, paid subscriptions (Paddle is wired but no membership UI).
+### 2. Programmatic route families
 
-## Phased delivery
+Reuse `keyword_landing_pages` with a `page_type` enum: `keyword | feature | use_case | industry | template`. Routes:
 
-### Phase 1 — Reader experience + public polish
-- Auto-generated **Table of Contents** (parses H2/H3 from post body, sticky on desktop)
-- **Related posts** (same category/tags, ranked by view_count)
-- **Breadcrumbs** with BreadcrumbList JSON-LD
-- **Social share buttons** (Twitter/X, LinkedIn, Facebook, copy-link)
-- **Author profile pages** at `/author/:slug` (bio, avatar, social links, post list) — uses `profiles` table
-- **Tag pages** `/blog/tag/:tag` and **category pages** `/blog/category/:category`
-- **Reading progress bar** + scroll-to-top
-- **Comments** (lightweight, uses `discussions` infra you already have, scoped to post)
+- `/features/:feature`
+- `/use-cases/:slug`
+- `/industry/:slug`
+- `/templates/:slug`
 
-### Phase 2 — Admin CMS polish
-- **Autosave drafts** (debounced, every 10s) + "Saved Xs ago" indicator
-- **Revision history** table + restore-from-revision UI
-- **Scheduled publishing**: status=`scheduled` + `scheduled_at` + cron edge function `publish-scheduled-posts`
-- **Duplicate post** action, **bulk actions** (publish/unpublish/delete/move-category)
-- **Sticky/featured post** toggle, surfaced on `/blog`
-- **Media library upgrades**: folders, drag-drop upload, search, alt-text editor
-- **Focus keyword analysis** integrated into editor SEO tab (density, in title/H1/meta/slug/first paragraph)
+`/buyer-guides/:slug` stays on its existing dedicated table.
 
-### Phase 3 — Dedicated SEO dashboard
-- New `/admin/seo` route with tabs:
-  - **Audit**: posts missing meta, missing alt text, missing OG image, missing focus keyword, weak readability
-  - **Redirects**: `redirects` table (from_path → to_path, status code), edge function applies them
-  - **Broken links**: edge function scrapes published posts, flags 4xx links
-  - **Top content**: posts sorted by view_count + CTR (uses existing `view_count`)
-  - **GSC integration**: OAuth connector + impressions/clicks/position per URL (you have Google Search Console connector knowledge)
-- **Sitemap**: extend `seo-files` to include `/author/*`, `/blog/tag/*`, `/blog/category/*`
+One shared renderer component, type-specific section presets.
 
-### Phase 4 — AI assistant + monetization
-- **AI editor toolbar**: generate title, meta description, excerpt, outline, "improve this paragraph", "expand", "summarize" — calls a new `ai-blog-assistant` edge function (Lovable AI gateway, `google/gemini-3-flash-preview`)
-- **AI alt-text** for uploaded images
-- **AI internal linking suggestions** based on existing post corpus
-- **Memberships**: `membership_tiers` table, gated content (`premium_only` flag on posts), paywall component, Paddle checkout for subscriptions
+### 3. Canonical & duplicate-intent policy
 
-## Database additions
+Documented in code (constants file) and enforced in `SeoHead`:
 
-```text
-post_revisions (post_id, body, title, editor_id, created_at)
-redirects (from_path, to_path, status_code, hits)
-post_comments (post_id, user_id, body, parent_id, status)
-membership_tiers (name, price, paddle_product_id, perks)
-user_memberships (user_id, tier_id, status, expires_at)
-blog_posts: add scheduled_at, is_sticky, premium_only, autosave_body, last_autosave_at
-profiles: add bio_long, twitter_handle, linkedin_url, website (some exist)
-```
+| Page type | Canonical | Intent |
+|---|---|---|
+| `/product/:slug` | self | Commercial — single product |
+| `/category/:slug` | self | Commercial — browse a category |
+| `/compare/:slug` & `/alternatives/:slug` | self | Commercial comparison |
+| `/{keyword}` (root) | self | Commercial — keyword-led, one primary product |
+| `/best/:slug` (existing) | self | Commercial — "best X for Y" listicle |
+| `/features/:feature`, `/use-cases/:slug`, `/industry/:slug`, `/templates/:slug` | self | Commercial — programmatic |
+| `/blog/:slug` | self | Informational only |
 
-All with RLS: public read for published content; admin/editor write; comments user-scoped.
+Rules enforced:
+- Each `keyword_landing_pages` row stores its `focus_keyword`; admin UI warns if the same focus keyword exists on another commercial page (product, category, comparison, other landing).
+- Blog editor stays restricted to informational keywords (warn if focus keyword matches a commercial page).
+- `canonical_override` field lets admin point a duplicate variant at the winning page.
 
-## Out of scope (not building unless you ask)
+### 4. Internal linking
 
-- AMP support (Google deprecated it)
-- PWA + web push (separate effort)
-- Two-factor auth (Supabase doesn't ship MFA UI; needs custom flow)
-- Multi-language **content** translation (UI i18n already exists; post translation is a big separate feature)
-- Mailchimp/ConvertKit (Brevo is already wired — switching providers is its own task)
-- Full GA4 integration (your `view_count` + Supabase analytics cover most needs)
+In `KeywordLandingPage`:
+- Hero CTA → `/product/<primary>`
+- "Compare alternatives" rail → `/compare/<related_comparison_slugs>` and `/alternatives/<primary>`
+- "Learn more" rail → `/blog/<related_blog_slugs>` and `/glossary/*`
+- Breadcrumbs via existing `Breadcrumbs` component.
 
-## Recommendation
+Add a small `useInternalLinks(focusKeyword)` hook that pulls 3-5 contextually related products/comparisons/posts for the sidebar.
 
-Start with **Phase 1** — biggest visible upgrade for readers, no risky migrations, ships in one round. Then we evaluate before Phase 2.
+### 5. Sitemap & robots
 
-Approve this plan to start, or tell me to reorder/cut/expand any phase.
+Extend `supabase/functions/seo-files/index.ts`:
+- Add `keyword_landing_pages` rows where `is_published = true` to sitemap, grouped by `page_type` (root, `/features/`, `/use-cases/`, `/industry/`, `/templates/`).
+- Keep existing `/best/`, `/product/`, `/category/`, `/blog/`, `/compare/` blocks.
+- Designed to scale to 10K+ entries — paginated sitemap index (`/sitemap.xml` → references `/sitemap-products.xml`, `/sitemap-landing.xml`, `/sitemap-blog.xml`, etc.) once any single set exceeds 5K rows.
+
+### 6. Admin enhancements
+
+- New nav entry "Keyword Pages" under CMS.
+- Per-page focus-keyword analyzer (reuse `FocusKeywordAnalyzer`).
+- AI generator extended to seed `page_type`-specific section templates.
+- Bulk publish/unpublish, view-count column, "duplicate intent" warning badges.
+
+## Out of scope (call out explicitly)
+
+- Custom domain / hreflang for localized landing pages — i18n table exists but no per-locale variants of landing pages in this pass.
+- Webhooks/PWA/push from the original mega-spec.
+- Automated backlink building.
+
+## Technical notes
+
+- DB: one migration creates `keyword_landing_pages` + `page_type` enum + indexes on `slug` and `(page_type, is_published)`.
+- RLS: public read where `is_published = true`; admin write via `has_role(auth.uid(), 'admin')`.
+- Routing: register the 5 root keyword slugs explicitly in `App.tsx` (not a catch-all) to keep React Router deterministic. The 4 programmatic families use `/:slug` params. Adding new root keywords later = add one `<Route>` line + a DB row.
+- No changes to `src/integrations/supabase/{client,types}.ts` beyond auto-regeneration after migration.
+
+## Deliverables
+
+- 1 migration (table, enum, RLS, indexes)
+- 1 public renderer + 4 route registrations (features/use-cases/industry/templates) + 5 root keyword routes
+- 1 admin CRUD page + sidebar link
+- Updated `seo-files` edge function (sitemap)
+- Updated `generate-landing-pages` edge function (handles new `page_type`)
+- Canonical policy constants + warnings in admin

@@ -139,6 +139,26 @@ async function handleSitemap(supabase: any, baseUrl: string) {
     }
   }
 
+  // Keyword landing pages (Apploye-style root + programmatic families)
+  const PREFIX: Record<string, string> = {
+    keyword: "",
+    feature: "/features",
+    use_case: "/use-cases",
+    industry: "/industry",
+    template: "/templates",
+  };
+  const { data: landings } = await supabase
+    .from("keyword_landing_pages")
+    .select("slug, page_type, updated_at, canonical_override")
+    .eq("is_published", true)
+    .limit(10000);
+  if (landings) {
+    for (const r of landings as any[]) {
+      const loc = r.canonical_override || `${base}${PREFIX[r.page_type] || ""}/${r.slug}`;
+      urls.push({ loc, lastmod: r.updated_at?.split("T")[0], priority: "0.8" });
+    }
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url>

@@ -1233,6 +1233,78 @@ export type Database = {
         }
         Relationships: []
       }
+      keyword_landing_pages: {
+        Row: {
+          canonical_override: string | null
+          created_at: string
+          faq: Json
+          focus_keyword: string | null
+          h1: string
+          hero_body: string | null
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          meta_title: string | null
+          page_type: Database["public"]["Enums"]["landing_page_type"]
+          primary_product_id: string | null
+          related_blog_slugs: Json
+          related_category_id: string | null
+          related_comparison_slugs: Json
+          related_product_ids: Json
+          schema_jsonld: Json | null
+          sections: Json
+          slug: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          canonical_override?: string | null
+          created_at?: string
+          faq?: Json
+          focus_keyword?: string | null
+          h1: string
+          hero_body?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          page_type?: Database["public"]["Enums"]["landing_page_type"]
+          primary_product_id?: string | null
+          related_blog_slugs?: Json
+          related_category_id?: string | null
+          related_comparison_slugs?: Json
+          related_product_ids?: Json
+          schema_jsonld?: Json | null
+          sections?: Json
+          slug: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          canonical_override?: string | null
+          created_at?: string
+          faq?: Json
+          focus_keyword?: string | null
+          h1?: string
+          hero_body?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          page_type?: Database["public"]["Enums"]["landing_page_type"]
+          primary_product_id?: string | null
+          related_blog_slugs?: Json
+          related_category_id?: string | null
+          related_comparison_slugs?: Json
+          related_product_ids?: Json
+          schema_jsonld?: Json | null
+          sections?: Json
+          slug?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       list_items: {
         Row: {
           created_at: string
@@ -3733,6 +3805,12 @@ export type Database = {
       ad_type: "banner" | "sidebar" | "featured_slot"
       app_role: "user" | "vendor" | "admin" | "superadmin"
       blog_status: "draft" | "scheduled" | "published" | "archived"
+      landing_page_type:
+        | "keyword"
+        | "feature"
+        | "use_case"
+        | "industry"
+        | "template"
       pricing_model: "free" | "freemium" | "paid" | "subscription" | "one-time"
       review_source: "organic" | "invited" | "imported"
       review_status: "pending" | "approved" | "rejected" | "spam" | "flagged"
@@ -3869,6 +3947,13 @@ export const Constants = {
       ad_type: ["banner", "sidebar", "featured_slot"],
       app_role: ["user", "vendor", "admin", "superadmin"],
       blog_status: ["draft", "scheduled", "published", "archived"],
+      landing_page_type: [
+        "keyword",
+        "feature",
+        "use_case",
+        "industry",
+        "template",
+      ],
       pricing_model: ["free", "freemium", "paid", "subscription", "one-time"],
       review_source: ["organic", "invited", "imported"],
       review_status: ["pending", "approved", "rejected", "spam", "flagged"],

@@ -63,6 +63,7 @@ const sidebarItems = [
   { label: "Broadcast", icon: Megaphone, to: "/admin/broadcast" },
   { label: "Brevo Email", icon: Mail, to: "/admin/brevo" },
   { label: "Landing Pages", icon: Globe, to: "/admin/landing-pages" },
+  { label: "Keyword Pages", icon: Globe, to: "/admin/keyword-pages" },
   { label: "Buyer Guides", icon: Compass, to: "/admin/buyer-guides" },
   { label: "Moderation", icon: Shield, to: "/admin/moderation" },
   { label: "Glossary", icon: BookOpen, to: "/admin/glossary" },
