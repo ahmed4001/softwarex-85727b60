@@ -7,7 +7,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { FocusKeywordAnalyzer } from "@/components/FocusKeywordAnalyzer";
 import { BlogSeoScorePanel } from "@/components/admin/BlogSeoScorePanel";
 import { InternalLinksSuggestionPanel } from "@/components/admin/InternalLinksSuggestionPanel";
-import { SeoErrorBoard, type FixAction } from "@/components/admin/SeoErrorBoard";
+import { SeoErrorBoard, SocialPreview, type FixAction } from "@/components/admin/SeoErrorBoard";
 import { computeSeoScore } from "@/lib/blog-seo-score";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -800,6 +800,12 @@ export default function AdminBlogEditorPage() {
                 (el as HTMLInputElement).focus?.();
               }
             }}
+          />
+          <SocialPreview
+            title={form.seo_title || form.title}
+            description={form.seo_description}
+            slug={form.slug}
+            image={form.featured_image}
           />
         </aside>
       </div>

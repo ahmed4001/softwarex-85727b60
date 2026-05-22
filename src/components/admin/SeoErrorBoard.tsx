@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { computeSeoScore, type SeoLevel } from "@/lib/blog-seo-score";
-import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import {
+  CheckCircle2, AlertCircle, XCircle, ChevronDown, ChevronUp, Sparkles,
+  Globe, TrendingUp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -47,12 +50,14 @@ const FIX_MAP: Record<string, FixAction> = {
 
 export function SeoErrorBoard(props: Props) {
   const [open, setOpen] = useState(true);
-  const [filter, setFilter] = useState<"all" | "errors" | "warnings">("all");
+  const [filter, setFilter] = useState<"all" | "errors" | "warnings" | "passing">("all");
   const result = useMemo(() => computeSeoScore(props), [props]);
 
   const sortedChecks = useMemo(() => {
-    const f = filter === "errors" ? (c: any) => c.level === "bad"
+    const f =
+      filter === "errors" ? (c: any) => c.level === "bad"
       : filter === "warnings" ? (c: any) => c.level === "warn"
+      : filter === "passing" ? (c: any) => c.level === "good"
       : () => true;
     return [...result.checks].filter(f).sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
   }, [result, filter]);
@@ -63,64 +68,69 @@ export function SeoErrorBoard(props: Props) {
     good: result.checks.filter((c) => c.level === "good").length,
   }), [result]);
 
-  const grade = result.level === "good" ? "A" : result.level === "warn" ? "B" : "C";
-  const ringColor = result.level === "good" ? "stroke-emerald-500"
-    : result.level === "warn" ? "stroke-amber-500" : "stroke-destructive";
-  const textColor = result.level === "good" ? "text-emerald-600"
-    : result.level === "warn" ? "text-amber-600" : "text-destructive";
-
-  const circumference = 2 * Math.PI * 28;
-  const offset = circumference - (result.score / 100) * circumference;
+  const tone =
+    result.level === "good" ? {
+      text: "text-emerald-600", bar: "bg-emerald-500",
+      ring: "ring-emerald-200/60", bg: "bg-emerald-50 dark:bg-emerald-950/30",
+    }
+    : result.level === "warn" ? {
+      text: "text-amber-600", bar: "bg-amber-500",
+      ring: "ring-amber-200/60", bg: "bg-amber-50 dark:bg-amber-950/30",
+    }
+    : {
+      text: "text-rose-600", bar: "bg-rose-500",
+      ring: "ring-rose-200/60", bg: "bg-rose-50 dark:bg-rose-950/30",
+    };
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
-      {/* Header */}
+      {/* Header — score + progress bar */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
+        className="w-full px-4 pt-4 pb-3 text-left hover:bg-muted/20 transition-colors"
       >
-        <div className="relative h-12 w-12 flex-shrink-0">
-          <svg className="h-12 w-12 -rotate-90" viewBox="0 0 64 64">
-            <circle cx="32" cy="32" r="28" strokeWidth="5" className="stroke-muted fill-none" />
-            <circle
-              cx="32" cy="32" r="28" strokeWidth="5" strokeLinecap="round"
-              className={cn("fill-none transition-all", ringColor)}
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn("text-sm font-bold", textColor)}>{result.score}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={cn("inline-flex items-center justify-center h-7 w-7 rounded-md", tone.bg)}>
+              <TrendingUp className={cn("h-3.5 w-3.5", tone.text)} />
+            </span>
+            <span className="text-sm font-semibold text-foreground">SEO Score</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={cn("text-2xl font-bold tabular-nums leading-none", tone.text)}>
+              {result.score}%
+            </span>
+            {open
+              ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </div>
         </div>
-        <div className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-            SEO Error Board <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-bold", textColor, "bg-muted")}>{grade}</span>
-          </p>
-          <div className="flex items-center gap-2 mt-0.5 text-[11px]">
-            <span className="text-destructive font-medium">{counts.bad} errors</span>
-            <span className="text-amber-600 font-medium">{counts.warn} warnings</span>
-            <span className="text-emerald-600 font-medium">{counts.good} passing</span>
-          </div>
+        <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className={cn("h-full rounded-full transition-all duration-500", tone.bar)}
+            style={{ width: `${Math.max(2, result.score)}%` }}
+          />
         </div>
-        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
 
       {open && (
         <div className="border-t border-border">
-          {/* Filters */}
-          <div className="flex items-center gap-1 px-3 py-2 border-b border-border bg-muted/20">
+          {/* Compact filter chips */}
+          <div className="flex items-center gap-1 px-3 py-2 border-b border-border bg-muted/10 overflow-x-auto">
             {([
               ["all", `All ${result.checks.length}`],
               ["errors", `Errors ${counts.bad}`],
               ["warnings", `Warnings ${counts.warn}`],
+              ["passing", `Passing ${counts.good}`],
             ] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setFilter(key)}
                 className={cn(
-                  "px-2 py-1 rounded text-[11px] font-medium transition-colors",
-                  filter === key ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground",
+                  "px-2 py-1 rounded-md text-[11px] font-medium whitespace-nowrap transition-colors",
+                  filter === key
+                    ? "bg-background text-foreground shadow-sm border border-border"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {label}
@@ -128,47 +138,64 @@ export function SeoErrorBoard(props: Props) {
             ))}
           </div>
 
-          {/* Stats strip */}
-          <div className="grid grid-cols-4 gap-2 px-3 py-3 border-b border-border bg-muted/10">
-            <Stat label="Words" value={result.stats.words} />
-            <Stat label="Headings" value={result.stats.h2 + result.stats.h3} />
-            <Stat label="Links" value={result.stats.internalLinks + result.stats.externalLinks} />
-            <Stat label="Density" value={`${result.stats.keywordDensity.toFixed(1)}%`} />
-          </div>
-
-          {/* Checks */}
-          <div className="max-h-[420px] overflow-y-auto divide-y divide-border">
+          {/* Checks — dot-bullet style like the reference */}
+          <div className="max-h-[360px] overflow-y-auto">
             {sortedChecks.length === 0 ? (
-              <div className="px-4 py-8 text-center text-xs text-muted-foreground">
+              <div className="px-4 py-10 text-center text-xs text-muted-foreground">
                 <Sparkles className="h-5 w-5 mx-auto mb-2 opacity-40" />
                 Nothing to fix here. Nice work.
               </div>
             ) : (
-              sortedChecks.map((c) => {
-                const Icon = c.level === "good" ? CheckCircle2 : c.level === "warn" ? AlertTriangle : XCircle;
-                const color = c.level === "good" ? "text-emerald-600" : c.level === "warn" ? "text-amber-600" : "text-destructive";
-                const fix = FIX_MAP[c.id];
-                return (
-                  <div key={c.id} className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                    <Icon className={cn("h-4 w-4 mt-0.5 flex-shrink-0", color)} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-foreground">{c.label}</p>
-                      <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{c.message}</p>
-                    </div>
-                    {fix && c.level !== "good" && props.onFix && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-[10px] font-semibold text-primary hover:bg-primary/10"
-                        onClick={() => props.onFix!(fix)}
-                      >
-                        Fix
-                      </Button>
-                    )}
-                  </div>
-                );
-              })
+              <ul className="py-1.5">
+                {sortedChecks.map((c) => {
+                  const Icon =
+                    c.level === "good" ? CheckCircle2
+                    : c.level === "warn" ? AlertCircle
+                    : XCircle;
+                  const color =
+                    c.level === "good" ? "text-emerald-500"
+                    : c.level === "warn" ? "text-amber-500"
+                    : "text-rose-500";
+                  const fix = FIX_MAP[c.id];
+                  return (
+                    <li
+                      key={c.id}
+                      className="group flex items-start gap-2.5 px-4 py-1.5 hover:bg-muted/30 transition-colors"
+                    >
+                      <Icon className={cn("h-3.5 w-3.5 mt-[3px] flex-shrink-0", color)} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] leading-snug text-foreground">
+                          {c.label}
+                        </p>
+                        {c.level !== "good" && (
+                          <p className="text-[11px] text-muted-foreground leading-snug">
+                            {c.message}
+                          </p>
+                        )}
+                      </div>
+                      {fix && c.level !== "good" && props.onFix && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[10px] font-semibold text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => props.onFix!(fix)}
+                        >
+                          Fix
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             )}
+          </div>
+
+          {/* Compact stats footer */}
+          <div className="grid grid-cols-4 gap-1 px-3 py-2.5 border-t border-border bg-muted/10">
+            <Stat label="Words" value={result.stats.words} />
+            <Stat label="Headings" value={result.stats.h2 + result.stats.h3} />
+            <Stat label="Links" value={result.stats.internalLinks + result.stats.externalLinks} />
+            <Stat label="Density" value={`${result.stats.keywordDensity.toFixed(1)}%`} />
           </div>
         </div>
       )}
@@ -179,8 +206,65 @@ export function SeoErrorBoard(props: Props) {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="text-center">
-      <p className="text-sm font-bold text-foreground">{value}</p>
+      <p className="text-xs font-semibold text-foreground tabular-nums">{value}</p>
       <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Social Preview                                                            */
+/* -------------------------------------------------------------------------- */
+
+interface SocialPreviewProps {
+  title: string;
+  description?: string;
+  slug?: string;
+  image?: string;
+  siteDomain?: string;
+}
+
+export function SocialPreview({
+  title, description, slug, image, siteDomain,
+}: SocialPreviewProps) {
+  const domain =
+    siteDomain ||
+    (typeof window !== "undefined" ? window.location.hostname.replace(/^www\./, "") : "yoursite.com");
+
+  const url = slug
+    ? `${domain.toUpperCase()}/${slug.toUpperCase()}`
+    : domain.toUpperCase();
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+        <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-sm font-semibold text-foreground">Social Preview</span>
+      </div>
+      <div className="p-3">
+        <div className="rounded-lg border border-border overflow-hidden bg-background">
+          {/* Image */}
+          <div className="aspect-[1.91/1] bg-muted flex items-center justify-center">
+            {image ? (
+              <img src={image} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <Globe className="h-8 w-8 text-muted-foreground/40" />
+            )}
+          </div>
+          {/* Text */}
+          <div className="px-3 py-2.5 border-t border-border space-y-1">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">
+              {url}
+            </p>
+            <p className="text-sm font-semibold text-foreground line-clamp-1 leading-tight">
+              {title || "Page Title"}
+            </p>
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
+              {description || "Page description will appear here…"}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
