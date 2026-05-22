@@ -1236,13 +1236,17 @@ export type Database = {
       keyword_landing_pages: {
         Row: {
           canonical_override: string | null
+          category: string | null
           created_at: string
           faq: Json
           focus_keyword: string | null
           h1: string
           hero_body: string | null
           id: string
+          intent: Database["public"]["Enums"]["landing_page_intent"]
+          internal_links: Json
           is_published: boolean
+          last_reviewed_at: string | null
           meta_description: string | null
           meta_title: string | null
           page_type: Database["public"]["Enums"]["landing_page_type"]
@@ -1250,22 +1254,28 @@ export type Database = {
           related_blog_slugs: Json
           related_category_id: string | null
           related_comparison_slugs: Json
+          related_keywords: Json
           related_product_ids: Json
           schema_jsonld: Json | null
           sections: Json
           slug: string
+          status: Database["public"]["Enums"]["landing_page_status"]
           updated_at: string
           view_count: number
         }
         Insert: {
           canonical_override?: string | null
+          category?: string | null
           created_at?: string
           faq?: Json
           focus_keyword?: string | null
           h1: string
           hero_body?: string | null
           id?: string
+          intent?: Database["public"]["Enums"]["landing_page_intent"]
+          internal_links?: Json
           is_published?: boolean
+          last_reviewed_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
           page_type?: Database["public"]["Enums"]["landing_page_type"]
@@ -1273,22 +1283,28 @@ export type Database = {
           related_blog_slugs?: Json
           related_category_id?: string | null
           related_comparison_slugs?: Json
+          related_keywords?: Json
           related_product_ids?: Json
           schema_jsonld?: Json | null
           sections?: Json
           slug: string
+          status?: Database["public"]["Enums"]["landing_page_status"]
           updated_at?: string
           view_count?: number
         }
         Update: {
           canonical_override?: string | null
+          category?: string | null
           created_at?: string
           faq?: Json
           focus_keyword?: string | null
           h1?: string
           hero_body?: string | null
           id?: string
+          intent?: Database["public"]["Enums"]["landing_page_intent"]
+          internal_links?: Json
           is_published?: boolean
+          last_reviewed_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
           page_type?: Database["public"]["Enums"]["landing_page_type"]
@@ -1296,10 +1312,12 @@ export type Database = {
           related_blog_slugs?: Json
           related_category_id?: string | null
           related_comparison_slugs?: Json
+          related_keywords?: Json
           related_product_ids?: Json
           schema_jsonld?: Json | null
           sections?: Json
           slug?: string
+          status?: Database["public"]["Enums"]["landing_page_status"]
           updated_at?: string
           view_count?: number
         }
@@ -3805,6 +3823,13 @@ export type Database = {
       ad_type: "banner" | "sidebar" | "featured_slot"
       app_role: "user" | "vendor" | "admin" | "superadmin"
       blog_status: "draft" | "scheduled" | "published" | "archived"
+      landing_page_intent: "high" | "medium" | "low"
+      landing_page_status:
+        | "draft"
+        | "in_progress"
+        | "ready"
+        | "published"
+        | "needs_update"
       landing_page_type:
         | "keyword"
         | "feature"
@@ -3947,6 +3972,14 @@ export const Constants = {
       ad_type: ["banner", "sidebar", "featured_slot"],
       app_role: ["user", "vendor", "admin", "superadmin"],
       blog_status: ["draft", "scheduled", "published", "archived"],
+      landing_page_intent: ["high", "medium", "low"],
+      landing_page_status: [
+        "draft",
+        "in_progress",
+        "ready",
+        "published",
+        "needs_update",
+      ],
       landing_page_type: [
         "keyword",
         "feature",

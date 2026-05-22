@@ -208,6 +208,13 @@ export default function KeywordLandingPage({ pageType, slugOverride, pathPrefix 
         <section className="border-t border-border pt-8 mb-8">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Explore more</h3>
           <div className="flex flex-wrap gap-2">
+            {((page.internal_links as Array<{ label: string; href: string }>) || []).map((l, i) => (
+              l?.href ? (
+                <Link key={`il-${i}`} to={l.href}>
+                  <Button variant="outline" size="sm">{l.label || l.href}</Button>
+                </Link>
+              ) : null
+            ))}
             {((page.related_comparison_slugs as string[]) || []).map((s) => (
               <Link key={s} to={`/compare/${s}`}>
                 <Button variant="outline" size="sm">Compare: {s.replace(/-/g, " ")}</Button>
