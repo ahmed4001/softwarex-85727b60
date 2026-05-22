@@ -7,6 +7,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { FocusKeywordAnalyzer } from "@/components/FocusKeywordAnalyzer";
 import { BlogSeoScorePanel } from "@/components/admin/BlogSeoScorePanel";
 import { InternalLinksSuggestionPanel } from "@/components/admin/InternalLinksSuggestionPanel";
+import { SeoErrorBoard, type FixAction } from "@/components/admin/SeoErrorBoard";
 import { computeSeoScore } from "@/lib/blog-seo-score";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -665,57 +666,142 @@ export default function AdminBlogEditorPage() {
         </div>
       </div>
 
-      {/* Ghost-style distraction-free writing area */}
-      <div className="max-w-3xl mx-auto py-10">
-        {/* Title — large, serif, no border */}
-        <input
-          value={form.title}
-          onChange={(e) => updateField("title", e.target.value)}
-          placeholder="Post title"
-          className="w-full text-4xl font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/40 mb-2"
-          style={{ fontFamily: "'Lora', 'EB Garamond', Georgia, serif" }}
-        />
+      {/* Ghost-style distraction-free writing area + SEO board */}
+      <div className="max-w-6xl mx-auto py-10 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
+        <div className="min-w-0">
+          {/* Title — large, serif, no border */}
+          <input
+            id="blog-title-input"
+            value={form.title}
+            onChange={(e) => updateField("title", e.target.value)}
+            placeholder="Post title"
+            className="w-full text-4xl font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/40 mb-2"
+            style={{ fontFamily: "'Lora', 'EB Garamond', Georgia, serif" }}
+          />
 
-        {/* Subtitle / excerpt inline */}
-        <textarea
-          value={form.excerpt}
-          onChange={(e) => updateField("excerpt", e.target.value)}
-          placeholder="Add a custom excerpt…"
-          rows={1}
-          className="w-full text-lg text-muted-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/30 resize-none mb-8"
-        />
+          {/* Subtitle / excerpt inline */}
+          <textarea
+            value={form.excerpt}
+            onChange={(e) => updateField("excerpt", e.target.value)}
+            placeholder="Add a custom excerpt…"
+            rows={1}
+            className="w-full text-lg text-muted-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/30 resize-none mb-8"
+          />
 
-        {/* Featured image (Ghost-style click to add) */}
-        {form.featured_image ? (
-          <div className="relative rounded-xl overflow-hidden mb-8 group">
-            <img src={form.featured_image} alt="Feature" className="w-full h-auto" />
+          {/* Featured image (Ghost-style click to add) */}
+          {form.featured_image ? (
+            <div id="blog-featured-block" className="relative rounded-xl overflow-hidden mb-8 group">
+              <img src={form.featured_image} alt="Feature" className="w-full h-auto" />
+              <button
+                onClick={() => updateField("featured_image", "")}
+                className="absolute top-3 right-3 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
             <button
-              onClick={() => updateField("featured_image", "")}
-              className="absolute top-3 right-3 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              id="blog-featured-block"
+              onClick={() => {
+                const url = window.prompt("Featured image URL:");
+                if (url) updateField("featured_image", url);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-6 mb-8 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
             >
-              <X className="h-3.5 w-3.5" />
+              <Image className="h-5 w-5" />
+              <span className="text-sm font-medium">Add feature image</span>
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => {
-              const url = window.prompt("Featured image URL:");
-              if (url) updateField("featured_image", url);
-            }}
-            className="w-full flex items-center justify-center gap-2 py-6 mb-8 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-          >
-            <Image className="h-5 w-5" />
-            <span className="text-sm font-medium">Add feature image</span>
-          </button>
-        )}
+          )}
 
-        {/* Rich text editor — clean, minimal */}
-        <RichTextEditor
-          value={form.body}
-          onChange={(html) => updateField("body", html)}
-          placeholder="Begin writing your post…"
-          className="min-h-[400px] border-none shadow-none bg-transparent ghost-editor"
-        />
+          {/* Rich text editor — clean, minimal */}
+          <div id="blog-body-block">
+            <RichTextEditor
+              value={form.body}
+              onChange={(html) => updateField("body", html)}
+              placeholder="Begin writing your post…"
+              className="min-h-[400px] bg-transparent ghost-editor"
+            />
+          </div>
+
+          {/* Inline meta inputs for quick SEO Fix actions */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="blog-seo-title" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                SEO title <span className="text-[10px] normal-case">({(form.seo_title || form.title).length}/60)</span>
+              </Label>
+              <Input
+                id="blog-seo-title"
+                value={form.seo_title}
+                onChange={(e) => updateField("seo_title", e.target.value)}
+                placeholder={form.title || "Search engine title"}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="blog-focus-keyword" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Focus keyword</Label>
+              <Input
+                id="blog-focus-keyword"
+                value={form.seo_keywords}
+                onChange={(e) => updateField("seo_keywords", e.target.value)}
+                placeholder="primary keyword, secondary, …"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="blog-seo-desc" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Meta description <span className="text-[10px] normal-case">({form.seo_description.length}/160)</span>
+              </Label>
+              <Textarea
+                id="blog-seo-desc"
+                value={form.seo_description}
+                onChange={(e) => updateField("seo_description", e.target.value)}
+                placeholder="Description shown in search results (140–160 chars)…"
+                rows={2}
+                className="text-sm resize-none"
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="blog-slug" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">URL slug</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">/blog/</span>
+                <Input
+                  id="blog-slug"
+                  value={form.slug}
+                  onChange={(e) => { setAutoSlug(false); updateField("slug", slugify(e.target.value)); }}
+                  className="font-mono text-xs h-9"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SEO Error Board — sticky sidebar */}
+        <aside className="lg:sticky lg:top-4 self-start space-y-4">
+          <SeoErrorBoard
+            title={form.title}
+            seoTitle={form.seo_title}
+            metaDescription={form.seo_description}
+            slug={form.slug}
+            body={form.body}
+            focusKeyword={form.seo_keywords.split(",")[0]?.trim()}
+            featuredImage={form.featured_image}
+            onFix={(action: FixAction) => {
+              const map: Record<FixAction["type"], string> = {
+                "focus-title": "blog-title-input",
+                "focus-meta": "blog-seo-desc",
+                "focus-keyword": "blog-focus-keyword",
+                "focus-slug": "blog-slug",
+                "focus-featured": "blog-featured-block",
+                "focus-body": "blog-body-block",
+              };
+              const el = document.getElementById(map[action.type]);
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                (el as HTMLInputElement).focus?.();
+              }
+            }}
+          />
+        </aside>
       </div>
     </>
   );
