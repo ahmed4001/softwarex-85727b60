@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { FocusKeywordAnalyzer } from "@/components/FocusKeywordAnalyzer";
+import { BlogSeoScorePanel } from "@/components/admin/BlogSeoScorePanel";
+import { InternalLinksSuggestionPanel } from "@/components/admin/InternalLinksSuggestionPanel";
+import { computeSeoScore } from "@/lib/blog-seo-score";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +20,7 @@ import {
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
-import { ArrowLeft, Save, Eye, Loader2, X, Settings, Globe, Clock, Tag, Image, Search } from "lucide-react";
+import { ArrowLeft, Save, Eye, Loader2, X, Settings, Globe, Clock, Tag, Image, Search, Gauge, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -87,7 +90,10 @@ export default function AdminBlogEditorPage() {
   const [form, setForm] = useState<BlogForm>(emptyForm);
   const [autoSlug, setAutoSlug] = useState(true);
   const [tagInput, setTagInput] = useState("");
-  const [settingsTab, setSettingsTab] = useState<"general" | "seo">("general");
+  const [settingsTab, setSettingsTab] = useState<"general" | "seo" | "score" | "links">("general");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [createdId, setCreatedId] = useState<string | null>(null);
 
   const { data: existing, isLoading: loadingPost } = useQuery({
     queryKey: ["admin-blog-post", id],
@@ -195,23 +201,71 @@ export default function AdminBlogEditorPage() {
         published_at: finalStatus === "published" ? new Date().toISOString() : existing?.published_at || null,
       };
 
-      if (isEdit) {
-        const { error } = await supabase.from("blog_posts").update(payload).eq("id", id!);
+      const effectiveId = id || createdId;
+      if (effectiveId) {
+        const { error } = await supabase.from("blog_posts").update(payload).eq("id", effectiveId);
         if (error) throw error;
+        return { id: effectiveId, isNew: false };
       } else {
-        const { error } = await supabase.from("blog_posts").insert(payload);
+        const { data, error } = await supabase.from("blog_posts").insert(payload).select("id").single();
         if (error) throw error;
+        return { id: data.id, isNew: true };
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog"] });
-      toast({ title: isEdit ? "Post updated" : "Post created" });
+      toast({ title: isEdit || createdId ? "Post updated" : "Post created" });
       navigate("/admin/blog");
     },
     onError: (err: any) => {
       toast({ title: "Error saving post", description: err.message, variant: "destructive" });
     },
   });
+
+  // ---- AUTO-SAVE ----
+  // Debounced silent save of drafts. Skips published/scheduled posts (require explicit user action).
+  useEffect(() => {
+    if (!form.title.trim() || !form.slug.trim()) return;
+    if (form.status !== "draft") return;
+    const handle = setTimeout(async () => {
+      setAutoSaving(true);
+      try {
+        const readingTime = estimateReadingTime(form.body);
+        const payload: any = {
+          title: form.title,
+          slug: form.slug,
+          excerpt: form.excerpt || null,
+          body: form.body || null,
+          category: form.category || null,
+          featured_image: form.featured_image || null,
+          status: "draft",
+          is_featured: form.is_featured,
+          is_pinned: form.is_pinned,
+          seo_title: form.seo_title || null,
+          seo_description: form.seo_description || null,
+          seo_keywords: form.seo_keywords || null,
+          canonical_url: form.canonical_url || null,
+          og_image: form.og_image || null,
+          reading_time: readingTime,
+          tags: form.tags as any,
+        };
+        const effectiveId = id || createdId;
+        if (effectiveId) {
+          await supabase.from("blog_posts").update(payload).eq("id", effectiveId);
+        } else {
+          const { data } = await supabase.from("blog_posts").insert(payload).select("id").single();
+          if (data?.id) setCreatedId(data.id);
+        }
+        setLastSavedAt(new Date());
+      } catch {
+        // silent — manual save will surface errors
+      } finally {
+        setAutoSaving(false);
+      }
+    }, 2500);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
 
   const handleSave = () => {
     if (!form.title.trim()) {
@@ -244,6 +298,16 @@ export default function AdminBlogEditorPage() {
   const readingTime = estimateReadingTime(form.body);
   const words = wordCount(form.body);
   const statusLabel = form.status === "published" ? "Published" : form.status === "scheduled" ? "Scheduled" : "Draft";
+  const seoScore = computeSeoScore({
+    title: form.title,
+    seoTitle: form.seo_title,
+    metaDescription: form.seo_description,
+    slug: form.slug,
+    body: form.body,
+    focusKeyword: form.seo_keywords.split(",")[0]?.trim(),
+    featuredImage: form.featured_image,
+  });
+  const scoreColor = seoScore.level === "good" ? "bg-emerald-500" : seoScore.level === "warn" ? "bg-amber-500" : "bg-destructive";
 
   return (
     <>
@@ -271,10 +335,31 @@ export default function AdminBlogEditorPage() {
                 <span>{readingTime} min read</span>
               </>
             )}
+            {(autoSaving || lastSavedAt) && (
+              <>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1">
+                  {autoSaving ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>
+                  ) : (
+                    <>Saved {lastSavedAt!.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</>
+                  )}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* SEO score chip */}
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border text-xs"
+            title={`SEO: ${seoScore.score}/100`}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", scoreColor)} />
+            <span className="font-semibold text-foreground">{seoScore.score}</span>
+            <Gauge className="h-3 w-3 text-muted-foreground" />
+          </div>
           {form.slug && (
             <Link to={`/blog/${form.slug}`} target="_blank">
               <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
@@ -296,25 +381,24 @@ export default function AdminBlogEditorPage() {
               </SheetHeader>
 
               {/* Settings tabs inside the sheet */}
-              <div className="flex gap-1 mt-4 mb-5 p-0.5 bg-muted rounded-lg">
-                <button
-                  onClick={() => setSettingsTab("general")}
-                  className={cn(
-                    "flex-1 text-xs font-medium py-1.5 rounded-md transition-colors",
-                    settingsTab === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  )}
-                >
-                  General
-                </button>
-                <button
-                  onClick={() => setSettingsTab("seo")}
-                  className={cn(
-                    "flex-1 text-xs font-medium py-1.5 rounded-md transition-colors",
-                    settingsTab === "seo" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  )}
-                >
-                  SEO & Meta
-                </button>
+              <div className="grid grid-cols-4 gap-1 mt-4 mb-5 p-0.5 bg-muted rounded-lg">
+                {([
+                  ["general", "General"],
+                  ["seo", "SEO"],
+                  ["score", "Score"],
+                  ["links", "Links"],
+                ] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setSettingsTab(val)}
+                    className={cn(
+                      "text-xs font-medium py-1.5 rounded-md transition-colors",
+                      settingsTab === val ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
 
               {settingsTab === "general" && (
@@ -532,6 +616,29 @@ export default function AdminBlogEditorPage() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {settingsTab === "score" && (
+                <BlogSeoScorePanel
+                  title={form.title}
+                  seoTitle={form.seo_title}
+                  metaDescription={form.seo_description}
+                  slug={form.slug}
+                  body={form.body}
+                  focusKeyword={form.seo_keywords.split(",")[0]?.trim()}
+                  featuredImage={form.featured_image}
+                />
+              )}
+
+              {settingsTab === "links" && (
+                <InternalLinksSuggestionPanel
+                  currentId={id || createdId || undefined}
+                  title={form.title}
+                  tags={form.tags}
+                  category={form.category}
+                  body={form.body}
+                  onInsert={(html) => updateField("body", (form.body || "") + html)}
+                />
               )}
             </SheetContent>
           </Sheet>
