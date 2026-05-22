@@ -36,12 +36,34 @@ export interface SeoScoreResult {
     images: number;
     imagesMissingAlt: number;
     keywordDensity: number; // percent
+    paragraphs: number;
+    avgSentenceLength: number;
+    transitionWordRatio: number;
+    passiveRatio: number;
+    lists: number;
+    videos: number;
   };
 }
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
+
+// Transition word list (subset, English)
+const TRANSITION_WORDS = [
+  "however", "therefore", "furthermore", "moreover", "additionally", "consequently",
+  "meanwhile", "nevertheless", "nonetheless", "accordingly", "subsequently", "instead",
+  "likewise", "similarly", "in addition", "for example", "for instance", "in contrast",
+  "on the other hand", "as a result", "in conclusion", "finally", "first", "second",
+  "third", "next", "then", "because", "although", "while", "since", "thus", "hence",
+  "specifically", "notably", "indeed", "overall", "in fact", "of course",
+];
+
+const POWER_WORDS = [
+  "ultimate", "best", "proven", "essential", "complete", "free", "new", "easy",
+  "powerful", "guide", "guaranteed", "secret", "amazing", "incredible", "exclusive",
+  "definitive", "must", "stunning", "remarkable", "epic", "smart", "instant",
+];
 
 function countMatches(haystack: string, needle: string) {
   if (!needle) return 0;
@@ -78,9 +100,43 @@ export function computeSeoScore(input: SeoScoreInput): SeoScoreResult {
   const imgTags = Array.from(input.body.matchAll(/<img\b[^>]*>/gi)).map((m) => m[0]);
   const images = imgTags.length;
   const imagesMissingAlt = imgTags.filter((t) => !/\salt=["'][^"']+["']/i.test(t)).length;
+  const imgAltsWithKw = kw
+    ? imgTags.filter((t) => {
+        const m = t.match(/\salt=["']([^"']+)["']/i);
+        return m && m[1].toLowerCase().includes(kw);
+      }).length
+    : 0;
 
   const kwHits = kw ? countMatches(text, kw) : 0;
   const keywordDensity = kw && words > 0 ? (kwHits / words) * 100 : 0;
+
+  // ---- Content structure stats
+  const paragraphs = (input.body.match(/<p\b/gi) || []).length;
+  const lists = (input.body.match(/<(ul|ol)\b/gi) || []).length;
+  const videos =
+    (input.body.match(/<(video|iframe)\b/gi) || []).length;
+
+  // Sentence stats
+  const sentenceArr = text.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
+  const sentenceCount = Math.max(1, sentenceArr.length);
+  const avgSentenceLength = words / sentenceCount;
+  const longSentences = sentenceArr.filter((s) => s.split(/\s+/).length > 25).length;
+  const longSentenceRatio = longSentences / sentenceCount;
+
+  // Transition words
+  const lowerText = " " + text.toLowerCase() + " ";
+  const transitionHits = TRANSITION_WORDS.reduce(
+    (a, w) => a + (lowerText.match(new RegExp(`\\b${w}\\b`, "g")) || []).length,
+    0,
+  );
+  const transitionWordRatio = sentenceCount ? transitionHits / sentenceCount : 0;
+
+  // Passive voice (rough: "was/were/been/being/is/are + past-participle-ish ending in 'ed' or common irregulars")
+  const passiveRe =
+    /\b(?:was|were|been|being|is|are|am|be)\s+(?:\w+ly\s+)?(\w+ed|done|made|given|taken|seen|known|written|said|told|shown|built|sent|kept|held|brought|bought|caught|found|left|paid|put|set|let)\b/gi;
+  const passiveHits = (text.match(passiveRe) || []).length;
+  const passiveRatio = sentenceCount ? passiveHits / sentenceCount : 0;
+
 
   // ---- TITLE
   const titleLen = effectiveTitle.length;
@@ -225,6 +281,204 @@ export function computeSeoScore(input: SeoScoreInput): SeoScoreResult {
     weight: 4,
   });
 
+  // ---- TITLE: starts with keyword
+  if (kw) {
+    const startsWithKw = effectiveTitle.toLowerCase().trimStart().startsWith(kw);
+    checks.push({
+      id: "kw-title-start",
+      label: "Keyword near title start",
+      level: startsWithKw ? "good" : "warn",
+      message: startsWithKw
+        ? "Keyword appears at the start of the title."
+        : "Move the focus keyword closer to the start of the title.",
+      weight: 4,
+    });
+
+    // Keyword in a subheading
+    const headingsHtml = (input.body.match(/<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>/gi) || [])
+      .join(" ")
+      .toLowerCase();
+    const kwInHeading = headingsHtml.includes(kw);
+    checks.push({
+      id: "kw-heading",
+      label: "Keyword in subheading",
+      level: kwInHeading ? "good" : "warn",
+      message: kwInHeading
+        ? "Focus keyword found in a subheading."
+        : "Include the focus keyword in at least one H2/H3.",
+      weight: 5,
+    });
+
+    // Keyword in image alt
+    if (images > 0) {
+      checks.push({
+        id: "kw-img-alt",
+        label: "Keyword in image alt",
+        level: imgAltsWithKw > 0 ? "good" : "warn",
+        message: imgAltsWithKw > 0
+          ? `${imgAltsWithKw} image alt text contains the keyword.`
+          : "Add the focus keyword to at least one image alt.",
+        weight: 4,
+      });
+    }
+  }
+
+  // ---- TITLE: power word
+  const titleLower = effectiveTitle.toLowerCase();
+  const hasPower = POWER_WORDS.some((w) => titleLower.includes(w));
+  checks.push({
+    id: "title-power",
+    label: "Power word in title",
+    level: hasPower ? "good" : "warn",
+    message: hasPower
+      ? "Title contains an engaging power word."
+      : "Try a power word (best, ultimate, proven, guide…) to boost CTR.",
+    weight: 3,
+  });
+
+  // ---- TITLE: number / year
+  const hasNumber = /\d/.test(effectiveTitle);
+  const currentYear = new Date().getFullYear();
+  const hasFreshYear =
+    new RegExp(`\\b(${currentYear}|${currentYear - 1})\\b`).test(effectiveTitle);
+  checks.push({
+    id: "title-number",
+    label: "Number in title",
+    level: hasNumber ? "good" : "warn",
+    message: hasNumber
+      ? "Numbers in titles improve click-through rates."
+      : "Add a number to your title (e.g. '7 ways', '2025 guide').",
+    weight: 3,
+  });
+  checks.push({
+    id: "title-freshness",
+    label: "Title freshness",
+    level: hasFreshYear ? "good" : "warn",
+    message: hasFreshYear
+      ? "Title signals fresh, up-to-date content."
+      : `Consider including ${currentYear} to signal freshness.`,
+    weight: 2,
+  });
+
+  // ---- PARAGRAPHS
+  const wordsPerPara = paragraphs > 0 ? words / paragraphs : words;
+  if (paragraphs >= 3 && wordsPerPara <= 120) {
+    checks.push({
+      id: "paragraphs",
+      label: "Paragraph length",
+      level: "good",
+      message: `Avg ${Math.round(wordsPerPara)} words per paragraph — scannable.`,
+      weight: 4,
+    });
+  } else if (paragraphs >= 1) {
+    checks.push({
+      id: "paragraphs",
+      label: "Paragraph length",
+      level: "warn",
+      message:
+        wordsPerPara > 120
+          ? `Paragraphs avg ${Math.round(wordsPerPara)} words — keep under 120.`
+          : "Break content into more paragraphs.",
+      weight: 4,
+    });
+  } else {
+    checks.push({
+      id: "paragraphs",
+      label: "Paragraph length",
+      level: "bad",
+      message: "No <p> paragraphs detected.",
+      weight: 4,
+    });
+  }
+
+  // ---- SENTENCE LENGTH
+  if (words > 0) {
+    if (longSentenceRatio <= 0.25) {
+      checks.push({
+        id: "sentence-length",
+        label: "Sentence length",
+        level: "good",
+        message: `Avg ${avgSentenceLength.toFixed(1)} words — clear.`,
+        weight: 4,
+      });
+    } else {
+      checks.push({
+        id: "sentence-length",
+        label: "Sentence length",
+        level: "warn",
+        message: `${Math.round(longSentenceRatio * 100)}% of sentences are >25 words. Shorten them.`,
+        weight: 4,
+      });
+    }
+  }
+
+  // ---- TRANSITION WORDS
+  if (words > 100) {
+    if (transitionWordRatio >= 0.3) {
+      checks.push({
+        id: "transition-words",
+        label: "Transition words",
+        level: "good",
+        message: `${Math.round(transitionWordRatio * 100)}% of sentences use transitions.`,
+        weight: 4,
+      });
+    } else {
+      checks.push({
+        id: "transition-words",
+        label: "Transition words",
+        level: "warn",
+        message: "Use more transitions (however, therefore, for example…) to improve flow.",
+        weight: 4,
+      });
+    }
+  }
+
+  // ---- PASSIVE VOICE
+  if (words > 100) {
+    if (passiveRatio <= 0.1) {
+      checks.push({
+        id: "passive-voice",
+        label: "Active voice",
+        level: "good",
+        message: `Only ${Math.round(passiveRatio * 100)}% passive — strong active voice.`,
+        weight: 3,
+      });
+    } else {
+      checks.push({
+        id: "passive-voice",
+        label: "Active voice",
+        level: "warn",
+        message: `${Math.round(passiveRatio * 100)}% of sentences are passive — aim for <10%.`,
+        weight: 3,
+      });
+    }
+  }
+
+  // ---- LISTS
+  checks.push({
+    id: "lists",
+    label: "Lists & bullets",
+    level: lists >= 1 ? "good" : "warn",
+    message: lists >= 1
+      ? `${lists} list(s) found — great for scannability.`
+      : "Add bullet or numbered lists to improve scannability.",
+    weight: 3,
+  });
+
+  // ---- MEDIA RICHNESS (video / embed)
+  checks.push({
+    id: "media-rich",
+    label: "Multimedia",
+    level: videos >= 1 || images >= 2 ? "good" : "warn",
+    message:
+      videos >= 1
+        ? `Video / embed included.`
+        : images >= 2
+          ? `${images} images — visually rich.`
+          : "Add a video or more images to enrich the post.",
+    weight: 3,
+  });
+
   // Score: weighted average where good=1, warn=0.5, bad=0
   const totalWeight = checks.reduce((a, c) => a + c.weight, 0);
   const earned = checks.reduce((a, c) => a + c.weight * (c.level === "good" ? 1 : c.level === "warn" ? 0.5 : 0), 0);
@@ -235,6 +489,12 @@ export function computeSeoScore(input: SeoScoreInput): SeoScoreResult {
     score,
     level,
     checks,
-    stats: { words, readingTime, h1, h2, h3, internalLinks, externalLinks, images, imagesMissingAlt, keywordDensity },
+    stats: {
+      words, readingTime, h1, h2, h3,
+      internalLinks, externalLinks,
+      images, imagesMissingAlt, keywordDensity,
+      paragraphs, avgSentenceLength, transitionWordRatio, passiveRatio,
+      lists, videos,
+    },
   };
 }

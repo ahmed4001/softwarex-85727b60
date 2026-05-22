@@ -30,13 +30,19 @@ const LEVEL_ORDER: Record<SeoLevel, number> = { bad: 0, warn: 1, good: 2 };
 
 const FIX_MAP: Record<string, FixAction> = {
   "title-length": { type: "focus-title" },
+  "title-power": { type: "focus-title" },
+  "title-number": { type: "focus-title" },
+  "title-freshness": { type: "focus-title" },
   "meta-desc": { type: "focus-meta" },
   "kw-set": { type: "focus-keyword" },
   "kw-title": { type: "focus-title" },
+  "kw-title-start": { type: "focus-title" },
   "kw-meta": { type: "focus-meta" },
   "kw-slug": { type: "focus-slug" },
   "kw-intro": { type: "focus-body" },
   "kw-density": { type: "focus-body" },
+  "kw-heading": { type: "focus-body" },
+  "kw-img-alt": { type: "focus-body" },
   "h-structure": { type: "focus-body" },
   "h1-count": { type: "focus-body" },
   "img-alt": { type: "focus-body" },
@@ -46,18 +52,30 @@ const FIX_MAP: Record<string, FixAction> = {
   "length": { type: "focus-body" },
   "readability": { type: "focus-body" },
   "featured": { type: "focus-featured" },
+  "paragraphs": { type: "focus-body" },
+  "sentence-length": { type: "focus-body" },
+  "transition-words": { type: "focus-body" },
+  "passive-voice": { type: "focus-body" },
+  "lists": { type: "focus-body" },
+  "media-rich": { type: "focus-body" },
 };
 
 // Category labels shown beside each check icon
 const CATEGORY_MAP: Record<string, string> = {
   "title-length": "Title",
+  "title-power": "Title",
+  "title-number": "Title",
+  "title-freshness": "Title",
   "meta-desc": "Meta",
   "kw-set": "Keyword",
   "kw-title": "Keyword",
+  "kw-title-start": "Keyword",
   "kw-meta": "Keyword",
   "kw-slug": "Keyword",
   "kw-intro": "Keyword",
   "kw-density": "Keyword",
+  "kw-heading": "Keyword",
+  "kw-img-alt": "Keyword",
   "h-structure": "Headings",
   "h1-count": "Headings",
   "img-alt": "Media",
@@ -67,6 +85,12 @@ const CATEGORY_MAP: Record<string, string> = {
   "length": "Content",
   "readability": "Content",
   "featured": "Media",
+  "paragraphs": "Readability",
+  "sentence-length": "Readability",
+  "transition-words": "Readability",
+  "passive-voice": "Readability",
+  "lists": "Structure",
+  "media-rich": "Media",
 };
 
 // Industry benchmark tiers used for the comparison bar
