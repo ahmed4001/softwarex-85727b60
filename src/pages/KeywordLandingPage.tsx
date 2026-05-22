@@ -94,7 +94,7 @@ export default function KeywordLandingPage({ pageType, slugOverride, pathPrefix 
         type="website"
       />
       <div className="container py-8 max-w-6xl">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: page.h1 }]} />
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: page.h1 }]} />
 
         {/* Hero */}
         <motion.section
