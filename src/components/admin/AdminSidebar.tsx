@@ -40,6 +40,7 @@ const sidebarItems = [
     label: "Blog & CMS", icon: FileText, children: [
       { label: "Blog Posts", to: "/admin/blog" },
       { label: "Add Post", to: "/admin/blog/new" },
+      { label: "SEO Dashboard", to: "/admin/blog/seo" },
       { label: "Pages", to: "/admin/pages" },
       { label: "SEO Landing Pages", to: "/admin/keyword-pages" },
       { label: "Landing Page Library", to: "/admin/landing-pages" },
