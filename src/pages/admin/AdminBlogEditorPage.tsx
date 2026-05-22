@@ -308,6 +308,8 @@ export default function AdminBlogEditorPage() {
     featuredImage: form.featured_image,
   });
   const scoreColor = seoScore.level === "good" ? "bg-emerald-500" : seoScore.level === "warn" ? "bg-amber-500" : "bg-destructive";
+
+  return (
     <>
       <SeoHead title={`${isEdit ? "Edit" : "New"} Post - Admin`} />
 
