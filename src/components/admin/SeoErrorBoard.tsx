@@ -70,6 +70,21 @@ const FIX_MAP: Record<string, FixAction> = {
   "kw-title-stuff": { type: "focus-title" },
   "title-h1-match": { type: "focus-body" },
   "read-time": { type: "focus-body" },
+  "h1-missing": { type: "focus-body" },
+  "kw-h1": { type: "focus-body" },
+  "slug-special": { type: "focus-slug" },
+  "slug-underscore": { type: "focus-slug" },
+  "http-links": { type: "focus-body" },
+  "external-overuse": { type: "focus-body" },
+  "internal-overuse": { type: "focus-body" },
+  "alt-generic": { type: "focus-body" },
+  "intro-length": { type: "focus-body" },
+  "conclusion": { type: "focus-body" },
+  "cta-body": { type: "focus-body" },
+  "authority-link": { type: "focus-body" },
+  "subhead-distribution": { type: "focus-body" },
+  "lsi-coverage": { type: "focus-body" },
+  "title-clickbait": { type: "focus-title" },
 };
 
 // Category labels shown beside each check icon
@@ -115,6 +130,21 @@ const CATEGORY_MAP: Record<string, string> = {
   "kw-title-stuff": "Keyword",
   "title-h1-match": "Title",
   "read-time": "Content",
+  "h1-missing": "Headings",
+  "kw-h1": "Keyword",
+  "slug-special": "URL",
+  "slug-underscore": "URL",
+  "http-links": "Technical",
+  "external-overuse": "Links",
+  "internal-overuse": "Links",
+  "alt-generic": "Media",
+  "intro-length": "Content",
+  "conclusion": "Content",
+  "cta-body": "Engagement",
+  "authority-link": "E-E-A-T",
+  "subhead-distribution": "Headings",
+  "lsi-coverage": "Keyword",
+  "title-clickbait": "Title",
 };
 
 // Industry benchmark tiers used for the comparison bar

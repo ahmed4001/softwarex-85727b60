@@ -684,6 +684,208 @@ export function computeSeoScore(input: SeoScoreInput): SeoScoreResult {
     });
   }
 
+  // ---- H1 PRESENT / KEYWORD IN H1
+  if (h1 === 0) {
+    checks.push({
+      id: "h1-missing", label: "H1 present", level: "bad",
+      message: "Post has no H1 tag — add a single H1.", weight: 6,
+    });
+  } else {
+    checks.push({
+      id: "h1-missing", label: "H1 present", level: "good",
+      message: "H1 found.", weight: 6,
+    });
+    if (kw && firstH1) {
+      const h1Text = stripHtml(firstH1[1]).toLowerCase();
+      const has = h1Text.includes(kw);
+      checks.push({
+        id: "kw-h1", label: "Keyword in H1",
+        level: has ? "good" : "warn",
+        message: has ? "H1 contains the focus keyword." : "Add focus keyword to your H1.",
+        weight: 5,
+      });
+    }
+  }
+
+  // ---- SLUG: special chars / underscores
+  if (input.slug) {
+    if (/[^a-z0-9-]/.test(input.slug.toLowerCase())) {
+      checks.push({
+        id: "slug-special", label: "URL special characters", level: "bad",
+        message: "Slug contains special characters — use only letters, numbers, hyphens.",
+        weight: 3,
+      });
+    }
+    if (input.slug.includes("_")) {
+      checks.push({
+        id: "slug-underscore", label: "Hyphens, not underscores", level: "warn",
+        message: "Replace underscores (_) with hyphens (-) in your slug.",
+        weight: 3,
+      });
+    }
+  }
+
+  // ---- INSECURE (HTTP) LINKS
+  const httpLinks = linkMatches.filter((h) => h.toLowerCase().startsWith("http://")).length;
+  if (httpLinks > 0) {
+    checks.push({
+      id: "http-links", label: "HTTPS links", level: "warn",
+      message: `${httpLinks} link(s) use insecure http:// — switch to https://.`,
+      weight: 3,
+    });
+  }
+
+  // ---- TOO MANY LINKS
+  if (externalLinks > 10) {
+    checks.push({
+      id: "external-overuse", label: "Too many outbound links", level: "warn",
+      message: `${externalLinks} external links — keep under 10 to preserve link equity.`,
+      weight: 3,
+    });
+  }
+  if (internalLinks > 15) {
+    checks.push({
+      id: "internal-overuse", label: "Too many internal links", level: "warn",
+      message: `${internalLinks} internal links — looks spammy.`,
+      weight: 2,
+    });
+  }
+
+  // ---- GENERIC ALT TEXT
+  if (images > 0) {
+    const genericAlts = imgTags.filter((t) => {
+      const m = t.match(/\salt=["']([^"']+)["']/i);
+      if (!m) return false;
+      const v = m[1].toLowerCase().trim();
+      return /^(image|img|photo|picture|screenshot)\s*\d*$/.test(v) || v.length < 3;
+    }).length;
+    if (genericAlts > 0) {
+      checks.push({
+        id: "alt-generic", label: "Descriptive alt text", level: "warn",
+        message: `${genericAlts} image(s) have generic alt text. Be descriptive.`,
+        weight: 3,
+      });
+    }
+  }
+
+  // ---- INTRO LENGTH
+  const firstParaMatch = input.body.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i);
+  const firstParaText = firstParaMatch ? stripHtml(firstParaMatch[1]) : "";
+  const firstParaWords = firstParaText.split(/\s+/).filter(Boolean).length;
+  if (firstParaWords < 30) {
+    checks.push({
+      id: "intro-length", label: "Strong introduction", level: "warn",
+      message: firstParaWords === 0
+        ? "Add an introductory paragraph."
+        : `Intro is only ${firstParaWords} words — aim for 40–80 words.`,
+      weight: 4,
+    });
+  } else {
+    checks.push({
+      id: "intro-length", label: "Strong introduction", level: "good",
+      message: `Intro is ${firstParaWords} words — sets up the post well.`,
+      weight: 4,
+    });
+  }
+
+  // ---- CONCLUSION
+  const headingTexts = (input.body.match(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi) || [])
+    .map((h) => stripHtml(h).toLowerCase());
+  const hasConclusion =
+    headingTexts.some((h) => /conclusion|takeaway|summary|final thoughts|wrap[\s-]?up|key points/.test(h)) ||
+    /\b(in conclusion|to sum up|to wrap up|in summary|final thoughts)\b/i.test(text.slice(-500));
+  if (words > 400) {
+    checks.push({
+      id: "conclusion", label: "Clear conclusion",
+      level: hasConclusion ? "good" : "warn",
+      message: hasConclusion
+        ? "Post has a conclusion section."
+        : "Add a 'Conclusion' or 'Key Takeaways' section.",
+      weight: 3,
+    });
+  }
+
+  // ---- CTA
+  const ctaTextRe = /\b(subscribe|sign up|download|get started|try (it )?(free|now|today)|learn more|book a (demo|call)|contact us|join|register)\b/i;
+  const hasCtaBody = ctaTextRe.test(text) || /<button\b|class=["'][^"']*\bbtn\b/i.test(input.body);
+  checks.push({
+    id: "cta-body", label: "Call-to-action",
+    level: hasCtaBody ? "good" : "warn",
+    message: hasCtaBody
+      ? "Post includes a call-to-action."
+      : "Add a CTA (Subscribe, Try free, Learn more…) to drive engagement.",
+    weight: 3,
+  });
+
+  // ---- AUTHORITY / REFERENCE (E-E-A-T)
+  const authorityRe =
+    /https?:\/\/(?:[\w.-]+\.)?(?:wikipedia\.org|gov|edu|nature\.com|sciencedirect\.com|nih\.gov|who\.int|forbes\.com|hbr\.org|nytimes\.com|reuters\.com|bbc\.|harvard\.edu|stanford\.edu|mit\.edu)/i;
+  const hasAuthority = linkMatches.some((h) => authorityRe.test(h));
+  if (words > 400) {
+    checks.push({
+      id: "authority-link", label: "Authority reference",
+      level: hasAuthority ? "good" : "warn",
+      message: hasAuthority
+        ? "Cites an authoritative source — boosts E-E-A-T."
+        : "Link to an authoritative source (.gov, .edu, Wikipedia, major publisher).",
+      weight: 3,
+    });
+  }
+
+  // ---- SUBHEADING DISTRIBUTION
+  if (words > 600) {
+    const wordsPerHeading = (h2 + h3) > 0 ? words / (h2 + h3) : words;
+    checks.push({
+      id: "subhead-distribution", label: "Subheading distribution",
+      level: wordsPerHeading <= 300 ? "good" : "warn",
+      message: wordsPerHeading <= 300
+        ? `~${Math.round(wordsPerHeading)} words per subheading — well paced.`
+        : `${Math.round(wordsPerHeading)} words per subheading — break long sections with H2/H3.`,
+      weight: 3,
+    });
+  }
+
+  // ---- LSI / SEMANTIC COVERAGE
+  if (effectiveTitle && words > 200) {
+    const stopwords = new Set([
+      "the","a","an","and","or","but","of","in","on","at","to","for","with","is","are",
+      "your","you","how","what","why","when","this","that","best","top",
+    ]);
+    const titleWords = effectiveTitle
+      .toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+      .filter((w) => w.length > 3 && !stopwords.has(w));
+    if (titleWords.length > 0) {
+      const lowerBody = text.toLowerCase();
+      const covered = titleWords.filter((w) => lowerBody.includes(w)).length;
+      const ratio = covered / titleWords.length;
+      checks.push({
+        id: "lsi-coverage", label: "Semantic coverage",
+        level: ratio >= 0.7 ? "good" : ratio >= 0.4 ? "warn" : "bad",
+        message: ratio >= 0.7
+          ? `${covered}/${titleWords.length} title topics covered in body.`
+          : `Only ${covered}/${titleWords.length} title topics appear in body — expand coverage.`,
+        weight: 4,
+      });
+    }
+  }
+
+  // ---- TITLE: clickbait / shouting
+  if (effectiveTitle) {
+    const bangs = (effectiveTitle.match(/[!?]/g) || []).length;
+    const letters = effectiveTitle.replace(/[^a-zA-Z]/g, "").length;
+    const caps = effectiveTitle.replace(/[^A-Z]/g, "").length;
+    const allCaps = letters > 8 && caps / letters > 0.6;
+    if (bangs > 1 || allCaps) {
+      checks.push({
+        id: "title-clickbait", label: "Title professionalism", level: "warn",
+        message: allCaps
+          ? "Avoid all-caps titles — looks like shouting."
+          : "Avoid multiple '!' or '?' — looks clickbaity.",
+        weight: 2,
+      });
+    }
+  }
+
   const totalWeight = checks.reduce((a, c) => a + c.weight, 0);
   const earned = checks.reduce((a, c) => a + c.weight * (c.level === "good" ? 1 : c.level === "warn" ? 0.5 : 0), 0);
   const score = Math.round((earned / Math.max(1, totalWeight)) * 100);
