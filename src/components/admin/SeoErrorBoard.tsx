@@ -48,6 +48,41 @@ const FIX_MAP: Record<string, FixAction> = {
   "featured": { type: "focus-featured" },
 };
 
+// Category labels shown beside each check icon
+const CATEGORY_MAP: Record<string, string> = {
+  "title-length": "Title",
+  "meta-desc": "Meta",
+  "kw-set": "Keyword",
+  "kw-title": "Keyword",
+  "kw-meta": "Keyword",
+  "kw-slug": "Keyword",
+  "kw-intro": "Keyword",
+  "kw-density": "Keyword",
+  "h-structure": "Headings",
+  "h1-count": "Headings",
+  "img-alt": "Media",
+  "internal-links": "Links",
+  "external-links": "Links",
+  "slug": "URL",
+  "length": "Content",
+  "readability": "Content",
+  "featured": "Media",
+};
+
+// Industry benchmark tiers used for the comparison bar
+const BENCHMARKS = [
+  { label: "Poor",      min: 0,  max: 40,  color: "bg-rose-400/70"   },
+  { label: "Fair",      min: 40, max: 55,  color: "bg-orange-400/70" },
+  { label: "Good",      min: 55, max: 80,  color: "bg-amber-400/70"  },
+  { label: "Excellent", min: 80, max: 100, color: "bg-emerald-500/80" },
+];
+
+function getTier(score: number) {
+  return BENCHMARKS.find((b) => score >= b.min && score <= b.max) ?? BENCHMARKS[0];
+}
+
+const INDUSTRY_AVG = 62; // average on-page SEO score reference
+
 export function SeoErrorBoard(props: Props) {
   const [open, setOpen] = useState(true);
   const [filter, setFilter] = useState<"all" | "errors" | "warnings" | "passing">("all");
@@ -97,19 +132,57 @@ export function SeoErrorBoard(props: Props) {
             <span className="text-sm font-semibold text-foreground">SEO Score</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={cn("text-2xl font-bold tabular-nums leading-none", tone.text)}>
-              {result.score}%
-            </span>
+            <div className="flex flex-col items-end leading-none">
+              <span className={cn("text-2xl font-bold tabular-nums", tone.text)}>
+                {result.score}%
+              </span>
+              <span className={cn("text-[10px] font-semibold uppercase tracking-wider mt-0.5", tone.text)}>
+                {getTier(result.score).label}
+              </span>
+            </div>
             {open
               ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
               : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </div>
         </div>
-        <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
-          <div
-            className={cn("h-full rounded-full transition-all duration-500", tone.bar)}
-            style={{ width: `${Math.max(2, result.score)}%` }}
-          />
+
+        {/* Benchmark scale */}
+        <div className="mt-3">
+          <div className="relative h-2 w-full rounded-full overflow-hidden flex">
+            {BENCHMARKS.map((b) => (
+              <div
+                key={b.label}
+                className={cn("h-full", b.color)}
+                style={{ width: `${b.max - b.min}%` }}
+              />
+            ))}
+            {/* Industry average marker */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 h-3 w-px bg-foreground/40"
+              style={{ left: `${INDUSTRY_AVG}%` }}
+              title={`Industry avg ${INDUSTRY_AVG}%`}
+            />
+            {/* Your score marker */}
+            <div
+              className="absolute -top-0.5 h-3 w-1 rounded-sm bg-foreground shadow ring-2 ring-background"
+              style={{ left: `calc(${Math.max(0, Math.min(100, result.score))}% - 2px)` }}
+            />
+          </div>
+          <div className="mt-1 flex justify-between text-[9px] uppercase tracking-wider text-muted-foreground">
+            <span>Poor</span>
+            <span>Fair</span>
+            <span>Good</span>
+            <span>Excellent</span>
+          </div>
+          <p className="mt-1.5 text-[10px] text-muted-foreground">
+            You: <span className={cn("font-semibold", tone.text)}>{result.score}%</span>
+            <span className="mx-1.5">·</span>
+            Industry avg: <span className="font-semibold text-foreground">{INDUSTRY_AVG}%</span>
+            <span className="mx-1.5">·</span>
+            {result.score >= INDUSTRY_AVG
+              ? <span className="text-emerald-600 font-semibold">+{result.score - INDUSTRY_AVG} above avg</span>
+              : <span className="text-rose-600 font-semibold">{result.score - INDUSTRY_AVG} below avg</span>}
+          </p>
         </div>
       </button>
 
@@ -164,11 +237,18 @@ export function SeoErrorBoard(props: Props) {
                     >
                       <Icon className={cn("h-3.5 w-3.5 mt-[3px] flex-shrink-0", color)} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12.5px] leading-snug text-foreground">
-                          {c.label}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {CATEGORY_MAP[c.id] && (
+                            <span className="inline-flex items-center rounded bg-muted px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              {CATEGORY_MAP[c.id]}
+                            </span>
+                          )}
+                          <p className="text-[12.5px] leading-snug text-foreground">
+                            {c.label}
+                          </p>
+                        </div>
                         {c.level !== "good" && (
-                          <p className="text-[11px] text-muted-foreground leading-snug">
+                          <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
                             {c.message}
                           </p>
                         )}
