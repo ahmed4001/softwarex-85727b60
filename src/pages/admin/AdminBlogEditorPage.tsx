@@ -381,25 +381,24 @@ export default function AdminBlogEditorPage() {
               </SheetHeader>
 
               {/* Settings tabs inside the sheet */}
-              <div className="flex gap-1 mt-4 mb-5 p-0.5 bg-muted rounded-lg">
-                <button
-                  onClick={() => setSettingsTab("general")}
-                  className={cn(
-                    "flex-1 text-xs font-medium py-1.5 rounded-md transition-colors",
-                    settingsTab === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  )}
-                >
-                  General
-                </button>
-                <button
-                  onClick={() => setSettingsTab("seo")}
-                  className={cn(
-                    "flex-1 text-xs font-medium py-1.5 rounded-md transition-colors",
-                    settingsTab === "seo" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  )}
-                >
-                  SEO & Meta
-                </button>
+              <div className="grid grid-cols-4 gap-1 mt-4 mb-5 p-0.5 bg-muted rounded-lg">
+                {([
+                  ["general", "General"],
+                  ["seo", "SEO"],
+                  ["score", "Score"],
+                  ["links", "Links"],
+                ] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setSettingsTab(val)}
+                    className={cn(
+                      "text-xs font-medium py-1.5 rounded-md transition-colors",
+                      settingsTab === val ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
 
               {settingsTab === "general" && (
