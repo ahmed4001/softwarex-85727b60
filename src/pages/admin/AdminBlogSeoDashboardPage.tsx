@@ -390,13 +390,23 @@ function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { 
 
   const hasFilters = query || statusFilter !== "all" || scoreFilter !== "all";
 
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * pageSize;
+  const pageRows = rows.slice(pageStart, pageStart + pageSize);
+
+  // Reset to first page whenever filters/sort/pageSize change
+  useEffect(() => { setPage(1); }, [query, statusFilter, scoreFilter, sortKey, sortDir, pageSize]);
+
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
       <div className="p-6 pb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-semibold">All posts</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            {rows.length} of {scored.length} {scored.length === 1 ? "post" : "posts"}
+            {rows.length === 0
+              ? `0 of ${scored.length} posts`
+              : `${pageStart + 1}–${Math.min(pageStart + pageSize, rows.length)} of ${rows.length}${rows.length !== scored.length ? ` (filtered from ${scored.length})` : ""}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
