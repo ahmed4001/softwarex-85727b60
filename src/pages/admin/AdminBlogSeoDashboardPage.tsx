@@ -1,13 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { computeSeoScore } from "@/lib/blog-seo-score";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   BarChart3, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
-  Globe, FileText, Eye, Link2, ArrowUpRight, Loader2,
+  Globe, FileText, Eye, Link2, ArrowUpRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Search, X,
 } from "lucide-react";
 
 type Post = {
@@ -288,45 +292,157 @@ export default function AdminBlogSeoDashboardPage() {
       </div>
 
       {/* All posts score table */}
-      <div className="rounded-xl border bg-card overflow-hidden">
-        <div className="p-6 pb-3">
+      <PostsTable scored={analysis.scored} />
+    </div>
+  );
+}
+
+type SortKey = "title" | "status" | "views" | "words" | "score";
+type SortDir = "asc" | "desc";
+
+function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { words: number } }[] }) {
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [scoreFilter, setScoreFilter] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("score");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const rows = useMemo(() => {
+    let r = scored;
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      r = r.filter((s) => s.post.title.toLowerCase().includes(q) || s.post.slug.toLowerCase().includes(q));
+    }
+    if (statusFilter !== "all") r = r.filter((s) => s.post.status === statusFilter);
+    if (scoreFilter !== "all") {
+      r = r.filter((s) =>
+        scoreFilter === "good" ? s.score >= 80
+        : scoreFilter === "warn" ? s.score >= 60 && s.score < 80
+        : s.score < 60
+      );
+    }
+    const dir = sortDir === "asc" ? 1 : -1;
+    r = [...r].sort((a, b) => {
+      switch (sortKey) {
+        case "title": return a.post.title.localeCompare(b.post.title) * dir;
+        case "status": return a.post.status.localeCompare(b.post.status) * dir;
+        case "views": return ((a.post.view_count || 0) - (b.post.view_count || 0)) * dir;
+        case "words": return (a.stats.words - b.stats.words) * dir;
+        case "score": return (a.score - b.score) * dir;
+      }
+    });
+    return r;
+  }, [scored, query, statusFilter, scoreFilter, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir(key === "title" || key === "status" ? "asc" : "desc"); }
+  };
+
+  const SortIcon = ({ k }: { k: SortKey }) =>
+    sortKey !== k ? <ArrowUpDown className="h-3 w-3 opacity-40" />
+    : sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+
+  const hasFilters = query || statusFilter !== "all" || scoreFilter !== "all";
+
+  return (
+    <div className="rounded-xl border bg-card overflow-hidden">
+      <div className="p-6 pb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
           <h2 className="font-semibold">All posts</h2>
-          <p className="text-xs text-muted-foreground mt-1">SEO score &amp; performance overview</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {rows.length} of {scored.length} {scored.length === 1 ? "post" : "posts"}
+          </p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-xs text-muted-foreground border-y bg-muted/30">
-              <tr>
-                <th className="text-left px-6 py-2 font-medium">Title</th>
-                <th className="text-left px-3 py-2 font-medium">Status</th>
-                <th className="text-right px-3 py-2 font-medium">Views</th>
-                <th className="text-right px-3 py-2 font-medium">Words</th>
-                <th className="text-right px-6 py-2 font-medium">SEO</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analysis.scored.map((s) => (
-                <tr key={s.post.id} className="border-t hover:bg-muted/30">
-                  <td className="px-6 py-2.5">
-                    <Link to={`/admin/blog/${s.post.id}/edit`} className="hover:underline font-medium">
-                      {s.post.title}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2.5 text-xs capitalize text-muted-foreground">{s.post.status}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">{(s.post.view_count || 0).toLocaleString()}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">{s.stats.words}</td>
-                  <td className="px-6 py-2.5 text-right">
-                    <span className={cn("text-xs font-semibold px-2 py-1 rounded-md border", scoreColor(s.score))}>
-                      {s.score}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search title…"
+              className="h-8 text-xs pl-8 w-48"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-8 text-xs w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={scoreFilter} onValueChange={setScoreFilter}>
+            <SelectTrigger className="h-8 text-xs w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All scores</SelectItem>
+              <SelectItem value="good">Good (80+)</SelectItem>
+              <SelectItem value="warn">Warning (60–79)</SelectItem>
+              <SelectItem value="bad">Poor (&lt; 60)</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasFilters && (
+            <button
+              onClick={() => { setQuery(""); setStatusFilter("all"); setScoreFilter("all"); }}
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md border"
+            >
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
         </div>
       </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground border-y bg-muted/30">
+            <tr>
+              <Th onClick={() => toggleSort("title")} align="left" className="px-6"><span className="inline-flex items-center gap-1">Title <SortIcon k="title" /></span></Th>
+              <Th onClick={() => toggleSort("status")} align="left" className="px-3"><span className="inline-flex items-center gap-1">Status <SortIcon k="status" /></span></Th>
+              <Th onClick={() => toggleSort("views")} align="right" className="px-3"><span className="inline-flex items-center gap-1 justify-end">Views <SortIcon k="views" /></span></Th>
+              <Th onClick={() => toggleSort("words")} align="right" className="px-3"><span className="inline-flex items-center gap-1 justify-end">Words <SortIcon k="words" /></span></Th>
+              <Th onClick={() => toggleSort("score")} align="right" className="px-6"><span className="inline-flex items-center gap-1 justify-end">SEO <SortIcon k="score" /></span></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">No posts match your filters.</td></tr>
+            ) : rows.map((s) => (
+              <tr key={s.post.id} className="border-t hover:bg-muted/30">
+                <td className="px-6 py-2.5">
+                  <Link to={`/admin/blog/${s.post.id}/edit`} className="hover:underline font-medium">
+                    {s.post.title}
+                  </Link>
+                </td>
+                <td className="px-3 py-2.5 text-xs capitalize text-muted-foreground">{s.post.status}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{(s.post.view_count || 0).toLocaleString()}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">{s.stats.words}</td>
+                <td className="px-6 py-2.5 text-right">
+                  <span className={cn("text-xs font-semibold px-2 py-1 rounded-md border", scoreColor(s.score))}>
+                    {s.score}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
+  );
+}
+
+function Th({ children, onClick, align, className }: { children: React.ReactNode; onClick: () => void; align: "left" | "right"; className?: string }) {
+  return (
+    <th
+      onClick={onClick}
+      className={cn(
+        "py-2 font-medium cursor-pointer select-none hover:text-foreground transition-colors",
+        align === "left" ? "text-left" : "text-right",
+        className,
+      )}
+    >
+      {children}
+    </th>
   );
 }
 
