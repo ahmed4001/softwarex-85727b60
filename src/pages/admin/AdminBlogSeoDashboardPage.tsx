@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ import {
 import {
   BarChart3, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
   Globe, FileText, Eye, Link2, ArrowUpRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Search, X, RefreshCw,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 
 type Post = {
@@ -348,6 +349,8 @@ function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { 
   const [scoreFilter, setScoreFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const rows = useMemo(() => {
     let r = scored;
@@ -387,13 +390,23 @@ function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { 
 
   const hasFilters = query || statusFilter !== "all" || scoreFilter !== "all";
 
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * pageSize;
+  const pageRows = rows.slice(pageStart, pageStart + pageSize);
+
+  // Reset to first page whenever filters/sort/pageSize change
+  useEffect(() => { setPage(1); }, [query, statusFilter, scoreFilter, sortKey, sortDir, pageSize]);
+
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
       <div className="p-6 pb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-semibold">All posts</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            {rows.length} of {scored.length} {scored.length === 1 ? "post" : "posts"}
+            {rows.length === 0
+              ? `0 of ${scored.length} posts`
+              : `${pageStart + 1}–${Math.min(pageStart + pageSize, rows.length)} of ${rows.length}${rows.length !== scored.length ? ` (filtered from ${scored.length})` : ""}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -447,9 +460,9 @@ function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { 
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {pageRows.length === 0 ? (
               <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">No posts match your filters.</td></tr>
-            ) : rows.map((s) => (
+            ) : pageRows.map((s) => (
               <tr key={s.post.id} className="border-t hover:bg-muted/30">
                 <td className="px-6 py-2.5">
                   <Link to={`/admin/blog/${s.post.id}/edit`} className="hover:underline font-medium">
@@ -468,6 +481,40 @@ function PostsTable({ scored }: { scored: { post: Post; score: number; stats: { 
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination footer */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-t bg-muted/20 text-xs">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span>Rows per page</span>
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+            <SelectTrigger className="h-7 w-[68px] text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[10, 25, 50, 100, 200].map((n) => (
+                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-muted-foreground tabular-nums">
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage(1)} disabled={currentPage === 1} aria-label="First page">
+              <ChevronsLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} aria-label="Previous page">
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} aria-label="Next page">
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage(totalPages)} disabled={currentPage === totalPages} aria-label="Last page">
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
