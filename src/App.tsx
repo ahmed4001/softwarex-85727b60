@@ -42,6 +42,7 @@ const AdminTranslationsPage = lazy(() => import("./pages/admin/AdminTranslations
 const AdminAIImportPage = lazy(() => import("./pages/admin/AdminAIImportPage"));
 const AdminBlogEditorPage = lazy(() => import("./pages/admin/AdminBlogEditorPage"));
 const AdminBlogSeoDashboardPage = lazy(() => import("./pages/admin/AdminBlogSeoDashboardPage"));
+const AdminBlogSeoAuditPage = lazy(() => import("./pages/admin/AdminBlogSeoAuditPage"));
 const AdminBrevoPage = lazy(() => import("./pages/admin/AdminBrevoPage"));
 const AdminAnalyticsPage = lazy(() => import("./pages/admin/AdminAnalyticsPage"));
 const AdminAIPage = lazy(() => import("./pages/admin/AdminAIPage"));
