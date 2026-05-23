@@ -160,45 +160,92 @@ export default function AdminKeywordLandingPage() {
     return c;
   }, [enrichedPages]);
 
+  const buildPayload = () => ({
+    page_type: form.page_type,
+    status: form.status,
+    intent: form.intent,
+    category: form.category || null,
+    slug: form.slug.trim(),
+    h1: form.h1.trim(),
+    meta_title: form.meta_title || null,
+    meta_description: form.meta_description || null,
+    focus_keyword: form.focus_keyword || null,
+    hero_body: form.hero_body || null,
+    excerpt: form.excerpt || null,
+    featured_image: form.featured_image || null,
+    sections: form.sections,
+    faq: form.faq.filter((f) => f.q || f.a),
+    related_keywords: form.related_keywords,
+    internal_links: form.internal_links,
+    primary_product_id: form.primary_product_id || null,
+    related_product_ids: safeJson(form.related_product_ids, []),
+    canonical_override: form.canonical_override || null,
+  });
+
   const upsert = useMutation({
-    mutationFn: async () => {
-      const payload: any = {
-        page_type: form.page_type,
-        status: form.status,
-        intent: form.intent,
-        category: form.category || null,
-        slug: form.slug.trim(),
-        h1: form.h1.trim(),
-        meta_title: form.meta_title || null,
-        meta_description: form.meta_description || null,
-        focus_keyword: form.focus_keyword || null,
-        hero_body: form.hero_body || null,
-        excerpt: form.excerpt || null,
-        featured_image: form.featured_image || null,
-        sections: form.sections,
-        faq: form.faq.filter((f) => f.q || f.a),
-        related_keywords: form.related_keywords,
-        internal_links: form.internal_links,
-        primary_product_id: form.primary_product_id || null,
-        related_product_ids: safeJson(form.related_product_ids, []),
-        canonical_override: form.canonical_override || null,
-      };
+    mutationFn: async (opts?: { exit?: boolean }) => {
+      const payload: any = buildPayload();
+      let savedId = form.id;
       if (form.id) {
         const { error } = await (supabase as any).from("keyword_landing_pages").update(payload).eq("id", form.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("keyword_landing_pages").insert(payload);
+        const { data, error } = await (supabase as any).from("keyword_landing_pages").insert(payload).select("id").single();
         if (error) throw error;
+        savedId = data?.id;
       }
+      return { id: savedId, exit: !!opts?.exit };
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success("Saved");
-      setOpen(false);
-      setForm(emptyForm());
+      setLastSavedAt(new Date());
+      if (res.id && !form.id) setForm((f) => ({ ...f, id: res.id }));
       qc.invalidateQueries({ queryKey: ["admin-keyword-landings"] });
+      if (res.exit) {
+        setOpen(false);
+        setForm(emptyForm());
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  // Auto-save: debounced silent save for existing pages while dialog is open.
+  useEffect(() => {
+    if (!open) return;
+    if (!form.id) return; // only autosave existing records to avoid creating empties
+    if (!form.slug || !form.h1) return;
+    const serialized = JSON.stringify(buildPayload());
+    if (serialized === lastSerializedRef.current) return;
+    const handle = setTimeout(async () => {
+      setAutoSaving(true);
+      try {
+        const { error } = await (supabase as any)
+          .from("keyword_landing_pages")
+          .update(buildPayload())
+          .eq("id", form.id);
+        if (!error) {
+          lastSerializedRef.current = serialized;
+          setLastSavedAt(new Date());
+          qc.invalidateQueries({ queryKey: ["admin-keyword-landings"] });
+        }
+      } catch {
+        // silent — manual Save will surface errors
+      } finally {
+        setAutoSaving(false);
+      }
+    }, 2500);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, open]);
+
+  // Reset autosave ref when opening / switching record
+  useEffect(() => {
+    if (open) {
+      lastSerializedRef.current = form.id ? JSON.stringify(buildPayload()) : "";
+      setLastSavedAt(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, form.id]);
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Status }) => {
