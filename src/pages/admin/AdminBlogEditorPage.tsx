@@ -102,6 +102,8 @@ export default function AdminBlogEditorPage() {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [metaOpen, setMetaOpen] = useState(false);
 
   const uploadFeaturedImage = useCallback(async (file: File) => {
     setUploadingImage(true);
