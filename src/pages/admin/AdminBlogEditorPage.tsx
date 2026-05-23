@@ -26,7 +26,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { BlogPostPreview } from "@/components/admin/BlogPostPreview";
-import { ArrowLeft, Save, Eye, Loader2, X, Settings, Globe, Clock, Tag, Image, Search, Gauge, Link2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Save, Eye, Loader2, X, Settings, Globe, Clock, Tag, Image, Search, Gauge, Link2, ExternalLink, Maximize2, Minimize2, ChevronDown, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
