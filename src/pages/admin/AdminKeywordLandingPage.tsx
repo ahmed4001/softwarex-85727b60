@@ -168,6 +168,8 @@ export default function AdminKeywordLandingPage() {
         meta_description: form.meta_description || null,
         focus_keyword: form.focus_keyword || null,
         hero_body: form.hero_body || null,
+        excerpt: form.excerpt || null,
+        featured_image: form.featured_image || null,
         sections: form.sections,
         faq: form.faq.filter((f) => f.q || f.a),
         related_keywords: form.related_keywords,
