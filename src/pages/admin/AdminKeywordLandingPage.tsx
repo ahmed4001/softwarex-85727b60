@@ -561,6 +561,23 @@ export default function AdminKeywordLandingPage() {
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add link
               </Button>
             </TabsContent>
+
+            <TabsContent value="seo" className="mt-4 grid lg:grid-cols-2 gap-4">
+              <SeoErrorBoard
+                title={form.meta_title || form.h1}
+                seoTitle={form.meta_title}
+                metaDescription={form.meta_description}
+                slug={form.slug}
+                body={buildSeoBody(form)}
+                focusKeyword={form.focus_keyword}
+                onFix={(_a: FixAction) => { /* tab-only editor; no field focusing */ }}
+              />
+              <SocialPreview
+                title={form.meta_title || form.h1}
+                description={form.meta_description}
+                slug={form.slug}
+              />
+            </TabsContent>
           </Tabs>
 
           <DialogFooter>
