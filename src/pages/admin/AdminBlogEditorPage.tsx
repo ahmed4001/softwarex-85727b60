@@ -96,6 +96,24 @@ export default function AdminBlogEditorPage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [autoSaving, setAutoSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const uploadFeaturedImage = useCallback(async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `blog/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, file, { contentType: file.type, upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      setForm((f) => ({ ...f, featured_image: data.publicUrl }));
+      toast({ title: "Image uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
+  }, []);
 
   const { data: existing, isLoading: loadingPost } = useQuery({
     queryKey: ["admin-blog-post", id],
