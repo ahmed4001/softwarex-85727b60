@@ -363,68 +363,88 @@ export default function AdminBlogEditorPage() {
     <>
       <SeoHead title={`${isEdit ? "Edit" : "New"} Post - Admin`} />
 
-      {/* Ghost-style top bar — minimal, fixed-feel */}
-      <div className="flex items-center justify-between gap-4 mb-0 -mt-2 pb-4 border-b border-border">
-        <div className="flex items-center gap-3">
-          <Link to="/admin/blog">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className={cn(
-              "inline-block h-2 w-2 rounded-full",
-              form.status === "published" ? "bg-emerald-500" : form.status === "scheduled" ? "bg-amber-500" : "bg-muted-foreground/40"
-            )} />
-            <span>{statusLabel}</span>
-            {words > 0 && (
-              <>
-                <span className="text-border">·</span>
-                <span>{words} words</span>
-                <span className="text-border">·</span>
-                <span>{readingTime} min read</span>
-              </>
-            )}
-            {(autoSaving || lastSavedAt) && (
-              <>
-                <span className="text-border">·</span>
-                <span className="flex items-center gap-1">
-                  {autoSaving ? (
-                    <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>
-                  ) : (
-                    <>Saved {lastSavedAt!.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</>
-                  )}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* SEO score chip */}
-          <div
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border text-xs"
-            title={`SEO: ${seoScore.score}/100`}
-          >
-            <span className={cn("h-1.5 w-1.5 rounded-full", scoreColor)} />
-            <span className="font-semibold text-foreground">{seoScore.score}</span>
-            <Gauge className="h-3 w-3 text-muted-foreground" />
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-            onClick={() => setPreviewOpen(true)}
-          >
-            <Eye className="h-3.5 w-3.5" /> Preview
-          </Button>
-          {form.slug && form.status === "published" && (
-            <Link to={`/blog/${form.slug}`} target="_blank">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
-                <ExternalLink className="h-3.5 w-3.5" /> Open live
+      {/* Sticky top bar */}
+      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl border-b border-border">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-3 px-4 md:px-6 h-14">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link to="/admin/blog">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-          )}
+
+            {/* Status pill */}
+            <span className={cn(
+              "hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border",
+              form.status === "published" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+              form.status === "scheduled" && "bg-amber-500/10 text-amber-600 border-amber-500/20",
+              form.status === "draft" && "bg-muted text-muted-foreground border-border",
+              form.status === "archived" && "bg-muted text-muted-foreground border-border",
+            )}>
+              <span className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                form.status === "published" ? "bg-emerald-500" : form.status === "scheduled" ? "bg-amber-500" : "bg-muted-foreground/50"
+              )} />
+              {statusLabel}
+            </span>
+
+            {/* Word count / reading time */}
+            {words > 0 && (
+              <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground ml-1">
+                <span>{words.toLocaleString()} words</span>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{readingTime} min</span>
+              </div>
+            )}
+
+            {/* Save state */}
+            <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground ml-1">
+              {autoSaving ? (
+                <><Loader2 className="h-3 w-3 animate-spin" /> <span>Saving…</span></>
+              ) : lastSavedAt ? (
+                <><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> <span>Saved {lastSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {/* SEO score chip */}
+            <div
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-xs hover:bg-muted/50 transition-colors cursor-default"
+              title={`SEO score: ${seoScore.score}/100`}
+            >
+              <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="font-semibold text-foreground">{seoScore.score}</span>
+              <span className={cn("h-1.5 w-1.5 rounded-full", scoreColor)} />
+            </div>
+
+            {/* Focus mode toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
+              title={focusMode ? "Exit focus mode" : "Focus mode"}
+              onClick={() => setFocusMode((v) => !v)}
+            >
+              {focusMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-9 text-muted-foreground hover:text-foreground"
+              onClick={() => setPreviewOpen(true)}
+              title="Preview (⌘⇧P)"
+            >
+              <Eye className="h-4 w-4" /> <span className="hidden sm:inline">Preview</span>
+            </Button>
+            {form.slug && form.status === "published" && (
+              <Link to={`/blog/${form.slug}`} target="_blank">
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" title="Open live page">
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
 
           {/* Settings sidebar trigger */}
           <Sheet>
