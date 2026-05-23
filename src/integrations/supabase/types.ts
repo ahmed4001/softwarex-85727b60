@@ -1238,7 +1238,9 @@ export type Database = {
           canonical_override: string | null
           category: string | null
           created_at: string
+          excerpt: string | null
           faq: Json
+          featured_image: string | null
           focus_keyword: string | null
           h1: string
           hero_body: string | null
@@ -1267,7 +1269,9 @@ export type Database = {
           canonical_override?: string | null
           category?: string | null
           created_at?: string
+          excerpt?: string | null
           faq?: Json
+          featured_image?: string | null
           focus_keyword?: string | null
           h1: string
           hero_body?: string | null
@@ -1296,7 +1300,9 @@ export type Database = {
           canonical_override?: string | null
           category?: string | null
           created_at?: string
+          excerpt?: string | null
           faq?: Json
+          featured_image?: string | null
           focus_keyword?: string | null
           h1?: string
           hero_body?: string | null
