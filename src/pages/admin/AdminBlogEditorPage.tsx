@@ -817,6 +817,12 @@ export default function AdminBlogEditorPage() {
             slug={form.slug}
             image={form.featured_image}
           />
+          <SeoHighlights
+            title={form.title}
+            slug={form.slug}
+            body={form.body}
+            focusKeyword={form.seo_keywords.split(",")[0]?.trim()}
+          />
         </aside>
       </div>
     </>
