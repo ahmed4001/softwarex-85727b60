@@ -391,10 +391,18 @@ export default function AdminBlogEditorPage() {
             <span className="font-semibold text-foreground">{seoScore.score}</span>
             <Gauge className="h-3 w-3 text-muted-foreground" />
           </div>
-          {form.slug && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground hover:text-foreground"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Eye className="h-3.5 w-3.5" /> Preview
+          </Button>
+          {form.slug && form.status === "published" && (
             <Link to={`/blog/${form.slug}`} target="_blank">
               <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
-                <Eye className="h-3.5 w-3.5" /> Preview
+                <ExternalLink className="h-3.5 w-3.5" /> Open live
               </Button>
             </Link>
           )}
