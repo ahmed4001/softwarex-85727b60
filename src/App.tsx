@@ -195,6 +195,7 @@ function AppContent() {
           <Route path="users" element={<ErrorBoundary><AdminUsersPage /></ErrorBoundary>} />
           <Route path="blog" element={<ErrorBoundary><AdminBlogPage /></ErrorBoundary>} />
           <Route path="blog/seo" element={<ErrorBoundary><AdminBlogSeoDashboardPage /></ErrorBoundary>} />
+          <Route path="blog/seo-audit" element={<ErrorBoundary><AdminBlogSeoAuditPage /></ErrorBoundary>} />
           <Route path="blog/new" element={<ErrorBoundary><AdminBlogEditorPage /></ErrorBoundary>} />
           <Route path="blog/:id/edit" element={<ErrorBoundary><AdminBlogEditorPage /></ErrorBoundary>} />
           <Route path="seed" element={<ErrorBoundary><AdminSeedPage /></ErrorBoundary>} />
