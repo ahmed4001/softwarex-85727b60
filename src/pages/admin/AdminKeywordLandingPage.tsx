@@ -65,6 +65,8 @@ interface FormState {
   meta_description: string;
   focus_keyword: string;
   hero_body: string;
+  excerpt: string;
+  featured_image: string;
   sections: { heading: string; body: string; bullets: string[] }[];
   faq: { q: string; a: string }[];
   related_keywords: string[];
