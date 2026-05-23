@@ -192,16 +192,18 @@ export default function KeywordLandingPage({ pageType, slugOverride, pathPrefix 
         {faq.length > 0 && (
           <section className="mb-16 max-w-3xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">Frequently asked</h2>
-            <div className="space-y-3">
+            <Accordion type="single" collapsible className="w-full">
               {faq.map((f, i) => (
-                <Card key={i}>
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-foreground mb-2">{f.q}</h3>
-                    <p className="text-sm text-muted-foreground">{f.a}</p>
-                  </CardContent>
-                </Card>
+                <AccordionItem key={i} value={`faq-${i}`} className="border-border">
+                  <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary hover:no-underline py-4">
+                    {f.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground leading-relaxed pb-4">
+                    {f.a}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </section>
         )}
 
