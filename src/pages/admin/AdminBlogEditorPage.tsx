@@ -302,7 +302,7 @@ export default function AdminBlogEditorPage() {
       toast({ title: "Slug is required", variant: "destructive" });
       return;
     }
-    saveMutation.mutate(undefined);
+    saveMutation.mutate({});
   };
 
   const handlePublish = () => {
@@ -310,7 +310,7 @@ export default function AdminBlogEditorPage() {
       toast({ title: "Title and slug are required", variant: "destructive" });
       return;
     }
-    saveMutation.mutate("published");
+    saveMutation.mutate({ status: "published" });
   };
 
   if (isEdit && loadingPost) {
