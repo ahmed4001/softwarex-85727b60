@@ -726,6 +726,31 @@ export default function AdminKeywordLandingPage() {
                 />
               </div>
             </TabsContent>
+
+            <TabsContent value="preview" className="mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-muted-foreground">Live preview — exactly how this page will render to visitors.</p>
+                {form.id && form.slug && (
+                  <Link to={`${PATH_PREFIX[form.page_type]}/${form.slug}`} target="_blank">
+                    <Button size="sm" variant="outline" className="gap-1.5">
+                      <ExternalLink className="h-3.5 w-3.5" /> Open live page
+                    </Button>
+                  </Link>
+                )}
+              </div>
+              <KeywordPagePreview
+                h1={form.h1}
+                meta_description={form.meta_description}
+                hero_body={form.hero_body}
+                featured_image={form.featured_image}
+                excerpt={form.excerpt}
+                sections={form.sections}
+                faq={form.faq}
+                internal_links={form.internal_links}
+                slug={form.slug}
+                page_type={form.page_type}
+              />
+            </TabsContent>
           </Tabs>
 
           <DialogFooter className="gap-2 sm:gap-2 flex-wrap items-center">
