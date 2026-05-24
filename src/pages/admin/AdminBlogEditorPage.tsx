@@ -131,14 +131,22 @@ export default function AdminBlogEditorPage() {
   const uploadFeaturedImage = useCallback(async (file: File) => {
     setUploadingImage(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
+      // Optimize: resize to max 1600px, convert to WebP @ 0.82 quality
+      const opt = await optimizeImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.82, mimeType: "image/webp" });
+      const finalFile = opt.file;
+      const ext = (finalFile.name.split(".").pop() || "webp").toLowerCase();
       const path = `blog/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, file, { contentType: file.type, upsert: false });
+      const { error } = await supabase.storage.from("product-images").upload(path, finalFile, { contentType: finalFile.type, upsert: false });
       if (error) throw error;
       const { data } = supabase.storage.from("product-images").getPublicUrl(path);
       setForm((f) => ({ ...f, featured_image: data.publicUrl }));
       setDirty(true);
-      toast({ title: "Image uploaded" });
+      toast({
+        title: opt.skipped ? "Image uploaded" : `Image optimized · ${opt.savedPct}% smaller`,
+        description: opt.skipped
+          ? `${formatBytes(opt.originalBytes)} (original kept)`
+          : `${formatBytes(opt.originalBytes)} → ${formatBytes(opt.optimizedBytes)} · ${opt.width}×${opt.height} WebP`,
+      });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
