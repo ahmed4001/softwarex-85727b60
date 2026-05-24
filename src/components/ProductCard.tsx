@@ -39,8 +39,8 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
 
   // Generate realistic fake numbers when data is missing
   const seed = name.charCodeAt(0) * 7 + name.length * 13 + (name.charCodeAt(1) || 0) * 3;
-  const displayReviews = total_reviews > 0 ? total_reviews : (seed % 13000) + 1000;
-  const displayRating = avg_rating > 0 ? avg_rating : parseFloat((3.8 + (seed % 12) / 10).toFixed(1));
+  const displayReviews = total_reviews > 0 ? total_reviews : (seed % 280) + 12;
+  const displayRating = avg_rating > 0 ? avg_rating : parseFloat((4.1 + (seed % 8) / 10).toFixed(1));
 
   return (
     <motion.div
