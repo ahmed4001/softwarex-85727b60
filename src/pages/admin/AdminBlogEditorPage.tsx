@@ -51,6 +51,17 @@ function wordCount(html: string): number {
   return text.split(" ").filter(Boolean).length;
 }
 
+function relativeTime(date: Date): string {
+  const s = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return date.toLocaleDateString();
+}
+
 interface BlogForm {
   title: string;
   slug: string;
@@ -100,11 +111,21 @@ export default function AdminBlogEditorPage() {
   const [settingsTab, setSettingsTab] = useState<"general" | "seo" | "score" | "links">("general");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [autoSaving, setAutoSaving] = useState(false);
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [, forceTick] = useState(0);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
+
+  // Tick every 15s to refresh "Saved Xm ago" relative time
+  useEffect(() => {
+    const i = setInterval(() => forceTick((n) => n + 1), 15000);
+    return () => clearInterval(i);
+  }, []);
 
   const uploadFeaturedImage = useCallback(async (file: File) => {
     setUploadingImage(true);
@@ -115,6 +136,7 @@ export default function AdminBlogEditorPage() {
       if (error) throw error;
       const { data } = supabase.storage.from("product-images").getPublicUrl(path);
       setForm((f) => ({ ...f, featured_image: data.publicUrl }));
+      setDirty(true);
       toast({ title: "Image uploaded" });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -168,6 +190,8 @@ export default function AdminBlogEditorPage() {
         scheduled_at: existing.scheduled_at || "",
       });
       setAutoSlug(false);
+      setDirty(false);
+      if (existing.updated_at) setLastSavedAt(new Date(existing.updated_at));
     }
   }, [existing]);
 
@@ -179,6 +203,7 @@ export default function AdminBlogEditorPage() {
       }
       return next;
     });
+    setDirty(true);
   }, [autoSlug]);
 
   const addTag = (tag: string) => {
@@ -243,15 +268,23 @@ export default function AdminBlogEditorPage() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog"] });
       setLastSavedAt(new Date());
+      setDirty(false);
+      setAutosaveError(null);
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 1800);
       if (result.isNew && !id) setCreatedId(result.id);
       if (result.exit || result.status === "published" || result.status === "scheduled") {
-        toast({ title: result.status === "published" ? "Post published" : "Post saved" });
+        toast({
+          title: result.status === "published" ? "✓ Post published" : "✓ Post saved",
+          description: result.status === "published" ? "Your post is now live." : "All changes saved successfully.",
+        });
         navigate("/admin/blog");
       } else {
-        toast({ title: "Saved" });
+        toast({ title: "✓ Saved", description: "All changes saved successfully." });
       }
     },
     onError: (err: any) => {
+      setAutosaveError(err.message);
       toast({ title: "Error saving post", description: err.message, variant: "destructive" });
     },
   });
@@ -259,6 +292,7 @@ export default function AdminBlogEditorPage() {
   // ---- AUTO-SAVE ----
   // Debounced silent save of drafts. Skips published/scheduled posts (require explicit user action).
   useEffect(() => {
+    if (!dirty) return;
     if (!form.title.trim() || !form.slug.trim()) return;
     if (form.status !== "draft") return;
     const handle = setTimeout(async () => {
@@ -285,21 +319,28 @@ export default function AdminBlogEditorPage() {
         };
         const effectiveId = id || createdId;
         if (effectiveId) {
-          await supabase.from("blog_posts").update(payload).eq("id", effectiveId);
+          const { error } = await supabase.from("blog_posts").update(payload).eq("id", effectiveId);
+          if (error) throw error;
         } else {
-          const { data } = await supabase.from("blog_posts").insert(payload).select("id").single();
+          const { data, error } = await supabase.from("blog_posts").insert(payload).select("id").single();
+          if (error) throw error;
           if (data?.id) setCreatedId(data.id);
         }
         setLastSavedAt(new Date());
-      } catch {
-        // silent — manual save will surface errors
+        setDirty(false);
+        setAutosaveError(null);
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 1800);
+        toast({ title: "✓ Draft auto-saved", description: "Your changes are safe." });
+      } catch (err: any) {
+        setAutosaveError(err?.message || "Auto-save failed");
       } finally {
         setAutoSaving(false);
       }
     }, 2500);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form]);
+  }, [form, dirty]);
 
   const handleSave = () => {
     if (!form.title.trim()) {
@@ -399,12 +440,28 @@ export default function AdminBlogEditorPage() {
             )}
 
             {/* Save state */}
-            <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground ml-1">
-              {autoSaving ? (
-                <><Loader2 className="h-3 w-3 animate-spin" /> <span>Saving…</span></>
+            <div className={cn(
+              "hidden md:flex items-center gap-1.5 ml-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-300",
+              autosaveError && "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+              !autosaveError && (autoSaving || saveMutation.isPending) && "bg-primary/10 text-primary",
+              !autosaveError && !autoSaving && !saveMutation.isPending && savedFlash && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+              !autosaveError && !autoSaving && !saveMutation.isPending && !savedFlash && dirty && "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+              !autosaveError && !autoSaving && !saveMutation.isPending && !savedFlash && !dirty && "text-muted-foreground",
+            )}>
+              {autosaveError ? (
+                <><span className="h-1.5 w-1.5 rounded-full bg-rose-500" /><span>Save failed — retry</span></>
+              ) : autoSaving || saveMutation.isPending ? (
+                <><Loader2 className="h-3 w-3 animate-spin" /><span>{saveMutation.isPending ? "Saving…" : "Auto-saving…"}</span></>
+              ) : dirty ? (
+                <><span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" /><span>Unsaved changes</span></>
               ) : lastSavedAt ? (
-                <><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> <span>Saved {lastSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></>
-              ) : null}
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span>{savedFlash ? "Saved" : `Saved ${relativeTime(lastSavedAt)}`}</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground/70">No changes yet</span>
+              )}
             </div>
           </div>
 
@@ -760,6 +817,15 @@ export default function AdminBlogEditorPage() {
             {form.status === "published" ? "Update" : "Publish"}
           </Button>
         </div>
+        </div>
+        {/* Autosave progress bar */}
+        <div className="relative h-0.5 w-full overflow-hidden bg-transparent">
+          {(autoSaving || saveMutation.isPending) && (
+            <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-primary to-transparent animate-[shimmer_1.2s_ease-in-out_infinite]" />
+          )}
+          {!autoSaving && !saveMutation.isPending && savedFlash && (
+            <div className="absolute inset-y-0 left-0 w-full bg-emerald-500/60 animate-in fade-in slide-in-from-left duration-500" />
+          )}
         </div>
       </header>
 
