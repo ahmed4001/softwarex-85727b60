@@ -30,6 +30,7 @@ import { BlogPostPreview } from "@/components/admin/BlogPostPreview";
 import { ArrowLeft, Save, Eye, Loader2, X, Settings, Globe, Clock, Tag, Image, Search, Gauge, Link2, ExternalLink, Maximize2, Minimize2, ChevronDown, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { optimizeImage, formatBytes } from "@/lib/image-optimize";
 
 function slugify(text: string) {
   return text
