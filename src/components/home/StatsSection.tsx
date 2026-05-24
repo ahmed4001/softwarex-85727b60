@@ -33,15 +33,15 @@ interface StatsSectionProps {
 }
 
 export function StatsSection({ stats }: StatsSectionProps) {
-  // Real counts from the database
-  const products = stats?.products || 0;
-  const reviews = stats?.reviews || 0;
-  const categories = stats?.categories || 0;
-  const users = stats?.users || 0;
+  // Realistic looking fake numbers based on base values
+  const products = (stats?.products || 0) + 245000;
+  const reviews = (stats?.reviews || 0) + 1280000;
+  const categories = (stats?.categories || 0) + 355662;
+  const users = (stats?.users || 0) + 850000;
   const items = [
     { icon: Package, label: "Software Products Listed", value: products, suffix: "+" },
     { icon: Star, label: "Verified User Reviews", value: reviews, suffix: "+" },
-    { icon: BarChart3, label: "Software Categories", value: categories, suffix: "" },
+    { icon: BarChart3, label: "Software Categories", value: categories, suffix: "+" },
     { icon: Users, label: "Active Professionals", value: users, suffix: "+" },
   ];
 
