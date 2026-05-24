@@ -9,6 +9,7 @@ import { BlogSeoScorePanel } from "@/components/admin/BlogSeoScorePanel";
 import { InternalLinksSuggestionPanel } from "@/components/admin/InternalLinksSuggestionPanel";
 import { SeoErrorBoard, SocialPreview, type FixAction } from "@/components/admin/SeoErrorBoard";
 import { SeoHighlights } from "@/components/admin/SeoHighlights";
+import { InlineFieldValidation, validateSlug, validateSeoTitle, validateMetaDescription } from "@/components/admin/InlineFieldValidation";
 import { computeSeoScore } from "@/lib/blog-seo-score";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
