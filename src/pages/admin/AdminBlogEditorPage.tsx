@@ -9,6 +9,7 @@ import { BlogSeoScorePanel } from "@/components/admin/BlogSeoScorePanel";
 import { InternalLinksSuggestionPanel } from "@/components/admin/InternalLinksSuggestionPanel";
 import { SeoErrorBoard, SocialPreview, type FixAction } from "@/components/admin/SeoErrorBoard";
 import { SeoHighlights } from "@/components/admin/SeoHighlights";
+import { InlineFieldValidation, validateSlug, validateSeoTitle, validateMetaDescription } from "@/components/admin/InlineFieldValidation";
 import { computeSeoScore } from "@/lib/blog-seo-score";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -492,6 +493,7 @@ export default function AdminBlogEditorPage() {
                         className="font-mono text-xs h-8"
                       />
                     </div>
+                    <InlineFieldValidation messages={validateSlug(form.slug)} current={form.slug.length} max={75} recommended={[3, 60]} />
                   </div>
 
                   {/* Excerpt */}
@@ -865,6 +867,12 @@ export default function AdminBlogEditorPage() {
                     placeholder={form.title || "Search engine title"}
                     className="h-9 text-sm"
                   />
+                  <InlineFieldValidation
+                    messages={validateSeoTitle(form.seo_title || form.title, form.seo_keywords)}
+                    current={(form.seo_title || form.title).length}
+                    max={60}
+                    recommended={[50, 60]}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="blog-focus-keyword" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Focus keyword</Label>
@@ -888,6 +896,12 @@ export default function AdminBlogEditorPage() {
                     rows={2}
                     className="text-sm resize-none"
                   />
+                  <InlineFieldValidation
+                    messages={validateMetaDescription(form.seo_description, form.seo_keywords)}
+                    current={form.seo_description.length}
+                    max={160}
+                    recommended={[120, 160]}
+                  />
                 </div>
                 <div className="space-y-1.5 md:col-span-2">
                   <Label htmlFor="blog-slug" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">URL slug</Label>
@@ -900,6 +914,7 @@ export default function AdminBlogEditorPage() {
                       className="font-mono text-xs h-9"
                     />
                   </div>
+                  <InlineFieldValidation messages={validateSlug(form.slug)} current={form.slug.length} max={75} recommended={[3, 60]} />
                 </div>
               </div>
             )}
