@@ -189,6 +189,7 @@ export default function AdminBlogEditorPage() {
       }
       return next;
     });
+    setDirty(true);
   }, [autoSlug]);
 
   const addTag = (tag: string) => {
