@@ -3802,6 +3802,93 @@ export type Database = {
           },
         ]
       }
+      my_profile: {
+        Row: {
+          avatar_url: string | null
+          ban_reason: string | null
+          bio: string | null
+          company: string | null
+          company_size: string | null
+          created_at: string | null
+          display_title: string | null
+          email: string | null
+          helpful_votes_received: number | null
+          id: string | null
+          industry: string | null
+          is_banned: boolean | null
+          is_verified_reviewer: boolean | null
+          job_title: string | null
+          last_login_at: string | null
+          linkedin_verified: boolean | null
+          name: string | null
+          preferred_language: string | null
+          referral_code: string | null
+          referred_by: string | null
+          review_count: number | null
+          total_points: number | null
+          user_id: string | null
+          verification_type: string | null
+          verified_at: string | null
+          verified_domain: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          ban_reason?: string | null
+          bio?: string | null
+          company?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          display_title?: string | null
+          email?: string | null
+          helpful_votes_received?: number | null
+          id?: string | null
+          industry?: string | null
+          is_banned?: boolean | null
+          is_verified_reviewer?: boolean | null
+          job_title?: string | null
+          last_login_at?: string | null
+          linkedin_verified?: boolean | null
+          name?: string | null
+          preferred_language?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          review_count?: number | null
+          total_points?: number | null
+          user_id?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_domain?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          ban_reason?: string | null
+          bio?: string | null
+          company?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          display_title?: string | null
+          email?: string | null
+          helpful_votes_received?: number | null
+          id?: string | null
+          industry?: string | null
+          is_banned?: boolean | null
+          is_verified_reviewer?: boolean | null
+          job_title?: string | null
+          last_login_at?: string | null
+          linkedin_verified?: boolean | null
+          name?: string | null
+          preferred_language?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          review_count?: number | null
+          total_points?: number | null
+          user_id?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_domain?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_points: {
