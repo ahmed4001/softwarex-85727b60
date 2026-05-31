@@ -10,8 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Search, Eye, ListOrdered } from "lucide-react";
+import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Search, Eye, ListOrdered, Paintbrush, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { applyTheme, normalizeColor } from "@/lib/theme-config";
 
 type SettingRow = {
   id: string;
@@ -29,7 +30,10 @@ const DEFAULT_SETTINGS: Record<string, { label: string; description: string; gro
   reviews_require_approval: { label: "Reviews Require Approval", description: "New reviews must be approved before appearing", group: "moderation", defaultValue: true },
   allow_anonymous_reviews: { label: "Allow Anonymous Reviews", description: "Allow reviews without sign-in", group: "moderation", defaultValue: false },
   max_reviews_per_user_per_product: { label: "Max Reviews Per User Per Product", description: "Limit duplicate reviews", group: "moderation", defaultValue: "1" },
-  primary_color: { label: "Primary Color (HSL)", description: "Main brand color in HSL", group: "appearance", defaultValue: "142 76% 36%" },
+  primary_color: { label: "Primary Color", description: "Main brand color", group: "theme", defaultValue: "190 75% 42%" },
+  secondary_color: { label: "Secondary Color", description: "Secondary accent color", group: "theme", defaultValue: "175 55% 45%" },
+  button_color: { label: "Button Color", description: "Color used for primary buttons (overrides primary on buttons)", group: "theme", defaultValue: "190 75% 42%" },
+  background_color: { label: "Background Color", description: "Page background color", group: "theme", defaultValue: "200 50% 98%" },
   footer_text: { label: "Footer Copyright Text", description: "Text shown in footer", group: "appearance", defaultValue: "© 2026 SoftwareHub. All rights reserved." },
   smtp_from_email: { label: "From Email", description: "Default sender email", group: "email", defaultValue: "" },
   smtp_from_name: { label: "From Name", description: "Default sender name", group: "email", defaultValue: "SoftwareHub" },
@@ -109,10 +113,26 @@ export default function AdminSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-site-settings"] });
       const { loadProductOrderConfig } = await import("@/lib/product-order");
       await loadProductOrderConfig();
+      applyThemeFromForm();
       toast.success("Settings saved");
     },
     onError: () => toast.error("Failed to save settings"),
   });
+
+  const THEME_KEYS = ["primary_color", "secondary_color", "button_color", "background_color"] as const;
+  const isThemeKey = (k: string): k is typeof THEME_KEYS[number] => (THEME_KEYS as readonly string[]).includes(k);
+
+  const applyThemeFromForm = () => {
+    applyTheme({
+      primary: form.primary_color,
+      secondary: form.secondary_color,
+      button: form.button_color,
+      background: form.background_color,
+    });
+  };
+
+  // Live preview as the admin edits color fields
+  useEffect(() => { applyThemeFromForm(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [form.primary_color, form.secondary_color, form.button_color, form.background_color]);
 
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -140,6 +160,10 @@ export default function AdminSettingsPage() {
         </div>
       );
     }
+    // Color picker fields
+    if (isThemeKey(key)) {
+      return renderColorField(key);
+    }
     return (
       <div key={key} className="space-y-1.5">
         <Label>{def.label}</Label>
@@ -149,11 +173,73 @@ export default function AdminSettingsPage() {
     );
   };
 
+  const hslToHex = (hsl: string): string => {
+    const m = (hsl || "").trim().match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%$/);
+    if (!m) return "#000000";
+    const h = parseFloat(m[1]) / 360;
+    const s = parseFloat(m[2]) / 100;
+    const l = parseFloat(m[3]) / 100;
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1; if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    let r: number, g: number, b: number;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1 / 3);
+    }
+    const toHex = (n: number) => Math.round(n * 255).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  };
+
+  const renderColorField = (key: string) => {
+    const def = DEFAULT_SETTINGS[key];
+    const val = form[key] || def.defaultValue;
+    const normalized = normalizeColor(val) || def.defaultValue;
+    const hex = hslToHex(normalized);
+    return (
+      <div key={key} className="space-y-1.5">
+        <Label>{def.label}</Label>
+        <div className="flex items-center gap-3">
+          <input
+            type="color"
+            value={hex}
+            onChange={(e) => updateField(key, e.target.value)}
+            className="h-10 w-14 rounded-md border border-border bg-transparent cursor-pointer"
+            aria-label={`${def.label} picker`}
+          />
+          <Input
+            value={val || ""}
+            onChange={(e) => updateField(key, e.target.value)}
+            placeholder="#1ea7c4 or 190 75% 42%"
+            className="font-mono text-xs"
+          />
+          <div
+            className="h-10 w-10 rounded-md border border-border shrink-0"
+            style={{ backgroundColor: `hsl(${normalized})` }}
+            aria-hidden
+          />
+        </div>
+        <p className="text-[11px] text-muted-foreground">{def.description}</p>
+      </div>
+    );
+  };
+
+  const resetTheme = () => {
+    THEME_KEYS.forEach((k) => updateField(k, DEFAULT_SETTINGS[k].defaultValue));
+  };
+
   const groups = [
     { id: "general", label: "General", icon: Globe, keys: ["site_name", "site_tagline", "contact_email"] },
+    { id: "theme", label: "Theme", icon: Paintbrush, keys: ["primary_color", "secondary_color", "button_color", "background_color"] },
     { id: "listings", label: "Listings", icon: ListOrdered, keys: ["real_first_enabled", "real_first_min_score"] },
     { id: "moderation", label: "Moderation", icon: Shield, keys: ["reviews_require_approval", "allow_anonymous_reviews", "max_reviews_per_user_per_product"] },
-    { id: "appearance", label: "Appearance", icon: Palette, keys: ["primary_color", "footer_text"] },
+    { id: "appearance", label: "Appearance", icon: Palette, keys: ["footer_text"] },
     { id: "email", label: "Email", icon: Mail, keys: ["smtp_from_email", "smtp_from_name"] },
     { id: "seo", label: "SEO", icon: Search, keys: ["seo_default_title", "seo_default_description", "seo_default_keywords", "seo_default_og_image", "seo_google_verification", "seo_bing_verification", "robots_txt", "sitemap_include_products", "sitemap_include_categories", "sitemap_include_blog", "sitemap_include_comparisons"] },
   ];
@@ -198,6 +284,44 @@ export default function AdminSettingsPage() {
                       <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchSeoFile("sitemap")}>
                         <Eye className="h-3.5 w-3.5" /> Preview sitemap.xml
                       </Button>
+                    </div>
+                  )}
+                  {g.id === "theme" && (
+                    <div className="pt-4 border-t border-border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground">Live Preview</p>
+                        <Button variant="ghost" size="sm" className="gap-1.5" onClick={resetTheme}>
+                          <RotateCcw className="h-3.5 w-3.5" /> Reset to defaults
+                        </Button>
+                      </div>
+                      <div
+                        className="rounded-xl border border-border p-6 space-y-4"
+                        style={{ backgroundColor: `hsl(${normalizeColor(form.background_color) || "200 50% 98%"})` }}
+                      >
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <button
+                            className="px-4 py-2 rounded-md text-white text-sm font-medium shadow"
+                            style={{ backgroundColor: `hsl(${normalizeColor(form.button_color) || "190 75% 42%"})` }}
+                          >Primary Button</button>
+                          <button
+                            className="px-4 py-2 rounded-md text-white text-sm font-medium shadow"
+                            style={{ backgroundColor: `hsl(${normalizeColor(form.secondary_color) || "175 55% 45%"})` }}
+                          >Secondary Button</button>
+                          <span
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                            style={{ backgroundColor: `hsl(${normalizeColor(form.primary_color) || "190 75% 42%"})` }}
+                          >Primary Badge</span>
+                        </div>
+                        <div className="flex gap-3">
+                          {(["primary_color","secondary_color","button_color","background_color"] as const).map((k) => (
+                            <div key={k} className="flex-1">
+                              <div className="h-12 rounded-md border border-border" style={{ backgroundColor: `hsl(${normalizeColor(form[k]) || DEFAULT_SETTINGS[k].defaultValue})` }} />
+                              <p className="text-[10px] mt-1 text-center text-muted-foreground">{DEFAULT_SETTINGS[k].label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">Changes preview instantly across the entire app. Click "Save All" to persist.</p>
                     </div>
                   )}
                 </div>
