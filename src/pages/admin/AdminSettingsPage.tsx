@@ -286,6 +286,44 @@ export default function AdminSettingsPage() {
                       </Button>
                     </div>
                   )}
+                  {g.id === "theme" && (
+                    <div className="pt-4 border-t border-border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground">Live Preview</p>
+                        <Button variant="ghost" size="sm" className="gap-1.5" onClick={resetTheme}>
+                          <RotateCcw className="h-3.5 w-3.5" /> Reset to defaults
+                        </Button>
+                      </div>
+                      <div
+                        className="rounded-xl border border-border p-6 space-y-4"
+                        style={{ backgroundColor: `hsl(${normalizeColor(form.background_color) || "200 50% 98%"})` }}
+                      >
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <button
+                            className="px-4 py-2 rounded-md text-white text-sm font-medium shadow"
+                            style={{ backgroundColor: `hsl(${normalizeColor(form.button_color) || "190 75% 42%"})` }}
+                          >Primary Button</button>
+                          <button
+                            className="px-4 py-2 rounded-md text-white text-sm font-medium shadow"
+                            style={{ backgroundColor: `hsl(${normalizeColor(form.secondary_color) || "175 55% 45%"})` }}
+                          >Secondary Button</button>
+                          <span
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                            style={{ backgroundColor: `hsl(${normalizeColor(form.primary_color) || "190 75% 42%"})` }}
+                          >Primary Badge</span>
+                        </div>
+                        <div className="flex gap-3">
+                          {(["primary_color","secondary_color","button_color","background_color"] as const).map((k) => (
+                            <div key={k} className="flex-1">
+                              <div className="h-12 rounded-md border border-border" style={{ backgroundColor: `hsl(${normalizeColor(form[k]) || DEFAULT_SETTINGS[k].defaultValue})` }} />
+                              <p className="text-[10px] mt-1 text-center text-muted-foreground">{DEFAULT_SETTINGS[k].label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">Changes preview instantly across the entire app. Click "Save All" to persist.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             ))}
