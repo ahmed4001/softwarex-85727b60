@@ -113,10 +113,26 @@ export default function AdminSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-site-settings"] });
       const { loadProductOrderConfig } = await import("@/lib/product-order");
       await loadProductOrderConfig();
+      applyThemeFromForm();
       toast.success("Settings saved");
     },
     onError: () => toast.error("Failed to save settings"),
   });
+
+  const THEME_KEYS = ["primary_color", "secondary_color", "button_color", "background_color"] as const;
+  const isThemeKey = (k: string): k is typeof THEME_KEYS[number] => (THEME_KEYS as readonly string[]).includes(k);
+
+  const applyThemeFromForm = () => {
+    applyTheme({
+      primary: form.primary_color,
+      secondary: form.secondary_color,
+      button: form.button_color,
+      background: form.background_color,
+    });
+  };
+
+  // Live preview as the admin edits color fields
+  useEffect(() => { applyThemeFromForm(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [form.primary_color, form.secondary_color, form.button_color, form.background_color]);
 
   const updateField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
