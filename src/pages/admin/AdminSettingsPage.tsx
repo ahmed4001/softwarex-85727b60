@@ -243,6 +243,8 @@ export default function AdminSettingsPage() {
 
   const groups = [
     { id: "general", label: "General", icon: Globe, keys: ["site_name", "site_tagline", "contact_email"] },
+    { id: "branding", label: "Branding", icon: ImageIcon, keys: ["logo_height_mobile", "logo_height_desktop", "logo_max_width_mobile", "logo_max_width_desktop"] },
+    { id: "uploads", label: "Uploads", icon: Upload, keys: ["upload_max_size_mb", "upload_image_quality"] },
     { id: "theme", label: "Theme", icon: Paintbrush, keys: ["primary_color", "secondary_color", "button_color", "background_color"] },
     { id: "listings", label: "Listings", icon: ListOrdered, keys: ["real_first_enabled", "real_first_min_score"] },
     { id: "moderation", label: "Moderation", icon: Shield, keys: ["reviews_require_approval", "allow_anonymous_reviews", "max_reviews_per_user_per_product"] },
