@@ -285,6 +285,42 @@ export default function AdminSettingsPage() {
               <TabsContent key={g.id} value={g.id}>
                 <div className="glass-card p-6 space-y-5">
                   {g.keys.map((key) => renderField(key))}
+                  {g.id === "branding" && (
+                    <div className="pt-4 border-t border-border space-y-4">
+                      <p className="text-sm font-medium text-foreground">Live Preview</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Mobile</p>
+                          <div className="flex items-center justify-center bg-muted/40 rounded-lg p-4 min-h-[140px]">
+                            <img
+                              src={logoAsset.url}
+                              alt="Logo preview mobile"
+                              className="w-auto object-contain"
+                              style={{
+                                height: `${parseInt(form.logo_height_mobile) || 112}px`,
+                                maxWidth: `${parseInt(form.logo_max_width_mobile) || 200}px`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Desktop</p>
+                          <div className="flex items-center justify-center bg-muted/40 rounded-lg p-4 min-h-[200px]">
+                            <img
+                              src={logoAsset.url}
+                              alt="Logo preview desktop"
+                              className="w-auto object-contain"
+                              style={{
+                                height: `${parseInt(form.logo_height_desktop) || 160}px`,
+                                maxWidth: `${parseInt(form.logo_max_width_desktop) || 320}px`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">Click "Save All" to apply across the site header.</p>
+                    </div>
+                  )}
                   {g.id === "seo" && (
                     <div className="flex gap-3 pt-2 border-t border-border">
                       <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchSeoFile("robots")}>
