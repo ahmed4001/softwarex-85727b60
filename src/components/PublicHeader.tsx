@@ -30,6 +30,10 @@ export function PublicHeader() {
   const location = useLocation();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const branding = useBrandingSettings();
+
+  const headerMinHeightMobile = Math.max(branding.logoHeightMobile + 32, 96);
+  const headerMinHeightDesktop = Math.max(branding.logoHeightDesktop + 32, 112);
 
   const navLinks = [
     { to: "/", label: t("nav.home") },
