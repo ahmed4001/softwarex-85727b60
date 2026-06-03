@@ -3891,6 +3891,13 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_user_emails: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       award_points: {
         Args: {
           _entity_id?: string
