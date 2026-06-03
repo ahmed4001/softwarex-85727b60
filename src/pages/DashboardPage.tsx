@@ -445,7 +445,7 @@ function ProfileTab({ user, onSignOut }: { user: any; onSignOut: () => void }) {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, name, avatar_url, bio, job_title, company, industry, company_size, is_verified_reviewer, review_count, helpful_votes_received, created_at, preferred_language, linkedin_verified, total_points, display_title, referral_code, referred_by, verification_type, verified_domain, verified_at")
         .eq("user_id", user.id)
         .single();
       return data;

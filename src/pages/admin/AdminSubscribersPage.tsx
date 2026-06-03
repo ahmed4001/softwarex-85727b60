@@ -32,13 +32,11 @@ export default function AdminSubscribersPage() {
   const { data: signedUpUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ["admin-signup-emails"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, user_id, email, name, created_at")
-        .not("email", "is", null)
-        .order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any).rpc("admin_list_profiles");
       if (error) throw error;
-      return data || [];
+      return (data || [])
+        .filter((u: any) => u.email)
+        .map((u: any) => ({ id: u.id, user_id: u.user_id, email: u.email, name: u.name, created_at: u.created_at }));
     },
   });
 

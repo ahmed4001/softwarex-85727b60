@@ -3891,6 +3891,50 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_user_emails: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
+      admin_list_profiles: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          ban_reason: string | null
+          bio: string | null
+          company: string | null
+          company_size: string | null
+          created_at: string | null
+          display_title: string | null
+          email: string | null
+          helpful_votes_received: number | null
+          id: string
+          industry: string | null
+          is_banned: boolean | null
+          is_verified_reviewer: boolean | null
+          job_title: string | null
+          last_login_at: string | null
+          linkedin_verified: boolean | null
+          name: string | null
+          preferred_language: string | null
+          referral_code: string | null
+          referred_by: string | null
+          review_count: number | null
+          total_points: number
+          user_id: string
+          verification_type: string | null
+          verified_at: string | null
+          verified_domain: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       award_points: {
         Args: {
           _entity_id?: string

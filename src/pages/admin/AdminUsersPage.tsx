@@ -14,10 +14,13 @@ export default function AdminUsersPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", search],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
-      if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
-      const { data } = await query.limit(50);
-      return data || [];
+      const { data } = await (supabase as any).rpc("admin_list_profiles");
+      let list: any[] = data || [];
+      if (search) {
+        const s = search.toLowerCase();
+        list = list.filter((u) => (u.name || "").toLowerCase().includes(s) || (u.email || "").toLowerCase().includes(s));
+      }
+      return list.slice(0, 50);
     },
   });
 

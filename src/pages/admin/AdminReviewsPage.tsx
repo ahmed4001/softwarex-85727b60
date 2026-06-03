@@ -26,11 +26,18 @@ export default function AdminReviewsPage() {
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["admin-reviews", search, statusFilter],
     queryFn: async () => {
-      let query = supabase.from("reviews").select("*, products(name, slug), profiles(name, email)").order("created_at", { ascending: false });
+      let query = supabase.from("reviews").select("*, products(name, slug), profiles(name, user_id)").order("created_at", { ascending: false });
       if (statusFilter !== "all") query = query.eq("status", statusFilter as any);
       if (search) query = query.ilike("title", `%${search}%`);
       const { data } = await query.limit(50);
-      return data || [];
+      const list: any[] = data || [];
+      const userIds = Array.from(new Set(list.map((r: any) => r.profiles?.user_id).filter(Boolean)));
+      if (userIds.length) {
+        const { data: emails } = await (supabase as any).rpc("admin_get_user_emails", { _user_ids: userIds });
+        const map = new Map<string, string>((emails || []).map((e: any) => [e.user_id, e.email]));
+        list.forEach((r: any) => { if (r.profiles) r.profiles.email = map.get(r.profiles.user_id) ?? null; });
+      }
+      return list;
     },
   });
 

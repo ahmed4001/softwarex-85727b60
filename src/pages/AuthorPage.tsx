@@ -13,7 +13,7 @@ export default function AuthorPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, name, avatar_url, bio, job_title, company, industry, is_verified_reviewer, review_count, helpful_votes_received, created_at, total_points, display_title, verification_type, verified_domain, verified_at, linkedin_verified")
         .eq("user_id", id!)
         .maybeSingle();
       return data;
