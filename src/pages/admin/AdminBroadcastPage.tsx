@@ -36,7 +36,7 @@ export default function AdminBroadcastPage() {
   const { data: userCounts } = useQuery({
     queryKey: ["user-counts-for-broadcast"],
     queryFn: async () => {
-      const { count: total } = await supabase.from("profiles").select("*", { count: "exact", head: true });
+      const { count: total } = await supabase.from("profiles").select("user_id", { count: "exact", head: true });
       const { data: roles } = await supabase.from("user_roles").select("role");
       const vendors = roles?.filter((r) => r.role === "vendor").length || 0;
       const admins = roles?.filter((r) => r.role === "admin" || r.role === "superadmin").length || 0;
