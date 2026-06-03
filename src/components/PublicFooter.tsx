@@ -67,6 +67,7 @@ export function PublicFooter() {
         ...companyPages.map(p => ({ to: `/page/${p.slug}`, label: p.title })),
         { to: "/blog", label: t("footer.news") },
         { to: "/partners", label: "Partner Links" },
+        { to: "/vendor/plans", label: "Pricing" },
       ],
     },
     {
