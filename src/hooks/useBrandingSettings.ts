@@ -9,10 +9,10 @@ const KEYS = [
 ];
 
 export const DEFAULT_BRANDING = {
-  logoHeightMobile: 112,
-  logoHeightDesktop: 160,
-  logoMaxWidthMobile: 200,
-  logoMaxWidthDesktop: 320,
+  logoHeightMobile: 40,
+  logoHeightDesktop: 48,
+  logoMaxWidthMobile: 140,
+  logoMaxWidthDesktop: 180,
 };
 
 const toNum = (v: any, fallback: number) => {
