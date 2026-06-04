@@ -144,7 +144,6 @@ function AppContent() {
           <Route path="/blog/category/:category" element={<ErrorBoundary><BlogTaxonomyPage mode="category" /></ErrorBoundary>} />
           <Route path="/blog/:slug" element={<ErrorBoundary><BlogPostPage /></ErrorBoundary>} />
           <Route path="/author/:id" element={<ErrorBoundary><AuthorPage /></ErrorBoundary>} />
-          <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
           <Route path="/submit-product" element={<ErrorBoundary><SubmitProductPage /></ErrorBoundary>} />
           <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
           <Route path="/leaderboard" element={<ErrorBoundary><LeaderboardPage /></ErrorBoundary>} />
@@ -185,6 +184,9 @@ function AppContent() {
             />
           ))}
         </Route>
+
+        {/* Standalone auth page — no header/footer */}
+        <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
