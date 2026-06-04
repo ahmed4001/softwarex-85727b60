@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import logoAsset from "@/assets/reviewhunts-logo.png.asset.json";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign, MessageCircle, Layers, Compass, BookMarked } from "lucide-react";
+import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign, MessageCircle, Layers, Compass, BookMarked, Tag } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { NotificationBell } from "./NotificationBell";
 import { useBrandingSettings } from "@/hooks/useBrandingSettings";
 
 const resourceLinks = [
+  { to: "/compare-pricing", label: "nav.comparePricing", icon: Tag },
   { to: "/blog", label: "nav.blog", icon: BookOpen },
   { to: "/leaderboard", label: "nav.leaderboard", icon: Trophy },
   { to: "/activity", label: "nav.activityFeed", icon: Activity },
@@ -39,7 +40,6 @@ export function PublicHeader() {
     { to: "/", label: t("nav.home") },
     { to: "/categories", label: t("nav.categories") },
     { to: "/compare", label: t("nav.compare") },
-    { to: "/compare-pricing", label: t("nav.comparePricing", "Compare Pricing") },
   ];
 
   const isResourceActive = resourceLinks.some((l) => location.pathname.startsWith(l.to));
@@ -142,7 +142,7 @@ export function PublicHeader() {
           </div>
         </nav>
 
-        <div className="hidden lg:block flex-1 max-w-sm">
+        <div className="hidden lg:block flex-1 max-w-[200px]">
           <SearchBar variant="compact" />
         </div>
 
