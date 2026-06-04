@@ -72,7 +72,7 @@ export default function LoginPage() {
   return (
     <>
       <SeoHead title={`${isLogin ? t("login.signIn") : t("login.register")} — ReviewHunts`} description={t("login.subtitle")} />
-      <div className="min-h-screen grid lg:grid-cols-2">
+      <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
         {/* Left — editorial image + overlay */}
         <div className="hidden lg:block relative overflow-hidden">
           <img
@@ -121,7 +121,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right — form */}
-        <div className="flex items-center justify-center px-6 py-12 sm:px-12 bg-background relative">
+        <div className="flex items-center justify-center px-6 py-6 sm:px-12 sm:py-8 bg-background relative">
           {/* Subtle corner accent */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/3 rounded-bl-[120px]" />
 
@@ -132,11 +132,11 @@ export default function LoginPage() {
             className="w-full max-w-[380px] relative z-10"
           >
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            <div className="mb-5">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">
                 {isLogin ? "Welcome back" : "Get started"}
               </h1>
-              <p className="text-muted-foreground mt-2 text-[15px]">
+              <p className="text-muted-foreground mt-1 text-sm">
                 {isLogin
                   ? "Sign in to access your dashboard and reviews."
                   : "Create a free account to start discovering software."}
@@ -250,7 +250,7 @@ export default function LoginPage() {
             {/* Toggle */}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-border hover:border-foreground/15 bg-muted/30 hover:bg-muted/60 transition-all group text-sm mt-8"
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-border hover:border-foreground/15 bg-muted/30 hover:bg-muted/60 transition-all group text-sm mt-5"
             >
               <span className="text-muted-foreground">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -262,7 +262,7 @@ export default function LoginPage() {
             </button>
 
             {/* Footer */}
-            <p className="text-[11px] text-center text-muted-foreground/60 mt-8">
+            <p className="text-[11px] text-center text-muted-foreground/60 mt-4">
               By continuing, you agree to our{" "}
               <Link to="/page/terms" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">Terms</Link>{" & "}
               <Link to="/page/privacy" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">Privacy</Link>.
