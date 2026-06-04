@@ -172,17 +172,18 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-sidebar-primary/5 to-transparent pointer-events-none" />
 
       <div className="relative p-4 flex items-center gap-3 h-16">
-        <div className="h-9 w-9 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 shadow-lg">
-          <span className="text-sm font-black text-primary-foreground">S</span>
-        </div>
-        {!collapsed && (
-          <motion.span
+        {collapsed ? (
+          <div className="h-9 w-9 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 shadow-lg">
+            <span className="text-sm font-black text-primary-foreground">R</span>
+          </div>
+        ) : (
+          <motion.img
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-sm font-display font-bold text-sidebar-foreground whitespace-nowrap"
-          >
-            ReviewHunts
-          </motion.span>
+            src={logoAsset.url}
+            alt="ReviewHunts"
+            className="h-8 w-auto object-contain brightness-0 invert"
+          />
         )}
       </div>
 
