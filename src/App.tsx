@@ -183,10 +183,9 @@ function AppContent() {
               element={<ErrorBoundary><KeywordLandingPage pageType="keyword" slugOverride={slug} /></ErrorBoundary>}
             />
           ))}
+          <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
         </Route>
 
-        {/* Standalone auth page — no header/footer */}
-        <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
