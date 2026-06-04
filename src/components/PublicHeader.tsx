@@ -142,7 +142,7 @@ export function PublicHeader() {
           </div>
         </nav>
 
-        <div className="hidden lg:block flex-1 max-w-sm">
+        <div className="hidden lg:block flex-1 max-w-[200px]">
           <SearchBar variant="compact" />
         </div>
 
