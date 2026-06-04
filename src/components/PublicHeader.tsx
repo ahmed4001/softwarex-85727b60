@@ -68,8 +68,8 @@ export function PublicHeader() {
     <header className={cn(
       "sticky top-0 z-50 transition-all duration-300",
       scrolled
-        ? "bg-card/60 backdrop-blur-xl border-b border-white/10 shadow-sm"
-        : "bg-transparent/0 backdrop-blur-sm border-b border-transparent"
+        ? "bg-gradient-to-b from-card/70 to-card/40 backdrop-blur-2xl border-b border-white/15 shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+        : "bg-gradient-to-b from-card/30 to-transparent backdrop-blur-md border-b border-white/5"
     )}>
       <div
         className="container flex items-center justify-between gap-4 min-h-[var(--header-h-mobile)] md:min-h-[var(--header-h-desktop)]"
