@@ -60,7 +60,7 @@ export function SeoHead({
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@softwarehub" />
+      <meta name="twitter:site" content="@reviewhunts" />
       <meta name="twitter:title" content={fullTitle} />
       {effectiveDescription && <meta name="twitter:description" content={effectiveDescription} />}
       {effectiveOgImage && <meta name="twitter:image" content={effectiveOgImage} />}

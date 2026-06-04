@@ -35,7 +35,7 @@ import { RecentReviewsFeed } from "@/components/home/RecentReviewsFeed";
 import { AwardsBannerSection } from "@/components/home/AwardsBannerSection";
 import { QuickCompareSection } from "@/components/home/QuickCompareSection";
 
-const SITE_URL = "https://softwarehub.com";
+const SITE_URL = "https://reviewhunts.com";
 
 const websiteJsonLd = {
   "@context": "https://schema.org",

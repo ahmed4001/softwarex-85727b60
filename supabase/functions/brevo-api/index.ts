@@ -121,7 +121,7 @@ serve(async (req) => {
         const campaign = await brevoFetch(account.api_key, "/emailCampaigns", "POST", {
           name: params.subject,
           subject: params.subject,
-          sender: { name: params.senderName || "SoftwareHub", email: params.senderEmail },
+          sender: { name: params.senderName || "ReviewHunts", email: params.senderEmail },
           htmlContent: params.htmlContent,
           recipients: { listIds: params.listIds || [2] },
         });
@@ -134,7 +134,7 @@ serve(async (req) => {
           brevo_account_id: accountId,
           brevo_campaign_id: String(campaign.id),
           subject: params.subject,
-          sender_name: params.senderName || "SoftwareHub",
+          sender_name: params.senderName || "ReviewHunts",
           sender_email: params.senderEmail,
           html_content: params.htmlContent,
           status: "sent",
@@ -183,7 +183,7 @@ serve(async (req) => {
         const rrCampaign = await brevoFetch(bestAccount.api_key, "/emailCampaigns", "POST", {
           name: params.subject,
           subject: params.subject,
-          sender: { name: params.senderName || "SoftwareHub", email: params.senderEmail },
+          sender: { name: params.senderName || "ReviewHunts", email: params.senderEmail },
           htmlContent: params.htmlContent,
           recipients: { listIds: params.listIds || [2] },
         });
@@ -195,7 +195,7 @@ serve(async (req) => {
           brevo_account_id: bestAccount.id,
           brevo_campaign_id: String(rrCampaign.id),
           subject: params.subject,
-          sender_name: params.senderName || "SoftwareHub",
+          sender_name: params.senderName || "ReviewHunts",
           sender_email: params.senderEmail,
           html_content: params.htmlContent,
           status: "sent",
@@ -224,7 +224,7 @@ serve(async (req) => {
       case "send-transactional": {
         const account = await getApiKey(accountId);
         const email = await brevoFetch(account.api_key, "/smtp/email", "POST", {
-          sender: { name: params.senderName || "SoftwareHub", email: params.senderEmail },
+          sender: { name: params.senderName || "ReviewHunts", email: params.senderEmail },
           to: [{ email: params.to }],
           subject: params.subject,
           htmlContent: params.htmlContent,

@@ -9,7 +9,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 
-const SITE_URL = "https://softwarehub.com";
+const SITE_URL = "https://reviewhunts.com";
 
 const categoriesJsonLd = {
   "@context": "https://schema.org",

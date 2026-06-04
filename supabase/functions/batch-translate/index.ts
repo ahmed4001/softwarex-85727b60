@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       try {
         const prompt = `You are a professional translator. Translate the following JSON object from English to ${lang}. 
 Keep ALL JSON keys exactly the same (do not translate keys). Only translate the string values.
-Keep HTML tags like <strong> intact. Keep brand names like "SoftwareHub" unchanged.
+Keep HTML tags like <strong> intact. Keep brand names like "ReviewHunts" unchanged.
 Keep template variables like {{year}}, {{count}}, {{name}}, {{query}}, {{max}} unchanged.
 
 Source JSON:

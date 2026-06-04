@@ -105,7 +105,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          sender: { name: "SoftwareHub", email: "digest@softwarehub.com" },
+          sender: { name: "ReviewHunts", email: "digest@reviewhunts.com" },
           subject: "Your Weekly Software Digest 📊",
           htmlContent,
           messageVersions: recipients.map((r: any) => ({

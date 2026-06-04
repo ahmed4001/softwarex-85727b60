@@ -141,7 +141,7 @@ serve(async (req) => {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "SoftwareHub", email: "noreply@softwarehub.com" },
+        sender: { name: "ReviewHunts", email: "noreply@reviewhunts.com" },
         to: [{ email: vendorProfile.email, name: vendorName }],
         subject: `🎯 New lead for ${productName}: ${lead.name}`,
         htmlContent,

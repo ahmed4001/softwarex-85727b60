@@ -27,7 +27,7 @@ CREATE TABLE public.brevo_campaigns (
   brevo_account_id uuid REFERENCES public.brevo_accounts(id) ON DELETE CASCADE NOT NULL,
   brevo_campaign_id text,
   subject text NOT NULL,
-  sender_name text NOT NULL DEFAULT 'SoftwareHub',
+  sender_name text NOT NULL DEFAULT 'ReviewHunts',
   sender_email text NOT NULL,
   html_content text,
   status text NOT NULL DEFAULT 'draft',
