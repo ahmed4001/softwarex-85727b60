@@ -72,7 +72,7 @@ export default function LoginPage() {
   return (
     <>
       <SeoHead title={`${isLogin ? t("login.signIn") : t("login.register")} — ReviewHunts`} description={t("login.subtitle")} />
-      <div className="min-h-screen grid lg:grid-cols-2">
+      <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
         {/* Left — editorial image + overlay */}
         <div className="hidden lg:block relative overflow-hidden">
           <img
