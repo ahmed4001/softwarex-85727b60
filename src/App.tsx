@@ -253,8 +253,10 @@ function AppContent() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
+    </RouteErrorBoundary>
   );
 }
+
 
 const App = () => (
   <ErrorBoundary>
