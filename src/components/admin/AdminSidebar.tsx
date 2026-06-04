@@ -8,6 +8,7 @@ import {
   BookOpen, TrendingUp, UserCheck, Handshake, MousePointerClick
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import logoAsset from "@/assets/reviewhunts-logo.png.asset.json";
 
 const sidebarItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/admin" },

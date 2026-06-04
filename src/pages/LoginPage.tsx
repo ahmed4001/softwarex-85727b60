@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, UserPlus, Mail, Lock, User, Eye, EyeOff, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import softwareCollage from "@/assets/software-collage.jpg";
+import logoAsset from "@/assets/reviewhunts-logo.png.asset.json";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -98,10 +99,12 @@ export default function LoginPage() {
           />
 
           <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-14">
-            <Link to="/" className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors w-fit">
-              <div className="h-9 w-9 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10">
-                <span className="text-sm font-bold tracking-tight text-white">S</span>
-              </div>
+            <Link to="/" className="inline-flex items-center text-white/90 hover:text-white transition-colors w-fit" aria-label="ReviewHunts">
+              <img
+                src={logoAsset.url}
+                alt="ReviewHunts"
+                className="h-8 w-auto object-contain brightness-0 invert"
+              />
             </Link>
 
             <div className="max-w-md">
@@ -148,10 +151,12 @@ export default function LoginPage() {
             className="w-full max-w-[380px] relative z-10"
           >
             {/* Mobile logo */}
-            <Link to="/" className="lg:hidden inline-flex items-center gap-2 mb-10">
-              <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-sm font-bold text-primary-foreground">S</span>
-              </div>
+            <Link to="/" className="lg:hidden inline-flex items-center mb-10" aria-label="ReviewHunts">
+              <img
+                src={logoAsset.url}
+                alt="ReviewHunts"
+                className="h-8 w-auto object-contain dark:brightness-0 dark:invert"
+              />
             </Link>
 
             {/* Header */}
