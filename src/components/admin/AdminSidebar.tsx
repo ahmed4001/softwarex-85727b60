@@ -5,7 +5,7 @@ import {
   ArrowLeftRight, BarChart3, Bot, Box, ChevronDown, DollarSign, FileText, FolderOpen,
   Image, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings,
   Star, Users, Activity, Mail, Database, Sparkles, Globe, Inbox, Compass, Shield,
-  BookOpen, TrendingUp, UserCheck, Handshake, MousePointerClick
+  BookOpen, TrendingUp, UserCheck, Handshake, MousePointerClick, Tag
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoAsset from "@/assets/reviewhunts-logo.png.asset.json";
