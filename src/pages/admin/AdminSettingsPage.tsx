@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Settings, Save, Loader2, Globe, Palette, Shield, Mail, Search, Eye, ListOrdered, Paintbrush, RotateCcw, Image as ImageIcon, Upload } from "lucide-react";
-import logoAsset from "@/assets/reviewhunts-logo.png.asset.json";
+const logoAsset = { url: "/reviewhunts-logo.png" };
 import { toast } from "sonner";
 import { applyTheme, normalizeColor } from "@/lib/theme-config";
 

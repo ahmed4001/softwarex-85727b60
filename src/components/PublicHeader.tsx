@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import logoAsset from "@/assets/reviewhunts-logo.png.asset.json";
+const logoAsset = { url: "/reviewhunts-logo.png" };
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LayoutDashboard, Store, ChevronDown, BookOpen, BarChart3, GitCompareArrows, Trophy, Activity, DollarSign, MessageCircle, Layers, Compass, BookMarked, Tag } from "lucide-react";
