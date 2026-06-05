@@ -1021,6 +1021,7 @@ export type Database = {
           is_trending: boolean
           is_visible: boolean
           logo_url: string | null
+          product_id: string | null
           product_name: string
           slug: string
           start_date: string | null
@@ -1041,6 +1042,7 @@ export type Database = {
           is_trending?: boolean
           is_visible?: boolean
           logo_url?: string | null
+          product_id?: string | null
           product_name: string
           slug: string
           start_date?: string | null
@@ -1061,12 +1063,21 @@ export type Database = {
           is_trending?: boolean
           is_visible?: boolean
           logo_url?: string | null
+          product_id?: string | null
           product_name?: string
           slug?: string
           start_date?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       digest_logs: {
         Row: {
