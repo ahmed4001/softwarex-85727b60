@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CreditCard, Lock, ArrowLeft, Sparkles } from "lucide-react";
+import { CreditCard, Lock, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SeoHead } from "@/components/SeoHead";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const planPricing: Record<string, { name: string; price: number }> = {
   featured: { name: "Featured", price: 29 },
@@ -15,12 +18,33 @@ const planPricing: Record<string, { name: string; price: number }> = {
 export default function CheckoutPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const planId = params.get("plan") || "featured";
   const plan = planPricing[planId] || planPricing.featured;
 
-  const handlePay = () => {
-    toast.info("Payment gateway is being configured. You'll be redirected once it's live.");
+  const handlePay = async () => {
+    if (!user) {
+      navigate(`/login?redirect=/checkout?plan=${planId}`);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("paddle-create-checkout", {
+        body: { plan: planId },
+      });
+      if (error) throw error;
+      if (data?.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error(data?.error || "Could not start checkout");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Checkout failed. Please try again.");
+      setLoading(false);
+    }
   };
+
 
   return (
     <>
