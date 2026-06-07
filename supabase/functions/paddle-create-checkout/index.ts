@@ -13,11 +13,19 @@ const PADDLE_BASE =
     ? "https://api.paddle.com"
     : "https://sandbox-api.paddle.com";
 
+const PADDLE_PRICE_ID_PATTERN = /^pri_[a-z\d]{26}$/;
 const PRICE_MAP: Record<string, string | undefined> = {
-  featured: Deno.env.get("PADDLE_PRICE_FEATURED"),
-  promotion: Deno.env.get("PADDLE_PRICE_PROMOTION"),
-  premium: Deno.env.get("PADDLE_PRICE_PREMIUM"),
+  featured: Deno.env.get("PADDLE_PRICE_FEATURED")?.trim(),
+  promotion: Deno.env.get("PADDLE_PRICE_PROMOTION")?.trim(),
+  premium: Deno.env.get("PADDLE_PRICE_PREMIUM")?.trim(),
 };
+
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -31,21 +39,29 @@ Deno.serve(async (req) => {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
     if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Please sign in before starting checkout." }, 401);
     }
 
     const { plan } = await req.json();
+    if (!Object.prototype.hasOwnProperty.call(PRICE_MAP, plan)) {
+      return jsonResponse({ error: "Invalid checkout plan selected." }, 400);
+    }
+
+    if (!PADDLE_API_KEY) {
+      return jsonResponse({ error: "Paddle API key is not configured." }, 500);
+    }
+
     const priceId = PRICE_MAP[plan];
     if (!priceId) {
-      return new Response(
-        JSON.stringify({
-          error: `Paddle price ID for plan "${plan}" is not configured. Add PADDLE_PRICE_${plan?.toUpperCase()} secret.`,
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return jsonResponse({
+        error: `Paddle price ID for the ${plan} plan is not configured. Add PADDLE_PRICE_${plan?.toUpperCase()} with a Price ID that starts with pri_.`,
+      }, 500);
+    }
+
+    if (!PADDLE_PRICE_ID_PATTERN.test(priceId)) {
+      return jsonResponse({
+        error: `The saved Paddle price for the ${plan} plan is invalid. Use a Paddle Price ID that starts with pri_ and looks like pri_01..., not a product ID or checkout URL.`,
+      }, 500);
     }
 
     const origin = req.headers.get("origin") || "";
@@ -69,28 +85,17 @@ Deno.serve(async (req) => {
     const json = await res.json();
     if (!res.ok) {
       console.error("Paddle error", json);
-      return new Response(JSON.stringify({ error: json?.error?.detail || "Paddle request failed", details: json }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: json?.error?.detail || "Paddle request failed", details: json }, 502);
     }
 
     const checkoutUrl: string | undefined = json?.data?.checkout?.url;
     if (!checkoutUrl) {
-      return new Response(JSON.stringify({ error: "No checkout URL returned", details: json }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No checkout URL returned", details: json }, 502);
     }
 
-    return new Response(JSON.stringify({ checkoutUrl, transactionId: json.data.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ checkoutUrl, transactionId: json.data.id });
   } catch (err: any) {
     console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: err.message || "Checkout failed" }, 500);
   }
 });
