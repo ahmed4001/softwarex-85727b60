@@ -33,7 +33,10 @@ export default function CheckoutPage() {
       const { data, error } = await supabase.functions.invoke("paddle-create-checkout", {
         body: { plan: planId },
       });
-      if (error) throw error;
+      if (error) {
+        const contextError = error.context instanceof Response ? await error.context.clone().json().catch(() => null) : null;
+        throw new Error(contextError?.error || error.message || "Checkout failed");
+      }
       if (data?.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
