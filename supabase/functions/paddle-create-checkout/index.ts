@@ -9,6 +9,7 @@ const corsHeaders = {
 const PADDLE_CLIENT_TOKEN = (Deno.env.get("PADDLE_CLIENT_TOKEN") || "").trim();
 const PADDLE_ENV = (Deno.env.get("PADDLE_ENVIRONMENT") || "sandbox").trim().toLowerCase();
 const ENVIRONMENT = PADDLE_ENV === "live" || PADDLE_ENV === "production" ? "production" : "sandbox";
+// redeploy marker v2
 
 function validatePaddlePriceId(priceId: string | undefined): { valid: boolean; error?: string } {
   const trimmed = (priceId || "").trim();
