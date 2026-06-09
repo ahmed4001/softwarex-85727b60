@@ -34,6 +34,12 @@ export function SeoHead({
   const effectiveKeywords = keywords || settings.defaultKeywords;
   const effectiveOgImage = ogImage || settings.defaultOgImage;
   const jsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+  // Always emit a self-referencing canonical for indexable pages.
+  const resolvedCanonical =
+    canonicalUrl ||
+    (typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`
+      : undefined);
 
   return (
     <Helmet>
