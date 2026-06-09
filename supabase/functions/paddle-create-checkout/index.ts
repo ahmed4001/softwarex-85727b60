@@ -10,7 +10,35 @@ const PADDLE_CLIENT_TOKEN = (Deno.env.get("PADDLE_CLIENT_TOKEN") || "").trim();
 const PADDLE_ENV = (Deno.env.get("PADDLE_ENVIRONMENT") || "sandbox").trim().toLowerCase();
 const ENVIRONMENT = PADDLE_ENV === "live" || PADDLE_ENV === "production" ? "production" : "sandbox";
 
-const PADDLE_PRICE_ID_PATTERN = /^pri_[a-z\d]{10,}$/i;
+function validatePaddlePriceId(priceId: string | undefined): { valid: boolean; error?: string } {
+  const trimmed = (priceId || "").trim();
+
+  if (!trimmed) {
+    return { valid: false, error: "Paddle Price ID is empty" };
+  }
+
+  if (!/^pri_[a-z0-9]{10,}$/i.test(trimmed)) {
+    if (trimmed.startsWith("pro_")) {
+      return {
+        valid: false,
+        error: "This is a Paddle Product ID (pro_). You need a Price ID (pri_).",
+      };
+    }
+    if (trimmed.startsWith("https://")) {
+      return {
+        valid: false,
+        error: "This appears to be a checkout URL. You need a Price ID (pri_).",
+      };
+    }
+    return {
+      valid: false,
+      error: `Invalid Paddle Price ID format. Expected format like 'pri_xxxxxxxxxx', got: ${trimmed.substring(0, 20)}...`,
+    };
+  }
+
+  return { valid: true };
+}
+
 const PRICE_MAP: Record<string, string | undefined> = {
   featured: Deno.env.get("PADDLE_PRICE_FEATURED")?.trim(),
   promotion: Deno.env.get("PADDLE_PRICE_PROMOTION")?.trim(),
@@ -47,15 +75,10 @@ Deno.serve(async (req) => {
     }
 
     const priceId = PRICE_MAP[plan];
-    if (!priceId) {
+    const validation = validatePaddlePriceId(priceId);
+    if (!validation.valid) {
       return jsonResponse({
-        error: `Paddle price ID for the ${plan} plan is not configured. Add PADDLE_PRICE_${plan?.toUpperCase()} with a Price ID that starts with pri_.`,
-      }, 500);
-    }
-
-    if (!PADDLE_PRICE_ID_PATTERN.test(priceId)) {
-      return jsonResponse({
-        error: `The saved Paddle price for the ${plan} plan is invalid. Use a Paddle Price ID that starts with pri_ and looks like pri_01...`,
+        error: `The saved Paddle price for the ${plan} plan is invalid. ${validation.error}`,
       }, 500);
     }
 
