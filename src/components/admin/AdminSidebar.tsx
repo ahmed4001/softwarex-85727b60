@@ -16,6 +16,7 @@ const sidebarItems = [
     label: "Products", icon: Box, children: [
       { label: "All Products", to: "/admin/products" },
       { label: "Add Product", to: "/admin/products/new" },
+      { label: "Cleanup", to: "/admin/products/cleanup" },
       { label: "Sponsored", to: "/admin/products/sponsored" },
     ]
   },

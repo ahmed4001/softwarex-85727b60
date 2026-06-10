@@ -93,8 +93,21 @@ Deno.serve(async (req) => {
       .or("website_url.is.null,website_url.eq.")
       .limit(limit);
     if (ids?.length) q = q.in("id", ids);
-    const { data: rows, error } = await q;
+    const { data: rowsRaw, error } = await q;
     if (error) throw error;
+
+    // Skip products we've already attempted in a prior run (any status).
+    let rows = rowsRaw || [];
+    if (rows.length && !ids?.length) {
+      const idList = rows.map((r: any) => r.id);
+      const { data: tried } = await supabase
+        .from("backfill_match_log")
+        .select("product_id")
+        .in("product_id", idList);
+      const triedSet = new Set((tried || []).map((t: any) => t.product_id));
+      rows = rows.filter((r: any) => !triedSet.has(r.id));
+    }
+
 
     const results: any[] = [];
 
