@@ -236,6 +236,71 @@ export default function CheckoutPage() {
               <p className="text-muted-foreground mt-2">You're one step away from going live.</p>
             </div>
 
+            {(confirming || confirmedSub || confirmError) && (
+              <Alert
+                variant={confirmError ? "destructive" : "default"}
+                className="mb-6 border-primary/30 bg-primary/5"
+              >
+                {confirming ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : confirmedSub ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4" />
+                )}
+                <AlertTitle>
+                  {confirming
+                    ? "Confirming your subscription…"
+                    : confirmedSub
+                      ? `${planPricing[confirmedSub.plan]?.name ?? confirmedSub.plan} plan is now active`
+                      : "Subscription not confirmed yet"}
+                </AlertTitle>
+                <AlertDescription className="space-y-3">
+                  {confirming && (
+                    <p>We're waiting for Paddle to notify us. This usually takes a few seconds.</p>
+                  )}
+                  {confirmedSub && (
+                    <div className="text-sm space-y-1">
+                      <p>
+                        <span className="font-medium">Status:</span> {confirmedSub.status}
+                      </p>
+                      {confirmedSub.started_at && (
+                        <p>
+                          <span className="font-medium">Started:</span>{" "}
+                          {new Date(confirmedSub.started_at).toLocaleString()}
+                        </p>
+                      )}
+                      {confirmedSub.expires_at && (
+                        <p>
+                          <span className="font-medium">Renews:</span>{" "}
+                          {new Date(confirmedSub.expires_at).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="pt-2">
+                        <Button size="sm" onClick={() => navigate("/dashboard?paid=1&plan=" + confirmedSub.plan)}>
+                          Go to dashboard
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {confirmError && !confirming && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p>{confirmError}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={confirmAfterCheckout}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Re-check status
+                      </Button>
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+
             {paddleError && (
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
