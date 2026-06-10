@@ -123,18 +123,9 @@ const breadcrumbJsonLd = {
 };
 
 export default function HomePage() {
-  const { data: categories } = useQuery({
-    queryKey: ["categories-featured"],
-    queryFn: async () => {
-      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order").limit(16);
-      return data || [];
-    },
-  });
-
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
     queryKey: ["products-featured"],
     queryFn: async () => {
-      // First get featured products
       const { data: featured } = await supabase
         .from("products")
         .select("*, categories!products_category_id_fkey(name)")
@@ -143,12 +134,11 @@ export default function HomePage() {
         .order("info_score", { ascending: false })
         .order("avg_rating", { ascending: false })
         .limit(6);
-      
-      // If we have fewer than 6, fill with top-rated non-featured products
+
       const results = featured || [];
       if (results.length < 6) {
         const needed = 6 - results.length;
-        let query = supabase
+        const { data: extra } = await supabase
           .from("products")
           .select("*, categories!products_category_id_fkey(name)")
           .eq("is_active", true)
@@ -156,26 +146,12 @@ export default function HomePage() {
           .order("info_score", { ascending: false })
           .order("avg_rating", { ascending: false })
           .limit(needed);
-        const { data: extra } = await query;
         if (extra) results.push(...extra);
       }
       return results;
     },
   });
 
-  const { data: topProducts, isLoading: loadingTop } = useQuery({
-    queryKey: ["products-top"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("*, categories!products_category_id_fkey(name)")
-        .eq("is_active", true)
-        .order("info_score", { ascending: false })
-        .order("avg_rating", { ascending: false })
-        .limit(8);
-      return data || [];
-    },
-  });
 
   const { data: stats } = useQuery({
     queryKey: ["site-stats"],
