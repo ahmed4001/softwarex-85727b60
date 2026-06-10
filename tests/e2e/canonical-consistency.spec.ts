@@ -1,4 +1,5 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect } from "./fixtures/deterministic";
+import type { Page } from "@playwright/test";
 
 // Verify SEO tags stay consistent across full reloads AND client-side
 // (SPA) navigations. react-helmet-async should swap head tags cleanly
