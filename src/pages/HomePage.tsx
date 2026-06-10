@@ -20,6 +20,8 @@ import { VendorCTASection } from "@/components/home/VendorCTASection";
 import { MostPopularCategoriesSection } from "@/components/home/MostPopularCategoriesSection";
 import { TrendingProductsSection } from "@/components/home/TrendingProductsSection";
 import { ProductFinderQuiz } from "@/components/home/ProductFinderQuiz";
+import { ReadingProgress } from "@/components/home/ReadingProgress";
+import { StickyMobileCTA } from "@/components/home/StickyMobileCTA";
 
 const SITE_URL = "https://reviewhunts.com";
 
@@ -178,20 +180,25 @@ export default function HomePage() {
         jsonLd={[websiteJsonLd, organizationJsonLd, faqJsonLd, breadcrumbJsonLd]}
       />
 
+      <ReadingProgress />
+      <StickyMobileCTA />
+
       <main>
         {/* 1. Hero */}
         <HeroSection />
 
-        {/* 2. Trust strip + compact stats */}
+        {/* 2. Trust strip */}
         <TrustedBySection />
+
+        {/* 3. Bold stats — moved up for instant credibility */}
         <StatsSection stats={stats} />
 
         <div className="section-gradient-divider" aria-hidden="true" />
 
-        {/* 3. Most Popular Categories (single categories surface) */}
+        {/* 4. Most Popular Categories */}
         <MostPopularCategoriesSection />
 
-        {/* 4. Editor's Choice */}
+        {/* 5. Editor's Choice */}
         <section className="py-20" aria-labelledby="featured-heading">
           <div className="container">
             <SectionHeader id="featured-heading" label="Editor's Choice" title="Top-Rated Software Picks for 2026" subtitle="Hand-picked by our expert analysts based on user reviews, features, and value" />
@@ -208,25 +215,33 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 5. Interactive quiz — engagement hook */}
-        <ProductFinderQuiz />
+        {/* 6. Interactive quiz — visually highlighted as a break */}
+        <section className="py-16 md:py-20">
+          <div className="container">
+            <div className="rounded-3xl bg-gradient-to-br from-primary/[0.06] via-primary/[0.03] to-transparent border border-primary/15 p-1 md:p-2">
+              <div className="rounded-[20px] bg-background/40 backdrop-blur-sm">
+                <ProductFinderQuiz />
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div className="section-gradient-divider" aria-hidden="true" />
 
-        {/* 6. Trending */}
+        {/* 7. Trending */}
         <TrendingProductsSection />
 
-        {/* 7. Popular Comparisons */}
+        {/* 8. Popular Comparisons */}
         <PopularComparisonsSection />
 
-        {/* 8. How It Works */}
+        {/* 9. How It Works */}
         <HowItWorksSection />
 
-        {/* 9. Blog Preview + Vendor CTA */}
+        {/* 10. Blog Preview + Vendor CTA */}
         <BlogPreviewSection />
         <VendorCTASection />
 
-        {/* 10. FAQ + Newsletter */}
+        {/* 11. FAQ + Newsletter */}
         <FAQSection />
         <NewsletterSection />
       </main>
@@ -243,9 +258,9 @@ function SectionHeader({ label, title, subtitle, linkTo, id }: { label: string; 
       className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-10 gap-3"
     >
       <div>
-        <p className="text-sm font-semibold text-primary mb-1">{label}</p>
-        <h2 id={id} className="text-2xl md:text-3xl font-extrabold text-foreground">{title}</h2>
-        <p className="text-muted-foreground mt-1">{subtitle}</p>
+        <p className="text-sm font-semibold text-primary mb-1 tracking-wide uppercase">{label}</p>
+        <h2 id={id} className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">{title}</h2>
+        <p className="text-muted-foreground mt-2">{subtitle}</p>
       </div>
       {linkTo && (
         <Link to={linkTo}>
