@@ -2,14 +2,53 @@
 // FAQPage, BlogPosting, and Product/SoftwareApplication and snapshot the
 // serialized blocks. Any drift in our generated schema fails CI until the
 // snapshot is intentionally updated (`bunx vitest -u src/test/seo`).
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeAll, afterAll, vi } from "vitest";
 import { render, cleanup, act } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { SeoHead } from "@/components/SeoHead";
 
+// Freeze sources of non-determinism so snapshots are reproducible in CI:
+//   - Wall clock (Date.now / new Date()) via fake timers at a fixed epoch.
+//   - Math.random via a stable seeded PRNG (mulberry32).
+//   - crypto.randomUUID via a deterministic counter so any generated IDs
+//     baked into JSON-LD remain identical across runs.
+const FROZEN_NOW = new Date("2026-01-15T12:00:00.000Z");
+let originalRandom: typeof Math.random;
+let originalRandomUUID: typeof crypto.randomUUID | undefined;
+let uuidCounter = 0;
+
+beforeAll(() => {
+  vi.useFakeTimers({ now: FROZEN_NOW, shouldAdvanceTime: false });
+  originalRandom = Math.random;
+  let seed = 0x12345678;
+  Math.random = () => {
+    // mulberry32 — stable across Node versions.
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    originalRandomUUID = crypto.randomUUID.bind(crypto);
+    (crypto as any).randomUUID = () => {
+      uuidCounter += 1;
+      const hex = uuidCounter.toString(16).padStart(12, "0");
+      return `00000000-0000-4000-8000-${hex}`;
+    };
+  }
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+  Math.random = originalRandom;
+  if (originalRandomUUID) (crypto as any).randomUUID = originalRandomUUID;
+});
+
 afterEach(() => {
+  uuidCounter = 0;
   cleanup();
   document.head
     .querySelectorAll(
