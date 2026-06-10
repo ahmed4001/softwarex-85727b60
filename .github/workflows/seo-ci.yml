@@ -97,6 +97,16 @@ jobs:
         if: always()
         run: bunx playwright test tests/e2e/sitemap-liveness.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
 
+      - name: Broad product + blog detail canonical/JSON-LD coverage
+        if: always()
+        env:
+          SEO_BROAD_PRODUCT_COUNT: "5"
+          SEO_BROAD_BLOG_COUNT: "5"
+        run: bunx playwright test tests/e2e/broad-detail-coverage.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
+
+
+
+
 
 
       # ----- Lighthouse CI against staging homepage + a real product page -----
