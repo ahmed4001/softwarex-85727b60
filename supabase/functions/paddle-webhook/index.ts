@@ -42,11 +42,32 @@ async function verifyPaddleSignature(rawBody: string, signatureHeader: string, s
   }
 }
 
+// Events we actually act on — everything else is acknowledged without DB work.
+const ACTIVATE_EVENTS = new Set([
+  "transaction.completed",
+  "subscription.activated",
+  "subscription.created",
+]);
+const CANCEL_EVENTS = new Set(["subscription.canceled"]);
+
+const ackOk = () =>
+  new Response(JSON.stringify({ ok: true }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const rawBody = await req.text();
+
+    // Cheap pre-parse filter: skip events we don't care about before doing
+    // signature verification or spinning up a Supabase client.
+    const peekType = rawBody.match(/"event_type"\s*:\s*"([^"]+)"/)?.[1] || "";
+    if (peekType && !ACTIVATE_EVENTS.has(peekType) && !CANCEL_EVENTS.has(peekType)) {
+      return ackOk();
+    }
+
     const signature = req.headers.get("paddle-signature") || "";
     const webhookSecret = Deno.env.get("PADDLE_WEBHOOK_SECRET");
 
@@ -70,44 +91,38 @@ Deno.serve(async (req) => {
     const userId: string | undefined = custom.user_id;
     const plan: string | undefined = custom.plan;
 
-    if (!userId || !plan) {
-      return new Response(JSON.stringify({ ok: true, skipped: "no custom_data" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!userId || !plan) return ackOk();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    if (
-      eventType === "transaction.completed" ||
-      eventType === "subscription.activated" ||
-      eventType === "subscription.created"
-    ) {
-      const { data: existing } = await supabase
+    if (ACTIVATE_EVENTS.has(eventType)) {
+      // Single round-trip: try update first, insert only if no active row exists.
+      const { data: updated, error: updErr } = await supabase
         .from("vendor_subscriptions")
-        .select("id")
+        .update({ plan })
         .eq("user_id", userId)
         .eq("status", "active")
+        .select("id")
         .maybeSingle();
 
-      if (existing) {
-        await supabase.from("vendor_subscriptions").update({ plan }).eq("id", existing.id);
-      } else {
-        await supabase.from("vendor_subscriptions").insert({ user_id: userId, plan, status: "active" });
+      if (updErr) throw updErr;
+      if (!updated) {
+        await supabase
+          .from("vendor_subscriptions")
+          .insert({ user_id: userId, plan, status: "active" });
       }
-    } else if (eventType === "subscription.canceled") {
+    } else if (CANCEL_EVENTS.has(eventType)) {
       await supabase
         .from("vendor_subscriptions")
         .update({ status: "canceled" })
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .eq("status", "active");
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return ackOk();
   } catch (err: any) {
     console.error("paddle-webhook error", err);
     return new Response(JSON.stringify({ error: err.message }), {
