@@ -30,12 +30,13 @@ const DEFAULTS: Settings = {
 const PROJECT_REF = "ffeimjfunghzxgeqiwma";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZWltamZ1bmdoenhnZXFpd21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MjI2MjEsImV4cCI6MjA4NzQ5ODYyMX0.SnPyI6XDg3zyI4fQTYUKRoAhu_gJ4QLvBw-y6muPYvg";
 
-const storageKey = (uid: string | null) => `backfill-runner-settings:${uid ?? "anon"}`;
+const LOCAL_KEY = (uid: string | null) => `backfill-runner-settings:${uid ?? "anon"}`;
 
 export function BackfillRunnerPanel() {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [batchSize, setBatchSize] = useState(DEFAULTS.batchSize);
   const [multiplier, setMultiplier] = useState(DEFAULTS.multiplier);
   const [concurrency, setConcurrency] = useState(DEFAULTS.concurrency);
@@ -49,47 +50,78 @@ export function BackfillRunnerPanel() {
   const [stopRequested, setStopRequested] = useState(false);
   const [history, setHistory] = useState<Summary[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const savedAtRef = useRef<number>(0);
   const [savedTick, setSavedTick] = useState(0);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load saved settings once we know the user
+  function applySettings(s: Partial<Settings>) {
+    if (typeof s.batchSize === "number") setBatchSize(s.batchSize);
+    if (typeof s.multiplier === "number") setMultiplier(s.multiplier);
+    if (typeof s.concurrency === "number") setConcurrency(s.concurrency);
+    if (typeof s.minConfidence === "number") setMinConfidence(s.minConfidence);
+    if (typeof s.maxMissRate === "number") setMaxMissRate(s.maxMissRate);
+    if (typeof s.rateLimitMs === "number") setRateLimitMs(s.rateLimitMs);
+    if (typeof s.batches === "number") setBatches(s.batches);
+    if (typeof s.dryRun === "boolean") setDryRun(s.dryRun);
+  }
+
+  // Load saved settings from the user's profile (with localStorage fallback)
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getUser().then(({ data }) => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
       if (cancelled) return;
       const uid = data.user?.id ?? null;
       setUserId(uid);
-      try {
-        const raw = localStorage.getItem(storageKey(uid));
-        if (raw) {
-          const s = JSON.parse(raw) as Partial<Settings>;
-          if (typeof s.batchSize === "number") setBatchSize(s.batchSize);
-          if (typeof s.multiplier === "number") setMultiplier(s.multiplier);
-          if (typeof s.concurrency === "number") setConcurrency(s.concurrency);
-          if (typeof s.minConfidence === "number") setMinConfidence(s.minConfidence);
-          if (typeof s.maxMissRate === "number") setMaxMissRate(s.maxMissRate);
-          if (typeof s.rateLimitMs === "number") setRateLimitMs(s.rateLimitMs);
-          if (typeof s.batches === "number") setBatches(s.batches);
-          if (typeof s.dryRun === "boolean") setDryRun(s.dryRun);
+
+      let applied = false;
+      if (uid) {
+        const { data: profile } = await (supabase as any)
+          .from("profiles")
+          .select("backfill_runner_settings")
+          .eq("user_id", uid)
+          .maybeSingle();
+        const remote = profile?.backfill_runner_settings as Partial<Settings> | null;
+        if (remote && typeof remote === "object") {
+          applySettings(remote);
+          applied = true;
         }
-      } catch {/* ignore */}
-      setLoaded(true);
-    });
+      }
+      if (!applied) {
+        try {
+          const raw = localStorage.getItem(LOCAL_KEY(uid));
+          if (raw) applySettings(JSON.parse(raw));
+        } catch {/* ignore */}
+      }
+      if (!cancelled) setLoaded(true);
+    })();
     return () => { cancelled = true; };
   }, []);
 
-  // Auto-persist whenever settings change (after initial load)
+  // Auto-persist (debounced) to profiles, with localStorage as a cache
   useEffect(() => {
     if (!loaded) return;
     const s: Settings = {
       batchSize, multiplier, concurrency, minConfidence,
       maxMissRate, rateLimitMs, batches, dryRun,
     };
-    try {
-      localStorage.setItem(storageKey(userId), JSON.stringify(s));
-      savedAtRef.current = Date.now();
-      setSavedTick((t) => t + 1);
-    } catch {/* ignore */}
+    try { localStorage.setItem(LOCAL_KEY(userId), JSON.stringify(s)); } catch {/* ignore */}
+
+    if (!userId) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({ backfill_runner_settings: s })
+        .eq("user_id", userId);
+      setSaving(false);
+      if (error) {
+        toast.error(`Could not sync settings: ${error.message}`);
+      } else {
+        setSavedTick((t) => t + 1);
+      }
+    }, 600);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [loaded, userId, batchSize, multiplier, concurrency, minConfidence, maxMissRate, rateLimitMs, batches, dryRun]);
 
   function resetDefaults() {
