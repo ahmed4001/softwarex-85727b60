@@ -1,0 +1,83 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`JSON-LD snapshots > BlogPosting snapshot 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "author": {
+      "@type": "Person",
+      "name": "Jane Doe",
+    },
+    "dateModified": "2026-01-02T00:00:00.000Z",
+    "datePublished": "2026-01-01T00:00:00.000Z",
+    "description": "Engineering notes.",
+    "headline": "How we ship faster",
+    "image": "https://reviewhunts.com/og/how-we-ship-faster.png",
+    "mainEntityOfPage": {
+      "@id": "https://reviewhunts.com/blog/how-we-ship-faster",
+      "@type": "WebPage",
+    },
+    "publisher": {
+      "@type": "Organization",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://reviewhunts.com/logo.png",
+      },
+      "name": "ReviewHunts",
+    },
+  },
+]
+`;
+
+exports[`JSON-LD snapshots > FAQPage snapshot 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, via the official Slack app.",
+        },
+        "name": "Does Acme CRM integrate with Slack?",
+      },
+      {
+        "@type": "Question",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, up to 3 seats.",
+        },
+        "name": "Is there a free tier?",
+      },
+    ],
+  },
+]
+`;
+
+exports[`JSON-LD snapshots > SoftwareApplication (Product) snapshot 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "bestRating": "5",
+      "ratingCount": 128,
+      "ratingValue": "4.5",
+    },
+    "applicationCategory": "BusinessApplication",
+    "name": "Acme CRM",
+    "offers": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "price": "0",
+      "priceCurrency": "USD",
+    },
+    "operatingSystem": "Web",
+    "url": "https://reviewhunts.com/product/acme-crm",
+  },
+]
+`;
