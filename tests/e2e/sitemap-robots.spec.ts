@@ -1,5 +1,8 @@
 import { test, expect } from "./fixtures/deterministic";
 import { request } from "@playwright/test";
+import { attachFailureArtifacts } from "./fixtures/failure-artifacts";
+
+test.afterEach(attachFailureArtifacts);
 
 // Fetch sitemap.xml and robots.txt from STAGING_BASE_URL and assert
 // the exact directives. These run as raw HTTP requests (no browser)
