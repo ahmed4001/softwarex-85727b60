@@ -62,6 +62,7 @@ const sidebarItems = [
   { label: "Paddle Events", icon: Activity, to: "/admin/paddle-events" },
   { label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
   { label: "Settings", icon: Settings, to: "/admin/settings" },
+  { label: "Backfill Log", icon: Globe, to: "/admin/backfill-log" },
   { label: "Activity Log", icon: Activity, to: "/admin/activity" },
   { label: "Seed Data", icon: Database, to: "/admin/seed" },
   { label: "AI Import", icon: Sparkles, to: "/admin/ai-import" },

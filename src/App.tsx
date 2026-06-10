@@ -50,6 +50,7 @@ const AdminBrevoPage = lazy(() => import("./pages/admin/AdminBrevoPage"));
 const AdminAnalyticsPage = lazy(() => import("./pages/admin/AdminAnalyticsPage"));
 const AdminAIPage = lazy(() => import("./pages/admin/AdminAIPage"));
 const AdminActivityPage = lazy(() => import("./pages/admin/AdminActivityPage"));
+const AdminBackfillLogPage = lazy(() => import("./pages/admin/AdminBackfillLogPage"));
 const AdminProductEditorPage = lazy(() => import("./pages/admin/AdminProductEditorPage"));
 const AdminSubmissionsPage = lazy(() => import("./pages/admin/AdminSubmissionsPage"));
 const AdminAdsPage = lazy(() => import("./pages/admin/AdminAdsPage"));
@@ -220,6 +221,7 @@ function AppContent() {
           <Route path="ai" element={<ErrorBoundary><AdminAIPage /></ErrorBoundary>} />
           <Route path="submissions" element={<ErrorBoundary><AdminSubmissionsPage /></ErrorBoundary>} />
           <Route path="activity" element={<ErrorBoundary><AdminActivityPage /></ErrorBoundary>} />
+          <Route path="backfill-log" element={<ErrorBoundary><AdminBackfillLogPage /></ErrorBoundary>} />
           <Route path="ads" element={<ErrorBoundary><AdminAdsPage /></ErrorBoundary>} />
           <Route path="settings" element={<ErrorBoundary><AdminSettingsPage /></ErrorBoundary>} />
           <Route path="media" element={<ErrorBoundary><AdminMediaPage /></ErrorBoundary>} />
