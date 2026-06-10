@@ -229,7 +229,18 @@ export default function HomePage() {
         {/* 9. Recently Added */}
         <RecentlyAddedSection />
 
-        {/* 10. How It Works */}
+        {/* 10. Smart Finder — convert intent before How It Works */}
+        <section className="py-16 md:py-20">
+          <div className="container">
+            <div className="rounded-3xl bg-gradient-to-br from-primary/[0.06] via-primary/[0.03] to-transparent border border-primary/15 p-1 md:p-2">
+              <div className="rounded-[20px] bg-background/40 backdrop-blur-sm">
+                <ProductFinderQuiz />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 11. How It Works */}
         <HowItWorksSection />
 
         {/* 11. Blog Preview + Vendor CTA */}
