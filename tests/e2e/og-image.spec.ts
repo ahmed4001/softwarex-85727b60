@@ -10,7 +10,7 @@ import type { Page } from "@playwright/test";
 //   - returns 200 (or any 2xx) from the staging server
 // A broken og:image is one of the most common social-preview bugs.
 
-detTest.afterEach(attachFailureArtifacts);
+test.afterEach(attachFailureArtifacts);
 
 const ROUTES_WITH_OG_IMAGE = [
   "/",
@@ -67,4 +67,3 @@ for (const path of ROUTES_WITH_OG_IMAGE) {
   });
 }
 
-export { detTest as test };
