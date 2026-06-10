@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Terminal,
   RefreshCw,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,15 +27,70 @@ const planPricing: Record<string, { name: string; price: number }> = {
   premium: { name: "Premium", price: 199 },
 };
 
+type ConfirmedSub = {
+  plan: string;
+  status: string;
+  started_at: string | null;
+  expires_at: string | null;
+};
+
 export default function CheckoutPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paddleError, setPaddleError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmedSub, setConfirmedSub] = useState<ConfirmedSub | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const hasLoggedRef = useRef(false);
   const planId = params.get("plan") || "featured";
   const plan = planPricing[planId] || planPricing.featured;
+
+  // Poll vendor_subscriptions until the webhook activates the new plan.
+  const pollForActiveSubscription = async (
+    expectedPlan: string,
+    { attempts = 12, intervalMs = 2500 }: { attempts?: number; intervalMs?: number } = {},
+  ): Promise<ConfirmedSub | null> => {
+    if (!user) return null;
+    for (let i = 0; i < attempts; i++) {
+      const { data, error } = await supabase
+        .from("vendor_subscriptions")
+        .select("plan,status,started_at,expires_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data && data.plan === expectedPlan) {
+        console.log("[Paddle.js] Subscription confirmed on attempt", i + 1, data);
+        return data as ConfirmedSub;
+      }
+      console.log(
+        `[Paddle.js] Awaiting webhook activation (attempt ${i + 1}/${attempts})`,
+        { latestRow: data, error: error?.message },
+      );
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return null;
+  };
+
+  const confirmAfterCheckout = async () => {
+    setConfirming(true);
+    setConfirmError(null);
+    const sub = await pollForActiveSubscription(planId);
+    setConfirming(false);
+    if (sub) {
+      setConfirmedSub(sub);
+      toast.success(`Your ${planPricing[sub.plan]?.name ?? sub.plan} plan is active!`);
+    } else {
+      const reason =
+        "Payment received, but we couldn't confirm your subscription yet. It may take a moment — you can refresh or open your dashboard.";
+      setConfirmError(reason);
+      toast.warning(reason);
+    }
+  };
 
   useEffect(() => {
     if (hasLoggedRef.current) return;
