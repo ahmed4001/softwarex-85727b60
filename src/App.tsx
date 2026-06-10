@@ -223,6 +223,7 @@ function AppContent() {
           <Route path="submissions" element={<ErrorBoundary><AdminSubmissionsPage /></ErrorBoundary>} />
           <Route path="activity" element={<ErrorBoundary><AdminActivityPage /></ErrorBoundary>} />
           <Route path="backfill-log" element={<ErrorBoundary><AdminBackfillLogPage /></ErrorBoundary>} />
+          <Route path="website-review-queue" element={<ErrorBoundary><AdminWebsiteReviewQueuePage /></ErrorBoundary>} />
           <Route path="ads" element={<ErrorBoundary><AdminAdsPage /></ErrorBoundary>} />
           <Route path="settings" element={<ErrorBoundary><AdminSettingsPage /></ErrorBoundary>} />
           <Route path="media" element={<ErrorBoundary><AdminMediaPage /></ErrorBoundary>} />
