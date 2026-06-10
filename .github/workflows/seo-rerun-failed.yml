@@ -1,0 +1,98 @@
+name: SEO rerun failed specs
+
+# Manual rerun of ONLY the Playwright specs that failed in a previous
+# `SEO CI` run. Lets reviewers re-validate flaky / staging-network
+# failures without burning ~15 minutes on the full merge gate.
+#
+# Two modes:
+#   1) `failed_specs` input — comma-separated list of spec files
+#      (e.g. "tests/e2e/og-image.spec.ts,tests/e2e/sitemap-liveness.spec.ts").
+#      Runs exactly those files.
+#   2) `previous_run_id` input — a SEO CI run ID. Downloads its
+#      `playwright-test-results-merge-gate` artifact and feeds
+#      `--last-failed` to Playwright so it reruns only failed tests.
+#
+# Regenerates the same artifact set as the merge gate (HTML report,
+# test-results, console log) so debugging is identical to the original.
+
+on:
+  workflow_dispatch:
+    inputs:
+      failed_specs:
+        description: "Comma-separated spec files to rerun (overrides previous_run_id)"
+        required: false
+        default: ""
+      previous_run_id:
+        description: "SEO CI workflow run ID to pull --last-failed state from"
+        required: false
+        default: ""
+      mock_og_images:
+        description: "Mock og:image HTTP 200 checks (reduces staging-network flake)"
+        type: boolean
+        default: false
+
+jobs:
+  rerun-failed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL || 'https://id-preview--8f8ab8bf-14f5-4085-9849-266b90f727c8.lovable.app' }}
+      CI_MOCK_OG_IMAGES: ${{ inputs.mock_og_images && '1' || '' }}
+      PW_CONSOLE_LOG: ${{ github.workspace }}/playwright-console.log
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+
+      # ---- Mode 2: pull prior test-results to enable --last-failed ----
+      - name: Download previous test-results (for --last-failed)
+        if: ${{ inputs.previous_run_id != '' && inputs.failed_specs == '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-test-results-merge-gate
+          path: test-results
+          run-id: ${{ inputs.previous_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rerun failed specs
+        run: |
+          set -o pipefail
+          if [ -n "${{ inputs.failed_specs }}" ]; then
+            IFS=',' read -ra SPECS <<< "${{ inputs.failed_specs }}"
+            echo "Rerunning explicit specs: ${SPECS[*]}"
+            bunx playwright test "${SPECS[@]}" 2>&1 | tee -a "$PW_CONSOLE_LOG"
+          elif [ -n "${{ inputs.previous_run_id }}" ]; then
+            echo "Rerunning --last-failed from run ${{ inputs.previous_run_id }}"
+            bunx playwright test --last-failed 2>&1 | tee -a "$PW_CONSOLE_LOG"
+          else
+            echo "::error::Provide either failed_specs or previous_run_id"
+            exit 1
+          fi
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-rerun
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Playwright test-results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results-rerun
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload console log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-console-log-rerun
+          path: ${{ env.PW_CONSOLE_LOG }}
+          if-no-files-found: ignore
+          retention-days: 14
