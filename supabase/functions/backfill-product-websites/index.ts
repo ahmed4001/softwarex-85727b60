@@ -348,12 +348,14 @@ Deno.serve(async (req) => {
     const summary = {
       total: results.length,
       updated: results.filter((r) => r.status === "updated").length,
+      queued_review: results.filter((r) => r.status === "queued_review").length,
       no_match: results.filter((r) => r.status === "no_match").length,
       skipped: results.filter((r) => r.status === "skipped").length,
       errors: results.filter((r) => r.status === "error").length,
       aborted, abort_reason: abortReason,
       settings: { limit, multiplier, concurrency, minConfidence, maxMissRate, rateLimitMs },
     };
+
     return new Response(JSON.stringify({ success: true, dry_run: dryRun, summary, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
