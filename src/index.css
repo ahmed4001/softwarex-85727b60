@@ -285,8 +285,30 @@
   }
 
   .section-gradient-divider {
+    height: 80px;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      hsl(var(--primary) / 0.03) 50%,
+      transparent 100%
+    );
+    position: relative;
+  }
+  .section-gradient-divider::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    max-width: 240px;
     height: 1px;
-    background: hsl(var(--border));
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--border)) 50%,
+      transparent
+    );
   }
 
   .hero-gradient-text {

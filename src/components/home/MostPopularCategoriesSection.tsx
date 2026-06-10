@@ -129,7 +129,7 @@ export function MostPopularCategoriesSection() {
                     >
                       <Link
                         to={`/product/${p.slug}`}
-                        className="glass-card overflow-hidden group block"
+                        className="glass-card overflow-hidden group block ring-1 ring-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:ring-primary/30"
                       >
                         {/* Screenshot area */}
                         <div className="aspect-[16/10] bg-muted relative overflow-hidden">
