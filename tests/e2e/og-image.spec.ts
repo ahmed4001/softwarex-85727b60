@@ -1,6 +1,6 @@
-import { test, expect, request } from "@playwright/test";
-import { test as detTest } from "./fixtures/deterministic";
+import { test, expect } from "./fixtures/deterministic";
 import { attachFailureArtifacts } from "./fixtures/failure-artifacts";
+import { request } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 // Validate og:image across key public routes:
