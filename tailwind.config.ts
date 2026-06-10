@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Manrope',
+  				'DM Sans',
   				'Work Sans',
   				'ui-sans-serif',
   				'system-ui',
@@ -29,14 +29,14 @@ export default {
   				'sans-serif'
   			],
   			display: [
-  				'Sora',
+  				'Space Grotesk',
   				'Lora',
   				'ui-serif',
   				'Georgia',
   				'serif'
   			],
   			serif: [
-  				'Sora',
+  				'Space Grotesk',
   				'Lora',
   				'ui-serif',
   				'Georgia',
