@@ -1,5 +1,6 @@
 import { test, expect } from "./fixtures/deterministic";
-import type { Page, TestInfo } from "@playwright/test";
+import { attachFailureArtifacts } from "./fixtures/failure-artifacts";
+import type { Page } from "@playwright/test";
 
 // Parse every <script type="application/ld+json"> block on each key
 // public page and validate the required fields per @type. We mirror
@@ -203,33 +204,10 @@ function assertAllValid(blocks: FlatBlock[], label: string) {
   ).toEqual([]);
 }
 
-// On failure, attach the page HTML + every extracted JSON-LD block so
-// merge-gate diagnostics in CI don't require a re-run. Artifacts show
-// up under each failed test in the Playwright HTML report.
-test.afterEach(async ({ page }, testInfo: TestInfo) => {
-  if (testInfo.status === testInfo.expectedStatus) return;
-  try {
-    const url = page.url();
-    const html = await page.content().catch(() => "<unavailable>");
-    const blocks = await readJsonLd(page).catch(() => []);
-    await testInfo.attach("page-url.txt", { body: url, contentType: "text/plain" });
-    await testInfo.attach("page.html", { body: html, contentType: "text/html" });
-    await testInfo.attach("jsonld-blocks.json", {
-      body: JSON.stringify(blocks, null, 2),
-      contentType: "application/json",
-    });
-    const consoleLog: string[] = (page as any).__consoleLog || [];
-    await testInfo.attach("browser-console.log", {
-      body: consoleLog.join("\n") || "(no console output)",
-      contentType: "text/plain",
-    });
-    await page.screenshot({ fullPage: true }).then((buf) =>
-      testInfo.attach("page.png", { body: buf, contentType: "image/png" }),
-    ).catch(() => {});
-  } catch {
-    // best-effort — never fail the test in cleanup.
-  }
-});
+// On failure, attach the page HTML, JSON-LD, console log, screenshot,
+// and live sitemap.xml/robots.txt — see fixtures/failure-artifacts.ts.
+test.afterEach(attachFailureArtifacts);
+
 
 
 

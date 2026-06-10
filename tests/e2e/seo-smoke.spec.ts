@@ -1,5 +1,8 @@
 import { test, expect } from "./fixtures/deterministic";
+import { attachFailureArtifacts } from "./fixtures/failure-artifacts";
 import type { Page } from "@playwright/test";
+
+test.afterEach(attachFailureArtifacts);
 
 // SEO smoke tests for key public routes. For each route we assert:
 //   1) Exactly one <link rel="canonical"> exists and is absolute.
