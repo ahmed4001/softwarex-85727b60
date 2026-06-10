@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Verify Paddle webhook signature: header format "ts=...;h1=..."
 async function verifyPaddleSignature(rawBody: string, signatureHeader: string, secret: string): Promise<boolean> {
   try {
     const parts = Object.fromEntries(
@@ -18,20 +17,10 @@ async function verifyPaddleSignature(rawBody: string, signatureHeader: string, s
     const ts = parts["ts"];
     const h1 = parts["h1"];
     if (!ts || !h1) return false;
-
     const signedPayload = `${ts}:${rawBody}`;
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    );
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signedPayload));
-    const computed = Array.from(new Uint8Array(sigBuf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
+    const computed = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
     if (computed.length !== h1.length) return false;
     let diff = 0;
     for (let i = 0; i < computed.length; i++) diff |= computed.charCodeAt(i) ^ h1.charCodeAt(i);
@@ -52,19 +41,28 @@ const CANCEL_EVENTS = new Set(["subscription.canceled"]);
 const PAST_DUE_EVENTS = new Set(["subscription.past_due", "subscription.paused"]);
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const ackOk = () => jsonResponse({ ok: true });
+
+async function logSignatureFailure(reason: string, peekType: string, headers: Record<string, string>) {
+  try {
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    await supabase.from("paddle_alerts").insert({
+      kind: "signature_failure",
+      severity: "critical",
+      message: `Paddle webhook signature failure: ${reason}`,
+      details: { event_type: peekType || null, headers, at: new Date().toISOString() },
+    });
+  } catch (e) {
+    console.error("paddle-webhook: failed to log signature alert", e);
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const webhookSecret = Deno.env.get("PADDLE_WEBHOOK_SECRET");
-    // === Fail closed if secret missing ==============================
     if (!webhookSecret) {
       console.error("paddle-webhook: PADDLE_WEBHOOK_SECRET is not configured — rejecting request");
       return jsonResponse({ error: "webhook secret not configured" }, 500);
@@ -72,33 +70,29 @@ Deno.serve(async (req) => {
 
     const rawBody = await req.text();
     const signature = req.headers.get("paddle-signature") || "";
+    const peekType = rawBody.match(/"event_type"\s*:\s*"([^"]+)"/)?.[1] || "";
+    const safeHeaders = {
+      "paddle-signature": signature ? "present" : "missing",
+      "user-agent": req.headers.get("user-agent") || "",
+    };
 
-    // === Signature verification BEFORE any parsing or DB work =======
     if (!signature) {
-      console.warn("paddle-webhook: missing paddle-signature header");
+      await logSignatureFailure("missing signature header", peekType, safeHeaders);
       return jsonResponse({ error: "missing signature" }, 401);
     }
     const sigOk = await verifyPaddleSignature(rawBody, signature, webhookSecret);
     if (!sigOk) {
-      console.warn("paddle-webhook: invalid signature");
+      await logSignatureFailure("HMAC mismatch", peekType, safeHeaders);
       return jsonResponse({ error: "invalid signature" }, 401);
     }
 
-    // Cheap pre-parse filter for event types we don't process.
-    const peekType = rawBody.match(/"event_type"\s*:\s*"([^"]+)"/)?.[1] || "";
-    if (
-      peekType &&
-      !ACTIVATE_EVENTS.has(peekType) &&
-      !CANCEL_EVENTS.has(peekType) &&
-      !PAST_DUE_EVENTS.has(peekType)
-    ) {
+    if (peekType && !ACTIVATE_EVENTS.has(peekType) && !CANCEL_EVENTS.has(peekType) && !PAST_DUE_EVENTS.has(peekType)) {
       return ackOk();
     }
 
     const payload = JSON.parse(rawBody);
     const eventType: string = payload?.event_type || "";
-    const eventId: string | undefined =
-      payload?.event_id || payload?.notification_id || payload?.data?.id;
+    const eventId: string | undefined = payload?.event_id || payload?.notification_id || payload?.data?.id;
     const data = payload?.data || {};
     const custom = data?.custom_data || {};
     const userId: string | undefined = custom.user_id;
@@ -106,28 +100,18 @@ Deno.serve(async (req) => {
 
     if (!userId || !plan) return ackOk();
 
-    // Pull billing period & paddle identifiers off the payload.
     const periodEnd: string | null =
-      data?.current_billing_period?.ends_at ||
-      data?.billing_period?.ends_at ||
-      data?.next_billed_at ||
-      null;
-    const paddleSubId: string | null =
-      data?.subscription_id || (data?.id?.toString().startsWith("sub_") ? data.id : null);
+      data?.current_billing_period?.ends_at || data?.billing_period?.ends_at || data?.next_billed_at || null;
+    const paddleSubId: string | null = data?.subscription_id || (data?.id?.toString().startsWith("sub_") ? data.id : null);
     const paddleCustomerId: string | null = data?.customer_id || null;
-    const paddlePriceId: string | null =
-      data?.items?.[0]?.price?.id || data?.items?.[0]?.price_id || null;
+    const paddlePriceId: string | null = data?.items?.[0]?.price?.id || data?.items?.[0]?.price_id || null;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // === Idempotency gate ===========================================
     if (eventId) {
       const { error: dedupeErr } = await supabase
         .from("paddle_webhook_events")
-        .insert({ event_id: eventId, event_type: eventType, user_id: userId, plan });
+        .insert({ event_id: eventId, event_type: eventType, user_id: userId, plan, payload, signature_valid: true });
       if (dedupeErr) {
         if ((dedupeErr as any).code === "23505") {
           console.log(`paddle-webhook: duplicate event ${eventId} ignored`);
@@ -157,7 +141,6 @@ Deno.serve(async (req) => {
         if (paddleCustomerId) patch.paddle_customer_id = paddleCustomerId;
         if (paddlePriceId) patch.paddle_price_id = paddlePriceId;
 
-        // Prefer update by paddle_subscription_id, else by user_id+active.
         let updatedId: string | null = null;
         if (paddleSubId) {
           const { data: row } = await supabase
@@ -179,10 +162,15 @@ Deno.serve(async (req) => {
           updatedId = row?.id ?? null;
         }
         if (!updatedId) {
-          await supabase
-            .from("vendor_subscriptions")
-            .insert({ user_id: userId, ...patch });
+          await supabase.from("vendor_subscriptions").insert({ user_id: userId, ...patch });
         }
+
+        // Release any in-flight checkout lock for this user+plan.
+        await supabase
+          .from("paddle_checkout_attempts")
+          .delete()
+          .eq("user_id", userId)
+          .eq("plan", plan);
       } else if (PAST_DUE_EVENTS.has(eventType)) {
         await supabase
           .from("vendor_subscriptions")
@@ -192,11 +180,7 @@ Deno.serve(async (req) => {
       } else if (CANCEL_EVENTS.has(eventType)) {
         await supabase
           .from("vendor_subscriptions")
-          .update({
-            status: "canceled",
-            canceled_at: now,
-            last_event_at: now,
-          })
+          .update({ status: "canceled", canceled_at: now, last_event_at: now })
           .eq("user_id", userId)
           .in("status", ["active", "past_due"]);
       }
