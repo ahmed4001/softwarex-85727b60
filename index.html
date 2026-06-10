@@ -44,7 +44,9 @@
   </script>
 
   <!-- Paddle.js - preloaded before iubenda autoblocking so checkout always works -->
-  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"
+    onerror="console.error('[Paddle.js] Failed to preload Paddle.js from cdn.paddle.com', event); window.__paddleLoadError = 'Script tag failed to load (network/blocker)'"
+    onload="console.log('[Paddle.js] Preload script loaded successfully'); window.__paddleLoaded = true"></script>
 
   <!-- iubenda Cookie Consent -->
   <script type="text/javascript">
