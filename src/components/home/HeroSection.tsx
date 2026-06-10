@@ -156,7 +156,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="max-w-2xl mx-auto mb-8"
+          className="max-w-2xl mx-auto mb-6 sm:mb-8 px-1"
         >
           <label htmlFor="hero-search" className="sr-only">{t("hero.searchPlaceholder")}</label>
           <SearchBar variant="hero" className="w-full" />
@@ -166,7 +166,7 @@ export function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="flex flex-wrap items-center justify-center gap-6 text-sm"
+          className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm"
           aria-label="Quick links"
         >
           <Link to="/categories" className="flex items-center gap-1.5 text-foreground/50 hover:text-primary transition-colors font-medium">
@@ -181,7 +181,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="mt-12 max-w-5xl mx-auto"
+          className="mt-8 sm:mt-12 max-w-5xl mx-auto"
         >
           <div className="rounded-2xl overflow-hidden shadow-xl border border-border/20">
             <img
