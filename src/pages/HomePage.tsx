@@ -216,9 +216,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 5.5 Recently Added */}
-        <RecentlyAddedSection />
-
         {/* 6. Interactive quiz — visually highlighted as a break */}
         <section className="py-16 md:py-20">
           <div className="container">
