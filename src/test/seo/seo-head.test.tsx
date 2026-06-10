@@ -2,7 +2,7 @@
 // "key route" configs and assert the resolved <head> output.
 import { describe, it, expect } from "vitest";
 import { render, cleanup } from "@testing-library/react";
-import { HelmetProvider, type FilledContext } from "react-helmet-async";
+import { HelmetProvider } from "react-helmet-async";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { SeoHead } from "@/components/SeoHead";
