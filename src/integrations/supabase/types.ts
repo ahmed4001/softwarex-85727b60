@@ -387,6 +387,59 @@ export type Database = {
           },
         ]
       }
+      backfill_match_log: {
+        Row: {
+          candidates: Json | null
+          confidence: number | null
+          created_at: string
+          id: string
+          matched_domain: string | null
+          matched_url: string | null
+          previous_url: string | null
+          product_id: string | null
+          product_name: string
+          reason: string | null
+          source_query: string
+          status: string
+        }
+        Insert: {
+          candidates?: Json | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          matched_domain?: string | null
+          matched_url?: string | null
+          previous_url?: string | null
+          product_id?: string | null
+          product_name: string
+          reason?: string | null
+          source_query: string
+          status: string
+        }
+        Update: {
+          candidates?: Json | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          matched_domain?: string | null
+          matched_url?: string | null
+          previous_url?: string | null
+          product_id?: string | null
+          product_name?: string
+          reason?: string | null
+          source_query?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backfill_match_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           color: string
