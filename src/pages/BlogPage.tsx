@@ -84,7 +84,38 @@ export default function BlogPage() {
 
   return (
     <>
-      <SeoHead title={t("blog.title")} description={t("blog.subtitle")} />
+      <SeoHead
+        title={t("blog.title")}
+        description={t("blog.subtitle")}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Blog",
+            name: t("blog.title"),
+            description: t("blog.subtitle"),
+            url: `${typeof window !== "undefined" ? window.location.origin : ""}/blog`,
+            blogPost: (posts || []).slice(0, 20).map((p: any) => ({
+              "@type": "BlogPosting",
+              headline: p.title,
+              url: `${typeof window !== "undefined" ? window.location.origin : ""}/blog/${p.slug}`,
+              datePublished: p.published_at || p.created_at,
+              ...(p.excerpt ? { description: p.excerpt } : {}),
+            })),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: t("blog.title"),
+            description: t("blog.subtitle"),
+            url: `${typeof window !== "undefined" ? window.location.origin : ""}/blog`,
+            hasPart: (posts || []).slice(0, 20).map((p: any) => ({
+              "@type": "BlogPosting",
+              headline: p.title,
+              url: `${typeof window !== "undefined" ? window.location.origin : ""}/blog/${p.slug}`,
+            })),
+          },
+        ]}
+      />
 
       <div className="max-w-4xl mx-auto px-4 py-16">
         {/* Ghost-style header — centered, serif */}

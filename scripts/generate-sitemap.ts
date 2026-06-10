@@ -22,7 +22,7 @@ const staticEntries: Entry[] = [
   { loc: "/leaderboard", changefreq: "weekly", priority: "0.6" },
   { loc: "/awards", changefreq: "monthly", priority: "0.6" },
   { loc: "/lists", changefreq: "weekly", priority: "0.6" },
-  { loc: "/tech-stacks", changefreq: "weekly", priority: "0.6" },
+  { loc: "/stacks", changefreq: "weekly", priority: "0.6" },
   { loc: "/buyer-guides", changefreq: "weekly", priority: "0.7" },
   { loc: "/glossary", changefreq: "monthly", priority: "0.5" },
   { loc: "/partners", changefreq: "monthly", priority: "0.5" },
@@ -61,7 +61,7 @@ async function main() {
     await Promise.all([
       fetchTable("products", "slug,updated_at", "&is_active=eq.true"),
       fetchTable("categories", "slug,updated_at", "&is_active=eq.true"),
-      fetchTable("blog_posts", "slug,updated_at", "&status=eq.published"),
+      fetchTable("blog_posts", "slug,updated_at,tags,category,author_id", "&status=eq.published"),
       fetchTable("comparisons", "slug,created_at", "&is_published=eq.true"),
       fetchTable("pages", "slug,updated_at", "&is_active=eq.true"),
       fetchTable("buyer_guides", "slug,updated_at"),
@@ -85,6 +85,29 @@ async function main() {
   push(lists, "/lists", "0.5");
   push(glossary, "/glossary", "0.4");
   push(landing, "", "0.6");
+
+  // Blog taxonomy + author pages derived from published posts.
+  const tagSet = new Set<string>();
+  const categorySet = new Set<string>();
+  const authorSet = new Set<string>();
+  for (const p of posts || []) {
+    if (Array.isArray(p?.tags)) for (const t of p.tags) if (t) tagSet.add(String(t));
+    if (p?.category) categorySet.add(String(p.category));
+    if (p?.author_id) authorSet.add(String(p.author_id));
+  }
+  const slugify = (s: string) =>
+    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  for (const tag of tagSet) {
+    entries.push({ loc: `${BASE_URL}/blog/tag/${encodeURIComponent(slugify(tag))}`, priority: "0.5" });
+  }
+  for (const cat of categorySet) {
+    entries.push({ loc: `${BASE_URL}/blog/category/${encodeURIComponent(slugify(cat))}`, priority: "0.5" });
+  }
+  for (const id of authorSet) {
+    entries.push({ loc: `${BASE_URL}/author/${id}`, priority: "0.4" });
+  }
+
+
 
   const body = entries.map(e => [
     "  <url>",

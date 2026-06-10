@@ -21,6 +21,7 @@ import { PricingTiersDisplay } from "@/components/PricingTiersDisplay";
 import { TCOCalculator } from "@/components/TCOCalculator";
 import { LeadCaptureForm } from "@/components/LeadCaptureForm";
 import { ProductQASection } from "@/components/ProductQASection";
+import { useProductQA } from "@/hooks/useProductQA";
 import { PricingComparisonWidget } from "@/components/PricingComparisonWidget";
 import { AlsoViewedSection } from "@/components/AlsoViewedSection";
 import { ReviewDigestCard } from "@/components/ReviewDigestCard";
@@ -254,6 +255,25 @@ export default function ProductDetailPage() {
   });
   const responseMap = new Map((vendorResponses as any[]).map((r: any) => [r.review_id, r]));
 
+  // FAQPage schema source — only first-party answered questions count.
+  const { questions: qaQuestions, answers: qaAnswers } = useProductQA(product?.id);
+  const faqJsonLd = useMemo(() => {
+    const items = (qaQuestions || [])
+      .map((q: any) => {
+        const ans = qaAnswers(q.id);
+        const accepted = ans?.[0];
+        if (!accepted?.body) return null;
+        return {
+          "@type": "Question",
+          name: (q.body || "").slice(0, 240),
+          acceptedAnswer: { "@type": "Answer", text: (accepted.body || "").slice(0, 1000) },
+        };
+      })
+      .filter(Boolean);
+    if (!items.length) return null;
+    return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items };
+  }, [qaQuestions, qaAnswers]);
+
   const [reviewSort, setReviewSort] = useState<"newest" | "oldest" | "highest" | "lowest" | "most_helpful">("newest");
   const [reviewRatingFilter, setReviewRatingFilter] = useState<number | null>(null);
   const { handleAffiliateClick } = useAffiliateClick();
@@ -324,7 +344,8 @@ export default function ProductDetailPage() {
               ...((product.categories as any)?.name ? [{ "@type": "ListItem", "position": 2, "name": (product.categories as any).name, "item": `${window.location.origin}/category/${(product.categories as any).slug}` }] : []),
               { "@type": "ListItem", "position": (product.categories as any)?.name ? 3 : 2, "name": product.name }
             ]
-          }
+          },
+          ...(faqJsonLd ? [faqJsonLd] : [])
         ]}
       />
 

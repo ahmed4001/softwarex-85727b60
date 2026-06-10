@@ -1,0 +1,30 @@
+# ReviewHunts
+
+> Discover, compare, and review the best software. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories.
+
+ReviewHunts helps buyers find the right SaaS tools through verified user reviews, side-by-side comparisons, pricing breakdowns, AI-summarized review digests, and editorial buyer guides.
+
+## Pages
+
+- [Home](/): Featured software, trending categories, and editor picks.
+- [Categories](/categories): Browse all software categories.
+- [Search](/search): Search across products, categories, and guides.
+- [Compare](/compare): Build side-by-side product comparisons.
+- [Compare pricing](/compare-pricing): Pricing matrix across vendors with TCO.
+- [Pricing](/pricing): ReviewHunts vendor plans.
+- [Leaderboard](/leaderboard): Top-rated and most-reviewed products.
+- [Awards](/awards): Annual community-voted software awards.
+- [Lists](/lists): User-curated product lists.
+- [Tech stacks](/stacks): Community tech stacks.
+- [Buyer guides](/guides): Long-form purchasing guides.
+- [Glossary](/glossary): SaaS terms and definitions.
+- [Discussions](/discussions): Community Q&A and threads.
+- [Activity](/activity): Latest reviews, lists, and discussions.
+- [Blog](/blog): Articles, comparisons, and industry analysis.
+- [Deals](/deals): Active software discounts and promotions.
+- [Partners](/partners): Partner directory and link exchanges.
+- [Submit a product](/submit-product): Vendors list a new product.
+
+## Optional
+
+- [Choose a plan](/choose-plan): Vendor plan selection.

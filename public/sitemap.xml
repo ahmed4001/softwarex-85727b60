@@ -41,7 +41,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/tech-stacks</loc>
+    <loc>https://reviewhunts.com/stacks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -286,11 +286,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/google-veo-3-c8kd</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/team-collaboration-4lml</loc>
     <lastmod>2026-05-22</lastmod>
     <priority>0.8</priority>
@@ -308,6 +303,11 @@
   <url>
     <loc>https://reviewhunts.com/product/sales</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/google-veo-3-c8kd</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -801,32 +801,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/learning-curve-fazr</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/project-management-10gy</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/real-time-financial-tracking</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/post-affiliate-pro</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/tags-ot6c</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/grammarly-191j</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -876,8 +856,28 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://reviewhunts.com/product/learning-curve-fazr</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/project-management-10gy</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://reviewhunts.com/product/forbes</loc>
     <lastmod>2026-02-27</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/post-affiliate-pro</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/grammarly-191j</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -1056,11 +1056,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/max-2mdv</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/hubspot-credits</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -1121,6 +1116,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://reviewhunts.com/product/max-2mdv</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://reviewhunts.com/product/lokalise</loc>
     <lastmod>2026-02-27</lastmod>
     <priority>0.8</priority>
@@ -1152,16 +1152,6 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/product/large-language-models-and-code</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/seamless-integrations-7hay</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/self-ei5f</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -1218,6 +1208,16 @@
   <url>
     <loc>https://reviewhunts.com/product/nicereply</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/seamless-integrations-7hay</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/self-ei5f</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -1656,21 +1656,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/pro-tip-1zp6</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/strengths-vqap</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/offers-ai</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/perplexity-max</loc>
     <lastmod>2026-05-22</lastmod>
     <priority>0.8</priority>
@@ -1723,6 +1708,21 @@
   <url>
     <loc>https://reviewhunts.com/product/excel-27nh</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/pro-tip-1zp6</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/strengths-vqap</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/offers-ai</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -1846,16 +1846,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/zoho-desk-9iuv</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/twig-f0fb</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/first-response-time</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -1868,11 +1858,6 @@
   <url>
     <loc>https://reviewhunts.com/product/analyze-files</loc>
     <lastmod>2026-02-27</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/apache-spark</loc>
-    <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -1913,6 +1898,21 @@
   <url>
     <loc>https://reviewhunts.com/product/metabase-6ywd</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/zoho-desk-9iuv</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/twig-f0fb</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/apache-spark</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -2341,11 +2341,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/ai-data-analysis</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/flux-2-by-black-forest-labs</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -2413,6 +2408,11 @@
   <url>
     <loc>https://reviewhunts.com/product/ease-of-use-nmgs</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/ai-data-analysis</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -2826,11 +2826,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/sales-managers</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/common-ipnu</loc>
     <lastmod>2026-05-22</lastmod>
     <priority>0.8</priority>
@@ -2888,6 +2883,11 @@
   <url>
     <loc>https://reviewhunts.com/product/gong-wysb</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/sales-managers</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -3216,12 +3216,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/for-agents</loc>
-    <lastmod>2026-02-27</lastmod>
+    <loc>https://reviewhunts.com/product/live-translation</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/live-translation</loc>
+    <loc>https://reviewhunts.com/product/for-agents</loc>
     <lastmod>2026-02-27</lastmod>
     <priority>0.8</priority>
   </url>
@@ -3356,11 +3356,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/real-ma6p</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/mubert</loc>
     <lastmod>2026-05-22</lastmod>
     <priority>0.8</priority>
@@ -3413,6 +3408,11 @@
   <url>
     <loc>https://reviewhunts.com/product/deepseek-kct6</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/real-ma6p</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -3766,11 +3766,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/metric-e10a</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/you-com-7r4p</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -3823,6 +3818,11 @@
   <url>
     <loc>https://reviewhunts.com/product/follow-up</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/metric-e10a</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -3991,11 +3991,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/soundverse</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/kashflow</loc>
     <lastmod>2026-02-27</lastmod>
     <priority>0.8</priority>
@@ -4056,6 +4051,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://reviewhunts.com/product/soundverse</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://reviewhunts.com/product/start-your-14-h4kd</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -4087,11 +4087,6 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/product/photo-animation-maker</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/text-to-speech-hqs7</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -4156,22 +4151,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/playai</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/product/text-to-speech-hqs7</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://reviewhunts.com/product/perfect-for-research</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/workflow-templates</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/ltx-studio</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -4233,6 +4218,21 @@
   <url>
     <loc>https://reviewhunts.com/product/mobile-app-b8tx</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/playai</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/workflow-templates</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/ltx-studio</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -4341,32 +4341,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/quick-at</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/related-articles-4n87</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/emotional-performance</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/altered</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/categories-hhri</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/product/ease-of-use-a04r</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -4413,6 +4393,21 @@
   <url>
     <loc>https://reviewhunts.com/product/absorb-lms</loc>
     <lastmod>2026-02-27</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/quick-at</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/emotional-performance</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/altered</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -4781,11 +4776,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/provide-context</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/netsuite-erp</loc>
     <lastmod>2026-02-27</lastmod>
     <priority>0.8</priority>
@@ -4838,6 +4828,11 @@
   <url>
     <loc>https://reviewhunts.com/product/ease-of-use-jo1w</loc>
     <lastmod>2026-05-22</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/provide-context</loc>
+    <lastmod>2026-06-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5056,11 +5051,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/product/affordability-8ftu</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/product/anyword-anyword-is-a-long</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -5076,8 +5066,18 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/accounting</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/product/affordability-8ftu</loc>
+    <lastmod>2026-06-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/product/generic-ai-writing-apps</loc>
+    <lastmod>2026-02-27</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/analytics</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5087,7 +5087,7 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/crm</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5111,8 +5111,8 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/ecommerce</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/expense-management</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5171,17 +5171,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/analytics</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/antivirus</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://reviewhunts.com/category/fundraising</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/erp</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -5206,16 +5201,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/e-signature</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/expense-management</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/category/event-management</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -5226,8 +5211,8 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/antivirus</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/accounting</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5242,7 +5227,7 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/backup</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5262,7 +5247,22 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/contract-management</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/ecommerce</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/e-signature</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/erp</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5277,11 +5277,6 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/data-privacy</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/database-management</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -5321,22 +5316,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/graphic-design</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/category/gym-management</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://reviewhunts.com/category/project-management</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/data-visualization</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
@@ -5366,16 +5351,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/document-management</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/employee-engagement</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/category/survey</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -5401,8 +5376,13 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://reviewhunts.com/category/data-visualization</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://reviewhunts.com/category/ai-chatbots</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5412,7 +5392,7 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/ai-writing</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5427,7 +5407,7 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/business-intelligence</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5453,6 +5433,26 @@
   <url>
     <loc>https://reviewhunts.com/category/construction-management</loc>
     <lastmod>2026-05-14</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/document-management</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/database-management</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/employee-engagement</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/graphic-design</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5501,11 +5501,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/development</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://reviewhunts.com/category/vpn</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
@@ -5531,13 +5526,8 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/cloud-hosting</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/ai-image-generators</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/development</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5551,8 +5541,18 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://reviewhunts.com/category/ai-image-generators</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://reviewhunts.com/category/content-creation</loc>
     <lastmod>2026-05-14</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/ci-cd</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5566,23 +5566,18 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/collaboration</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/ci-cd</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/cloud-hosting</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://reviewhunts.com/category/cms</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/customer-success</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/collaboration</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5592,7 +5587,7 @@
   </url>
   <url>
     <loc>https://reviewhunts.com/category/security</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5631,13 +5626,18 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/ai-code</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/email-marketing</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/api-management</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/communication</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/ai-code</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
@@ -5651,22 +5651,22 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://reviewhunts.com/category/email-marketing</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://reviewhunts.com/category/api-management</loc>
+    <lastmod>2026-06-04</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://reviewhunts.com/category/customer-success</loc>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://reviewhunts.com/category/bug-tracking</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-06-04</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://reviewhunts.com/category/chatbots</loc>
-    <lastmod>2026-05-14</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://reviewhunts.com/category/communication</loc>
     <lastmod>2026-05-14</lastmod>
     <priority>0.8</priority>
   </url>
