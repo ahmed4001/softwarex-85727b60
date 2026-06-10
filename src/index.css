@@ -318,33 +318,77 @@
   /* ── Unified responsive typography scale ─────────────────
      Use across homepage sections so headings, body, and
      captions stay consistent on mobile/tablet/desktop. */
+  /* Eyebrow — Fira Sans, generous tracking for small caps feel */
   .t-eyebrow {
-    @apply text-xs sm:text-sm font-semibold text-primary tracking-wide uppercase;
+    @apply text-xs sm:text-sm font-semibold text-primary uppercase;
     font-family: 'Fira Sans', 'Work Sans', system-ui, sans-serif;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
   }
+  /* H1 — DM Serif Display is a display serif (single 400 weight).
+     Use normal weight, tight leading, subtle negative tracking. */
   .t-h1 {
-    @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] text-foreground;
+    @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground;
     font-family: 'DM Serif Display', 'Lora', ui-serif, Georgia, serif;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+  }
+  @screen md {
+    .t-h1 { line-height: 1.02; letter-spacing: -0.025em; margin-bottom: 1.5rem; }
   }
   .t-h2 {
-    @apply text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight text-foreground;
+    @apply text-3xl sm:text-4xl md:text-5xl text-foreground;
     font-family: 'DM Serif Display', 'Lora', ui-serif, Georgia, serif;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin-bottom: 1rem;
+  }
+  @screen md {
+    .t-h2 { line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
   }
   .t-h3 {
-    @apply text-lg sm:text-xl font-bold tracking-tight text-foreground;
+    @apply text-xl sm:text-2xl md:text-3xl text-foreground;
     font-family: 'DM Serif Display', 'Lora', ui-serif, Georgia, serif;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
   }
+  /* Lead — slightly tighter leading than body for visual hierarchy */
   .t-lead {
-    @apply text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed;
+    @apply text-base sm:text-lg md:text-xl text-muted-foreground;
     font-family: 'Fira Sans', 'Work Sans', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: -0.005em;
+    margin-bottom: 1rem;
   }
+  @screen md {
+    .t-lead { line-height: 1.55; margin-bottom: 1.25rem; }
+  }
+  /* Body — Fira Sans reads best around 1.65 leading at body sizes */
   .t-body {
-    @apply text-sm sm:text-base text-muted-foreground leading-relaxed;
+    @apply text-sm sm:text-base text-muted-foreground;
     font-family: 'Fira Sans', 'Work Sans', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.65;
+    letter-spacing: 0;
+  }
+  .t-body + .t-body,
+  .t-body + p,
+  p + .t-body {
+    margin-top: 0.85rem;
   }
   .t-caption {
-    @apply text-xs sm:text-[13px] text-muted-foreground/80 leading-relaxed;
+    @apply text-xs sm:text-[13px] text-muted-foreground/80;
     font-family: 'Fira Sans', 'Work Sans', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
   }
 
   @keyframes pulse-glow {
