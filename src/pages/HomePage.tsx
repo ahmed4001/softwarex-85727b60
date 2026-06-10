@@ -194,12 +194,23 @@ export default function HomePage() {
         {/* 3. Bold stats — moved up for instant credibility */}
         <StatsSection stats={stats} />
 
+        {/* 4. Smart Finder — convert intent right after credibility */}
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <div className="rounded-3xl bg-gradient-to-br from-primary/[0.06] via-primary/[0.03] to-transparent border border-primary/15 p-1 md:p-2">
+              <div className="rounded-[20px] bg-background/40 backdrop-blur-sm">
+                <ProductFinderQuiz />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="section-gradient-divider" aria-hidden="true" />
 
-        {/* 4. Most Popular Categories */}
+        {/* 5. Most Popular Categories */}
         <MostPopularCategoriesSection />
 
-        {/* 5. Editor's Choice */}
+        {/* 6. Editor's Choice */}
         <section className="py-14" aria-labelledby="featured-heading">
           <div className="container">
             <SectionHeader id="featured-heading" label="Editor's Choice" title="Top-Rated Software Picks for 2026" subtitle="Hand-picked by our expert analysts based on user reviews, features, and value" />
@@ -216,18 +227,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 6. Interactive quiz — visually highlighted as a break */}
-        <section className="py-10 md:py-14">
-          <div className="container">
-            <div className="rounded-3xl bg-gradient-to-br from-primary/[0.06] via-primary/[0.03] to-transparent border border-primary/15 p-1 md:p-2">
-              <div className="rounded-[20px] bg-background/40 backdrop-blur-sm">
-                <ProductFinderQuiz />
-              </div>
-            </div>
-          </div>
-        </section>
-
         <div className="section-gradient-divider" aria-hidden="true" />
+
 
         {/* 7. Trending */}
         <TrendingProductsSection />
