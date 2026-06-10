@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures/deterministic";
-import type { Page } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
 
 // Parse every <script type="application/ld+json"> block on each key
 // public page and validate the required fields per @type. We mirror
