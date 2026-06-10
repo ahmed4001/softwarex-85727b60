@@ -1714,6 +1714,30 @@ export type Database = {
         }
         Relationships: []
       }
+      paddle_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          plan: string | null
+          received_at: string
+          user_id: string | null
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          plan?: string | null
+          received_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          plan?: string | null
+          received_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           body: string | null

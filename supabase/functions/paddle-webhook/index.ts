@@ -86,6 +86,8 @@ Deno.serve(async (req) => {
 
     const payload = JSON.parse(rawBody);
     const eventType: string = payload?.event_type || "";
+    const eventId: string | undefined =
+      payload?.event_id || payload?.notification_id || payload?.data?.id;
     const data = payload?.data || {};
     const custom = data?.custom_data || {};
     const userId: string | undefined = custom.user_id;
@@ -98,28 +100,58 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    if (ACTIVATE_EVENTS.has(eventType)) {
-      // Single round-trip: try update first, insert only if no active row exists.
-      const { data: updated, error: updErr } = await supabase
-        .from("vendor_subscriptions")
-        .update({ plan })
-        .eq("user_id", userId)
-        .eq("status", "active")
-        .select("id")
-        .maybeSingle();
+    // === Idempotency gate ===========================================
+    // Paddle retries webhook deliveries on any non-2xx response and can
+    // also re-fire events during incidents. Insert the event id into a
+    // dedupe table FIRST; if the insert is a primary-key conflict we
+    // know we've already processed this exact delivery and bail out.
+    if (eventId) {
+      const { error: dedupeErr } = await supabase
+        .from("paddle_webhook_events")
+        .insert({ event_id: eventId, event_type: eventType, user_id: userId, plan });
+      if (dedupeErr) {
+        // 23505 = unique_violation → already processed, safe to ack.
+        if ((dedupeErr as any).code === "23505") {
+          console.log(`paddle-webhook: duplicate event ${eventId} ignored`);
+          return ackOk();
+        }
+        // Any other error: fail loud so Paddle retries.
+        throw dedupeErr;
+      }
+    } else {
+      console.warn("paddle-webhook: no event_id on payload — idempotency skipped");
+    }
 
-      if (updErr) throw updErr;
-      if (!updated) {
+    try {
+      if (ACTIVATE_EVENTS.has(eventType)) {
+        // Single round-trip: try update first, insert only if no active row exists.
+        const { data: updated, error: updErr } = await supabase
+          .from("vendor_subscriptions")
+          .update({ plan })
+          .eq("user_id", userId)
+          .eq("status", "active")
+          .select("id")
+          .maybeSingle();
+
+        if (updErr) throw updErr;
+        if (!updated) {
+          await supabase
+            .from("vendor_subscriptions")
+            .insert({ user_id: userId, plan, status: "active" });
+        }
+      } else if (CANCEL_EVENTS.has(eventType)) {
         await supabase
           .from("vendor_subscriptions")
-          .insert({ user_id: userId, plan, status: "active" });
+          .update({ status: "canceled" })
+          .eq("user_id", userId)
+          .eq("status", "active");
       }
-    } else if (CANCEL_EVENTS.has(eventType)) {
-      await supabase
-        .from("vendor_subscriptions")
-        .update({ status: "canceled" })
-        .eq("user_id", userId)
-        .eq("status", "active");
+    } catch (mutErr) {
+      // Roll back the dedupe row so Paddle's retry can actually re-process.
+      if (eventId) {
+        await supabase.from("paddle_webhook_events").delete().eq("event_id", eventId);
+      }
+      throw mutErr;
     }
 
     return ackOk();
