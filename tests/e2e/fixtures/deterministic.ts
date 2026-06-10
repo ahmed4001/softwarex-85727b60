@@ -96,6 +96,18 @@ export const test = base.extend({
     );
 
     await page.emulateMedia({ reducedMotion: "reduce" });
+
+    // Capture browser console + page errors so failing CI tests can
+    // attach a complete log via test.info().attach(...).
+    const consoleLog: string[] = [];
+    page.on("console", (msg) => {
+      consoleLog.push(`[${msg.type()}] ${msg.text()}`);
+    });
+    page.on("pageerror", (err) => {
+      consoleLog.push(`[pageerror] ${err.message}\n${err.stack || ""}`);
+    });
+    (page as any).__consoleLog = consoleLog;
+
     await use(page);
   },
 });
