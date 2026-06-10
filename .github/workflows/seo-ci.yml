@@ -118,6 +118,15 @@ jobs:
           CI_MOCK_OG_IMAGES: "1"
         run: bunx playwright test tests/e2e/og-image-mocked.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
 
+      # Fully mocked smoke — images + sitemap.xml + robots.txt all
+      # served as deterministic 200s. Surfaces META/structure bugs
+      # without staging-CDN noise.
+      - name: SEO smoke (all staging assets mocked)
+        if: always()
+        env:
+          CI_MOCK_STAGING_ASSETS: "1"
+        run: bunx playwright test tests/e2e/seo-smoke-mocked.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
+
 
 
 
@@ -344,16 +353,85 @@ jobs:
             lines.push('Failed tests:');
             for (const t of failedSpecs) lines.push(`- \`${t}\``);
             lines.push('');
-            lines.push('> Rerun only the failed specs via the **SEO rerun failed specs** workflow (Actions tab).');
+            const dispatchUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/workflows/seo-rerun-failed.yml`;
+            lines.push('### Rerun failed specs (one click)');
+            lines.push('');
+            lines.push(`Comment on this PR to dispatch the rerun workflow:`);
+            lines.push('');
+            lines.push('- `/rerun-failed` — rerun only the failed specs from this run');
+            lines.push('- `/rerun-failed mock` — rerun with og:image / staging assets mocked');
+            lines.push('');
+            lines.push(`Or [open the workflow UI](${dispatchUrl}) and supply \`previous_run_id=${process.env.GITHUB_RUN_ID}\` manually.`);
           }
           lines.push('');
           lines.push('See [CI SEO failure guide](../blob/' + (process.env.GITHUB_SHA||'main') + '/docs/ci-seo-failure-guide.md) for fix recipes.');
           process.stdout.write(lines.join('\n'));
           NODE
 
+      # ---- History + flake quarantine maintenance ----
+      - name: Download previous history
+        if: always()
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: seo-ci-history
+          workflow: seo-ci.yml
+          branch: main
+          path: .
+          if_no_artifact_found: warn
+
+      - name: Collect Playwright merged JSON results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-test-results-merge-gate
+          path: pw-merged-results
+        continue-on-error: true
+
+      - name: Record run into history
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node .github/scripts/record-run-history.mjs
+
+      - name: Update flaky-test quarantine
+        if: always()
+        run: node .github/scripts/update-quarantine.mjs
+
+      - name: Render history block
+        if: always()
+        env:
+          HISTORY_VIEW_N: "10"
+        run: node .github/scripts/render-history-block.mjs
+
+      - name: Compose final dashboard
+        if: always()
+        run: |
+          cat dashboard.md > final-dashboard.md
+          echo "" >> final-dashboard.md
+          [ -f history-block.md ] && cat history-block.md >> final-dashboard.md || true
+          echo "" >> final-dashboard.md
+          [ -f quarantine-changes.md ] && cat quarantine-changes.md >> final-dashboard.md || true
+
+      - name: Upload updated history (for next run)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-ci-history
+          path: .ci-history/spec-history.json
+          retention-days: 90
+
+      - name: Upload updated quarantine.json (audit trail)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarantine-snapshot
+          path: tests/e2e/quarantine.json
+          retention-days: 90
+
       - name: Post / update PR dashboard comment
         if: always()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: seo-ci-dashboard
-          path: dashboard.md
+          path: final-dashboard.md
+

@@ -1,0 +1,80 @@
+name: SEO rerun failed (PR comment trigger)
+
+# Listens for `/rerun-failed` (optionally `/rerun-failed mock`) comments
+# on PRs and dispatches the seo-rerun-failed workflow with the same
+# inputs the sticky dashboard exposes as a one-click button.
+#
+# Permissions are scoped so only users with write/maintain/admin access
+# to the repo can trigger reruns (prevents arbitrary commenter abuse).
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  dispatch-rerun:
+    if: >-
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '/rerun-failed')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      actions: write
+      contents: read
+    steps:
+      - name: Gate on commenter permission
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              username: context.payload.comment.user.login,
+            });
+            const ok = ["admin", "maintain", "write"].includes(data.permission);
+            if (!ok) {
+              core.setFailed(`User ${context.payload.comment.user.login} lacks write access (${data.permission}).`);
+            }
+
+      - name: Resolve PR head SHA + last SEO CI run id
+        id: ctx
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner, repo: context.repo.repo,
+              pull_number: context.payload.issue.number,
+            });
+            const headSha = pr.data.head.sha;
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              head_sha: headSha, per_page: 20,
+            });
+            const seoRun = runs.data.workflow_runs.find(r =>
+              (r.name || "").toLowerCase().includes("seo")
+            );
+            core.setOutput("prev_run_id", seoRun ? String(seoRun.id) : "");
+            core.setOutput("head_sha", headSha);
+
+      - name: Dispatch rerun workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.comment.body || "";
+            const mock = /\bmock\b/i.test(body);
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              workflow_id: "seo-rerun-failed.yml",
+              ref: "${{ steps.ctx.outputs.head_sha }}",
+              inputs: {
+                previous_run_id: "${{ steps.ctx.outputs.prev_run_id }}",
+                failed_specs: "",
+                mock_og_images: String(mock),
+              },
+            });
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: `Dispatched **SEO rerun failed specs** (mock=${mock}) from run \`${{ steps.ctx.outputs.prev_run_id }}\`.`,
+            });

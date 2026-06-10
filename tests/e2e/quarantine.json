@@ -1,0 +1,7 @@
+{
+  "_comment": "Specs listed here are quarantined: they run but their failures DO NOT block the merge gate. Maintained by .github/scripts/update-quarantine.mjs which auto-promotes specs out of quarantine after QUARANTINE_PASS_THRESHOLD consecutive green runs, and auto-quarantines specs whose recent failure rate exceeds FLAKE_FAIL_THRESHOLD.",
+  "passThreshold": 5,
+  "flakeFailThreshold": 0.2,
+  "windowSize": 20,
+  "quarantined": []
+}
