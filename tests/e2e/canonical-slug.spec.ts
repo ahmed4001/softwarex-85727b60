@@ -115,3 +115,81 @@ test.describe("Detail-page canonical slug correctness", () => {
     expect(snap.ogUrl, "og:url tracks canonical").toBe(snap.hrefs[0]);
   });
 });
+
+// ---------- Listing pagination + filter canonical leak checks ----------
+// Paginated and filtered listing pages MUST canonicalize to the
+// unparameterised base path. Letting `?page=` / `?category=` /
+// `?tag=` / `?sort=` / `?q=` reach the canonical creates duplicate-
+// content signals and fragments crawl budget.
+
+interface ListingCheck {
+  label: string;
+  visit: string;
+  expectedPath: string;
+}
+
+async function checkListingCanonical(page: Page, c: ListingCheck) {
+  await page.goto(c.visit, { waitUntil: "networkidle" });
+  await page.waitForTimeout(500);
+  const snap = await readCanonical(page);
+
+  expect(snap.count, `${c.label}: exactly one canonical`).toBe(1);
+  const href = snap.hrefs[0];
+  expect(href, `${c.label}: canonical absolute`).toMatch(/^https?:\/\//);
+
+  const u = new URL(href);
+  expect(u.pathname, `${c.label}: canonical pathname must be ${c.expectedPath}`).toBe(
+    c.expectedPath,
+  );
+  expect(u.search, `${c.label}: canonical must not include pagination/filter query`).toBe("");
+  expect(u.hash, `${c.label}: canonical must not include fragment`).toBe("");
+  expect(snap.ogUrl, `${c.label}: og:url tracks canonical`).toBe(href);
+}
+
+test.describe("Listing canonical never leaks pagination/filters", () => {
+  // Blog pagination + tag/category filter shouldn't bleed into canonical.
+  for (const c of [
+    { label: "/blog?page=2", visit: "/blog?page=2", expectedPath: "/blog" },
+    { label: "/blog?tag=engineering", visit: "/blog?tag=engineering", expectedPath: "/blog" },
+    {
+      label: "/blog?page=3&category=product",
+      visit: "/blog?page=3&category=product",
+      expectedPath: "/blog",
+    },
+  ]) {
+    test(`blog listing — ${c.label}`, async ({ page }) => {
+      await checkListingCanonical(page, c);
+    });
+  }
+
+  // Categories index pagination.
+  test("categories index — /categories?page=2", async ({ page }) => {
+    await checkListingCanonical(page, {
+      label: "/categories?page=2",
+      visit: "/categories?page=2",
+      expectedPath: "/categories",
+    });
+  });
+
+  // Category detail page with pagination/sort filters. Discover a real
+  // slug from /categories so we can hit a live category page.
+  test("category detail — /category/<slug>?page=2&sort=top", async ({ page }) => {
+    await page.goto("/categories", { waitUntil: "networkidle" });
+    await page.waitForTimeout(500);
+    const slug = await page.evaluate(() => {
+      const link = Array.from(
+        document.querySelectorAll<HTMLAnchorElement>('a[href^="/category/"], a[href^="/categories/"]'),
+      )
+        .map((a) => a.getAttribute("href") || "")
+        .find((h) => /^\/(category|categories)\/[\w-]+$/.test(h));
+      return link ? link.replace(/^\/(category|categories)\//, "") : null;
+    });
+    test.skip(!slug, "no /category/<slug> link found");
+
+    await checkListingCanonical(page, {
+      label: `/category/${slug}?page=2&sort=top`,
+      visit: `/category/${slug}?page=2&sort=top&utm_source=test`,
+      expectedPath: `/category/${slug}`,
+    });
+  });
+});
