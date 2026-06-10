@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useSeoSettings } from "@/hooks/useSeoSettings";
+import { validateJsonLd } from "@/lib/jsonLdValidator";
 
 interface SeoHeadProps {
   title: string;
@@ -12,6 +13,19 @@ interface SeoHeadProps {
   author?: string;
   robots?: string;
   lang?: string;
+}
+
+// Resolve runtime environment for logging severity. Staging/preview hosts
+// should log loudly; production should stay quiet but still drop invalid
+// blocks so bad schema never reaches crawlers.
+function getRuntimeEnv(): "development" | "staging" | "production" {
+  if (typeof window === "undefined") return "production";
+  const host = window.location.hostname;
+  if (host === "localhost" || host.startsWith("127.") || host.endsWith(".local"))
+    return "development";
+  if (host.includes("lovable.app") || host.includes("preview") || host.includes("staging"))
+    return "staging";
+  return "production";
 }
 
 export function SeoHead({
@@ -33,7 +47,26 @@ export function SeoHead({
   const effectiveDescription = description || settings.defaultDescription;
   const effectiveKeywords = keywords || settings.defaultKeywords;
   const effectiveOgImage = ogImage || settings.defaultOgImage;
-  const jsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+
+  const rawJsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+  // Runtime validation: drop malformed blocks before they reach <head>.
+  const { valid: jsonLdArray, invalid } = validateJsonLd(rawJsonLdArray);
+  if (invalid.length > 0 && typeof window !== "undefined") {
+    const env = getRuntimeEnv();
+    const payload = {
+      route: window.location.pathname,
+      pageTitle: fullTitle,
+      invalid,
+    };
+    // Always log a warning; in dev/staging escalate to console.error so it
+    // shows up in CI screen-grabs and replay tooling.
+    if (env === "production") {
+      console.warn("[SeoHead] Dropped invalid JSON-LD block(s):", payload);
+    } else {
+      console.error("[SeoHead] Invalid JSON-LD blocked:", payload);
+    }
+  }
+
   // Always emit a self-referencing canonical for indexable pages.
   const resolvedCanonical =
     canonicalUrl ||
