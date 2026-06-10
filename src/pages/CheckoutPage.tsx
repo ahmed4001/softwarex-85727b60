@@ -9,6 +9,7 @@ import {
   Loader2,
   AlertTriangle,
   Terminal,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +63,70 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  const attemptInitializePaddle = async () => {
+    console.log("[Paddle.js] attemptInitializePaddle invoked — fetching checkout config");
+    const { data, error } = await supabase.functions.invoke("paddle-create-checkout", {
+      body: { plan: planId },
+    });
+    if (error) {
+      const ctxErr = error.context instanceof Response ? await error.context.clone().json().catch(() => null) : null;
+      throw new Error(ctxErr?.error || error.message || "Checkout failed");
+    }
+    if (data?.error) throw new Error(data.error);
+    if (!data?.clientToken || !data?.priceId) throw new Error("Checkout configuration missing");
+
+    console.log("[Paddle.js] Checkout config received:", {
+      environment: data.environment,
+      priceId: data.priceId,
+      hasClientToken: !!data.clientToken,
+    });
+
+    let paddle: Paddle | undefined;
+    try {
+      paddle = await initializePaddle({
+        environment: data.environment === "production" ? "production" : "sandbox",
+        token: data.clientToken,
+        eventCallback: (ev) => {
+          console.log("[Paddle.js] Checkout event:", ev.name, ev);
+          if (ev.name === "checkout.completed") {
+            toast.success("Payment successful!");
+            navigate(`/dashboard?paid=1&plan=${planId}`);
+          }
+          if (ev.name === "checkout.error") {
+            toast.error("Checkout error. Please try again.");
+            setLoading(false);
+          }
+          if (ev.name === "checkout.closed") {
+            setLoading(false);
+          }
+        },
+      });
+    } catch (initErr: any) {
+      console.error("[Paddle.js] initializePaddle threw:", initErr);
+      setPaddleError(initErr.message || "Paddle failed to initialize.");
+      throw initErr;
+    }
+
+    if (!paddle) {
+      const reason = "Could not initialize Paddle. The library may be blocked or the token is invalid.";
+      console.error("[Paddle.js]", reason);
+      setPaddleError(reason);
+      throw new Error(reason);
+    }
+
+    console.log("[Paddle.js] Opening checkout overlay");
+    paddle.Checkout.open({
+      items: [{ priceId: data.priceId, quantity: 1 }],
+      customer: { email: data.email },
+      customData: { user_id: data.userId, plan: planId },
+      settings: {
+        successUrl: `${window.location.origin}/dashboard?paid=1&plan=${planId}`,
+        displayMode: "overlay",
+        theme: "light",
+      },
+    });
+  };
+
   const handlePay = async () => {
     if (!user) {
       navigate(`/login?redirect=/checkout?plan=${planId}`);
@@ -70,71 +135,24 @@ export default function CheckoutPage() {
     setLoading(true);
     setPaddleError(null);
 
-    console.log("[Paddle.js] handlePay invoked — fetching checkout config");
     try {
-      const { data, error } = await supabase.functions.invoke("paddle-create-checkout", {
-        body: { plan: planId },
-      });
-      if (error) {
-        const ctxErr = error.context instanceof Response ? await error.context.clone().json().catch(() => null) : null;
-        throw new Error(ctxErr?.error || error.message || "Checkout failed");
-      }
-      if (data?.error) throw new Error(data.error);
-      if (!data?.clientToken || !data?.priceId) throw new Error("Checkout configuration missing");
-
-      console.log("[Paddle.js] Checkout config received:", {
-        environment: data.environment,
-        priceId: data.priceId,
-        hasClientToken: !!data.clientToken,
-      });
-
-      let paddle: Paddle | undefined;
-      try {
-        paddle = await initializePaddle({
-          environment: data.environment === "production" ? "production" : "sandbox",
-          token: data.clientToken,
-          eventCallback: (ev) => {
-            console.log("[Paddle.js] Checkout event:", ev.name, ev);
-            if (ev.name === "checkout.completed") {
-              toast.success("Payment successful!");
-              navigate(`/dashboard?paid=1&plan=${planId}`);
-            }
-            if (ev.name === "checkout.error") {
-              toast.error("Checkout error. Please try again.");
-              setLoading(false);
-            }
-            if (ev.name === "checkout.closed") {
-              setLoading(false);
-            }
-          },
-        });
-      } catch (initErr: any) {
-        console.error("[Paddle.js] initializePaddle threw:", initErr);
-        setPaddleError(initErr.message || "Paddle failed to initialize.");
-        throw initErr;
-      }
-
-      if (!paddle) {
-        const reason = "Could not initialize Paddle. The library may be blocked or the token is invalid.";
-        console.error("[Paddle.js]", reason);
-        setPaddleError(reason);
-        throw new Error(reason);
-      }
-
-      console.log("[Paddle.js] Opening checkout overlay");
-      paddle.Checkout.open({
-        items: [{ priceId: data.priceId, quantity: 1 }],
-        customer: { email: data.email },
-        customData: { user_id: data.userId, plan: planId },
-        settings: {
-          successUrl: `${window.location.origin}/dashboard?paid=1&plan=${planId}`,
-          displayMode: "overlay",
-          theme: "light",
-        },
-      });
+      await attemptInitializePaddle();
     } catch (err: any) {
       console.error("[Paddle.js] handlePay caught error:", err);
       toast.error(err.message || "Checkout failed. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    console.log("[Paddle.js] User clicked retry — clearing error and re-attempting");
+    setPaddleError(null);
+    setLoading(true);
+    try {
+      await attemptInitializePaddle();
+    } catch (err: any) {
+      console.error("[Paddle.js] Retry attempt failed:", err);
+      toast.error(err.message || "Retry failed. Paddle is still unavailable.");
       setLoading(false);
     }
   };
@@ -165,8 +183,24 @@ export default function CheckoutPage() {
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Checkout unavailable</AlertTitle>
-                <AlertDescription className="space-y-2">
+                <AlertDescription className="space-y-3">
                   <p>{paddleError}</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetry}
+                      disabled={loading}
+                      className="gap-2"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      {loading ? "Retrying…" : "Retry Paddle"}
+                    </Button>
+                  </div>
                   <details className="text-xs opacity-80">
                     <summary className="cursor-pointer font-medium inline-flex items-center gap-1">
                       <Terminal className="h-3 w-3" /> View technical details
@@ -221,13 +255,17 @@ window.__paddleLoadError: ${(window as any).__paddleLoadError ?? "undefined"}`}
                 </div>
 
                 <Button
-                  onClick={handlePay}
-                  disabled={loading || !!paddleError}
+                  onClick={paddleError ? handleRetry : handlePay}
+                  disabled={loading}
                   className="w-full h-12 btn-premium rounded-xl text-primary-foreground font-semibold gap-2"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" /> Opening checkout…
+                    </>
+                  ) : paddleError ? (
+                    <>
+                      <RefreshCw className="h-4 w-4" /> Retry Paddle Checkout
                     </>
                   ) : (
                     <>
