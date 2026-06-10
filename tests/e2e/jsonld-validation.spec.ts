@@ -320,3 +320,117 @@ test("Blog post emits BlogPosting with required fields and any FAQ items are val
 
   assertAllValid(blocks, `/blog/${slug}`);
 });
+
+// ---------- WebSite + Organization on homepage and category pages ----------
+
+async function findCategorySlug(page: Page): Promise<string | null> {
+  await page.goto("/categories", { waitUntil: "networkidle" });
+  await page.waitForTimeout(600);
+  return page.evaluate(() => {
+    const link = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="/category/"], a[href^="/categories/"]'))
+      .map((a) => a.getAttribute("href") || "")
+      .find((h) => /^\/(category|categories)\/[\w-]+$/.test(h));
+    return link ? link.replace(/^\/(category|categories)\//, "") : null;
+  });
+}
+
+const SITE_SCHEMA_ROUTES: Array<{ label: string; resolve: (page: Page) => Promise<string | null> }> = [
+  { label: "homepage", resolve: async () => "/" },
+  { label: "categories index", resolve: async () => "/categories" },
+  { label: "category detail", resolve: async (page) => {
+      const slug = await findCategorySlug(page);
+      return slug ? `/category/${slug}` : null;
+    } },
+];
+
+for (const route of SITE_SCHEMA_ROUTES) {
+  test(`WebSite + Organization JSON-LD on ${route.label}`, async ({ page }) => {
+    const path = await route.resolve(page);
+    test.skip(!path, `no path resolved for ${route.label}`);
+    const blocks = await loadAndFlatten(page, path!);
+
+    const websites = blocks.filter((b) => b.type === "WebSite");
+    const orgs = blocks.filter((b) => b.type === "Organization");
+
+    expect(websites.length, `${route.label} must emit a WebSite schema`).toBeGreaterThan(0);
+    expect(orgs.length, `${route.label} must emit an Organization schema`).toBeGreaterThan(0);
+
+    for (const w of websites) {
+      expect(typeof w.data.name === "string" && w.data.name.length > 0, "WebSite.name").toBe(true);
+      expect(typeof w.data.url === "string" && /^https?:\/\//.test(w.data.url), "WebSite.url absolute").toBe(true);
+    }
+    for (const o of orgs) {
+      expect(typeof o.data.name === "string" && o.data.name.length > 0, "Organization.name").toBe(true);
+      expect(typeof o.data.url === "string" && /^https?:\/\//.test(o.data.url), "Organization.url absolute").toBe(true);
+      // sameAs (social profiles) is recommended on the homepage especially.
+      if (o.data.sameAs !== undefined) {
+        expect(Array.isArray(o.data.sameAs), "Organization.sameAs is array").toBe(true);
+        for (const u of o.data.sameAs) {
+          expect(typeof u === "string" && /^https?:\/\//.test(u), `sameAs entry ${u} absolute`).toBe(true);
+        }
+      }
+    }
+
+    // Homepage specifically should advertise at least one social profile.
+    if (route.label === "homepage") {
+      const anySameAs = orgs.some((o) => Array.isArray(o.data.sameAs) && o.data.sameAs.length > 0);
+      expect(anySameAs, "homepage Organization should include sameAs social profile links").toBe(true);
+    }
+
+    assertAllValid(blocks, path!);
+  });
+}
+
+// ---------- BreadcrumbList on product + blog detail pages ----------
+
+async function findDetailPath(page: Page, listPath: string, hrefPrefix: string) {
+  await page.goto(listPath, { waitUntil: "networkidle" });
+  await page.waitForTimeout(600);
+  return page.evaluate(({ prefix }) => {
+    const re = new RegExp("^" + prefix.replace(/[/]/g, "\\/") + "[\\w-]+$");
+    const link = Array.from(document.querySelectorAll<HTMLAnchorElement>(`a[href^="${prefix}"]`))
+      .map((a) => a.getAttribute("href") || "")
+      .find((h) => re.test(h));
+    return link;
+  }, { prefix: hrefPrefix });
+}
+
+function assertBreadcrumbValid(b: any) {
+  expect(b.type).toBe("BreadcrumbList");
+  expect(Array.isArray(b.data.itemListElement)).toBe(true);
+  expect(b.data.itemListElement.length).toBeGreaterThan(0);
+
+  const positions: number[] = [];
+  for (const li of b.data.itemListElement) {
+    expect(li["@type"]).toBe("ListItem");
+    expect(Number.isInteger(li.position), `position ${li.position} must be integer`).toBe(true);
+    expect(li.position).toBeGreaterThanOrEqual(1);
+    positions.push(li.position);
+  }
+  // Strict 1..N sequence with no duplicates / gaps.
+  const sorted = [...positions].sort((a, b) => a - b);
+  expect(new Set(sorted).size, "no duplicate breadcrumb positions").toBe(sorted.length);
+  sorted.forEach((p, i) => expect(p, `position[${i}] should be ${i + 1}`).toBe(i + 1));
+}
+
+test("BreadcrumbList on product detail page", async ({ page }) => {
+  const path = await findDetailPath(page, "/products", "/product/");
+  test.skip(!path, "no product link found on /products");
+
+  const blocks = await loadAndFlatten(page, path!);
+  const crumbs = blocks.filter((b) => b.type === "BreadcrumbList");
+  expect(crumbs.length, "product detail must emit BreadcrumbList").toBeGreaterThan(0);
+  for (const c of crumbs) assertBreadcrumbValid(c);
+  assertAllValid(blocks, path!);
+});
+
+test("BreadcrumbList on blog detail page", async ({ page }) => {
+  const path = await findDetailPath(page, "/blog", "/blog/");
+  test.skip(!path, "no blog link found on /blog");
+
+  const blocks = await loadAndFlatten(page, path!);
+  const crumbs = blocks.filter((b) => b.type === "BreadcrumbList");
+  expect(crumbs.length, "blog detail must emit BreadcrumbList").toBeGreaterThan(0);
+  for (const c of crumbs) assertBreadcrumbValid(c);
+  assertAllValid(blocks, path!);
+});
