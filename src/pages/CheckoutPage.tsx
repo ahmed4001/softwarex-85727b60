@@ -183,8 +183,24 @@ export default function CheckoutPage() {
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Checkout unavailable</AlertTitle>
-                <AlertDescription className="space-y-2">
+                <AlertDescription className="space-y-3">
                   <p>{paddleError}</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetry}
+                      disabled={loading}
+                      className="gap-2"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      {loading ? "Retrying…" : "Retry Paddle"}
+                    </Button>
+                  </div>
                   <details className="text-xs opacity-80">
                     <summary className="cursor-pointer font-medium inline-flex items-center gap-1">
                       <Terminal className="h-3 w-3" /> View technical details
