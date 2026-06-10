@@ -84,6 +84,66 @@ function validateBlock(block: any, index: number): ValidationIssue | null {
       }
       break;
     }
+    case "WebSite": {
+      requireFields(["name", "url"]);
+      if (block?.url && !/^https?:\/\//.test(String(block.url)))
+        errs.push("WebSite.url must be an absolute http(s) URL");
+      // potentialAction (SearchAction) is recommended but not required.
+      if (block?.potentialAction) {
+        const pa = Array.isArray(block.potentialAction)
+          ? block.potentialAction
+          : [block.potentialAction];
+        pa.forEach((a: any, i: number) => {
+          if (!a?.["@type"]) errs.push(`potentialAction[${i}] missing @type`);
+        });
+      }
+      break;
+    }
+    case "Organization": {
+      requireFields(["name", "url"]);
+      if (block?.url && !/^https?:\/\//.test(String(block.url)))
+        errs.push("Organization.url must be an absolute http(s) URL");
+      // sameAs (social profile URLs) — when present, every entry must be absolute.
+      if (block?.sameAs !== undefined) {
+        if (!Array.isArray(block.sameAs))
+          errs.push("Organization.sameAs must be an array of URLs");
+        else
+          block.sameAs.forEach((u: any, i: number) => {
+            if (typeof u !== "string" || !/^https?:\/\//.test(u))
+              errs.push(`Organization.sameAs[${i}] must be an absolute http(s) URL`);
+          });
+      }
+      if (block?.logo) {
+        const logoUrl = typeof block.logo === "string" ? block.logo : block.logo?.url;
+        if (logoUrl && !/^https?:\/\//.test(String(logoUrl)))
+          errs.push("Organization.logo URL must be absolute");
+      }
+      break;
+    }
+    case "BreadcrumbList": {
+      if (!Array.isArray(block?.itemListElement) || block.itemListElement.length === 0) {
+        errs.push("BreadcrumbList.itemListElement must be a non-empty array");
+      } else {
+        const positions: number[] = [];
+        block.itemListElement.forEach((li: any, i: number) => {
+          if (li?.["@type"] !== "ListItem")
+            errs.push(`itemListElement[${i}]["@type"] must be "ListItem"`);
+          const pos = li?.position;
+          if (!Number.isInteger(pos) || pos < 1)
+            errs.push(`itemListElement[${i}].position must be a positive integer (got ${JSON.stringify(pos)})`);
+          else positions.push(pos);
+          if (!li?.name && !li?.item?.name)
+            errs.push(`itemListElement[${i}] missing name`);
+        });
+        // Sequence must be contiguous and strictly ascending: 1, 2, 3, ...
+        const sorted = [...positions].sort((a, b) => a - b);
+        sorted.forEach((p, i) => {
+          if (p !== i + 1)
+            errs.push(`BreadcrumbList positions must be a 1..N sequence (got ${sorted.join(",")})`);
+        });
+      }
+      break;
+    }
     default:
       break;
   }
