@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Terminal,
   RefreshCw,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,15 +27,70 @@ const planPricing: Record<string, { name: string; price: number }> = {
   premium: { name: "Premium", price: 199 },
 };
 
+type ConfirmedSub = {
+  plan: string;
+  status: string;
+  started_at: string | null;
+  expires_at: string | null;
+};
+
 export default function CheckoutPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paddleError, setPaddleError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmedSub, setConfirmedSub] = useState<ConfirmedSub | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const hasLoggedRef = useRef(false);
   const planId = params.get("plan") || "featured";
   const plan = planPricing[planId] || planPricing.featured;
+
+  // Poll vendor_subscriptions until the webhook activates the new plan.
+  const pollForActiveSubscription = async (
+    expectedPlan: string,
+    { attempts = 12, intervalMs = 2500 }: { attempts?: number; intervalMs?: number } = {},
+  ): Promise<ConfirmedSub | null> => {
+    if (!user) return null;
+    for (let i = 0; i < attempts; i++) {
+      const { data, error } = await supabase
+        .from("vendor_subscriptions")
+        .select("plan,status,started_at,expires_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data && data.plan === expectedPlan) {
+        console.log("[Paddle.js] Subscription confirmed on attempt", i + 1, data);
+        return data as ConfirmedSub;
+      }
+      console.log(
+        `[Paddle.js] Awaiting webhook activation (attempt ${i + 1}/${attempts})`,
+        { latestRow: data, error: error?.message },
+      );
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return null;
+  };
+
+  const confirmAfterCheckout = async () => {
+    setConfirming(true);
+    setConfirmError(null);
+    const sub = await pollForActiveSubscription(planId);
+    setConfirming(false);
+    if (sub) {
+      setConfirmedSub(sub);
+      toast.success(`Your ${planPricing[sub.plan]?.name ?? sub.plan} plan is active!`);
+    } else {
+      const reason =
+        "Payment received, but we couldn't confirm your subscription yet. It may take a moment — you can refresh or open your dashboard.";
+      setConfirmError(reason);
+      toast.warning(reason);
+    }
+  };
 
   useEffect(() => {
     if (hasLoggedRef.current) return;
@@ -89,8 +145,10 @@ export default function CheckoutPage() {
         eventCallback: (ev) => {
           console.log("[Paddle.js] Checkout event:", ev.name, ev);
           if (ev.name === "checkout.completed") {
-            toast.success("Payment successful!");
-            navigate(`/dashboard?paid=1&plan=${planId}`);
+            toast.success("Payment received — confirming your subscription…");
+            setLoading(false);
+            // Kick off the post-checkout verification instead of redirecting blindly.
+            confirmAfterCheckout();
           }
           if (ev.name === "checkout.error") {
             toast.error("Checkout error. Please try again.");
@@ -120,7 +178,6 @@ export default function CheckoutPage() {
       customer: { email: data.email },
       customData: { user_id: data.userId, plan: planId },
       settings: {
-        successUrl: `${window.location.origin}/dashboard?paid=1&plan=${planId}`,
         displayMode: "overlay",
         theme: "light",
       },
@@ -178,6 +235,71 @@ export default function CheckoutPage() {
               <h1 className="text-3xl font-display font-bold">Complete your purchase</h1>
               <p className="text-muted-foreground mt-2">You're one step away from going live.</p>
             </div>
+
+            {(confirming || confirmedSub || confirmError) && (
+              <Alert
+                variant={confirmError ? "destructive" : "default"}
+                className="mb-6 border-primary/30 bg-primary/5"
+              >
+                {confirming ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : confirmedSub ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4" />
+                )}
+                <AlertTitle>
+                  {confirming
+                    ? "Confirming your subscription…"
+                    : confirmedSub
+                      ? `${planPricing[confirmedSub.plan]?.name ?? confirmedSub.plan} plan is now active`
+                      : "Subscription not confirmed yet"}
+                </AlertTitle>
+                <AlertDescription className="space-y-3">
+                  {confirming && (
+                    <p>We're waiting for Paddle to notify us. This usually takes a few seconds.</p>
+                  )}
+                  {confirmedSub && (
+                    <div className="text-sm space-y-1">
+                      <p>
+                        <span className="font-medium">Status:</span> {confirmedSub.status}
+                      </p>
+                      {confirmedSub.started_at && (
+                        <p>
+                          <span className="font-medium">Started:</span>{" "}
+                          {new Date(confirmedSub.started_at).toLocaleString()}
+                        </p>
+                      )}
+                      {confirmedSub.expires_at && (
+                        <p>
+                          <span className="font-medium">Renews:</span>{" "}
+                          {new Date(confirmedSub.expires_at).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="pt-2">
+                        <Button size="sm" onClick={() => navigate("/dashboard?paid=1&plan=" + confirmedSub.plan)}>
+                          Go to dashboard
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {confirmError && !confirming && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p>{confirmError}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={confirmAfterCheckout}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Re-check status
+                      </Button>
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
 
             {paddleError && (
               <Alert variant="destructive" className="mb-6">
