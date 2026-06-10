@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Fira Sans',
+  				'Manrope',
   				'Work Sans',
   				'ui-sans-serif',
   				'system-ui',
@@ -29,14 +29,14 @@ export default {
   				'sans-serif'
   			],
   			display: [
-  				'DM Serif Display',
+  				'Sora',
   				'Lora',
   				'ui-serif',
   				'Georgia',
   				'serif'
   			],
   			serif: [
-  				'DM Serif Display',
+  				'Sora',
   				'Lora',
   				'ui-serif',
   				'Georgia',
