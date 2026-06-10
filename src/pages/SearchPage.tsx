@@ -7,6 +7,7 @@ import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { Search, SlidersHorizontal, X, Sparkles, Wand2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,9 @@ import { PaginationControls } from "@/components/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useDebounce } from "@/hooks/useDebounce";
+import { trackEvent } from "@/lib/analytics";
 
 const PAGE_SIZE = 20;
 const PRICING_MODELS = [
@@ -24,6 +28,8 @@ const PRICING_MODELS = [
   { value: "subscription", label: "Subscription" },
   { value: "one-time", label: "One-time" },
 ];
+
+const QUICK_PRICING = ["all", "free", "freemium", "paid"] as const;
 
 export default function SearchPage() {
   const [params, setParams] = useSearchParams();
