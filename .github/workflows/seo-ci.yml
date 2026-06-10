@@ -104,6 +104,20 @@ jobs:
           SEO_BROAD_BLOG_COUNT: "5"
         run: bunx playwright test tests/e2e/broad-detail-coverage.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
 
+      - name: Extended smoke — subcategories + deep blog pagination
+        if: always()
+        env:
+          SEO_SMOKE_BLOG_DEPTH: "4"
+        run: bunx playwright test tests/e2e/seo-smoke-extended.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
+
+      # Mocked og:image checks — intercepts every image request and
+      # returns 200 PNG, so we only fail on bad META, not staging CDN.
+      - name: og:image META validation (network mocked)
+        if: always()
+        env:
+          CI_MOCK_OG_IMAGES: "1"
+        run: bunx playwright test tests/e2e/og-image-mocked.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
+
 
 
 
@@ -206,3 +220,140 @@ jobs:
           path: ${{ env.PW_CONSOLE_LOG }}
           if-no-files-found: ignore
           retention-days: 14
+
+  # ---------------------------------------------------------------
+  # Per-PR dashboard: posts a sticky comment summarizing the latest
+  # SEO CI status, Lighthouse scores (perf / SEO / a11y / best-pract),
+  # and Playwright pass/fail counts. Updates in place on every push
+  # so reviewers always see fresh numbers without scrolling artifacts.
+  # ---------------------------------------------------------------
+  seo-ci-dashboard:
+    name: SEO CI dashboard
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [seo-regression-tests, lighthouse-ci, playwright-seo-smoke, seo-merge-gate]
+    permissions:
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Lighthouse reports
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: lighthouse-report-merge-gate
+          path: lh-artifacts
+        continue-on-error: true
+
+      - name: Download Playwright test-results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-test-results-merge-gate
+          path: pw-artifacts
+        continue-on-error: true
+
+      - name: Build dashboard markdown
+        id: build
+        if: always()
+        run: |
+          set +e
+          node <<'NODE' > dashboard.md
+          const fs = require('fs');
+          const path = require('path');
+
+          function walk(dir) {
+            const out = [];
+            if (!fs.existsSync(dir)) return out;
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, entry.name);
+              if (entry.isDirectory()) out.push(...walk(p));
+              else out.push(p);
+            }
+            return out;
+          }
+
+          // ---- Lighthouse: read every lhr-*.json, extract category scores ----
+          const lhFiles = walk('lh-artifacts').filter(f => /lhr-.*\.json$/.test(f));
+          const lhRows = [];
+          for (const f of lhFiles) {
+            try {
+              const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+              const cats = j.categories || {};
+              const fmt = (k) => cats[k]?.score != null ? Math.round(cats[k].score * 100) : '—';
+              lhRows.push({
+                url: j.finalDisplayedUrl || j.requestedUrl || path.basename(f),
+                perf: fmt('performance'),
+                seo: fmt('seo'),
+                a11y: fmt('accessibility'),
+                bp: fmt('best-practices'),
+              });
+            } catch {}
+          }
+
+          // ---- Playwright: count pass/fail from .last-run.json + results ----
+          let pwPassed = 0, pwFailed = 0, pwFlaky = 0, pwSkipped = 0;
+          const failedSpecs = new Set();
+          const pwFiles = walk('pw-artifacts');
+          for (const f of pwFiles) {
+            if (path.basename(f) === '.last-run.json') {
+              try {
+                const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+                for (const t of (j.failedTests || [])) failedSpecs.add(t);
+              } catch {}
+            }
+          }
+          // Heuristic counts from directory naming (Playwright writes one
+          // dir per test attempt; "-retry" suffix = flake).
+          const testDirs = new Set();
+          for (const f of pwFiles) {
+            const rel = path.relative('pw-artifacts', f);
+            const top = rel.split(path.sep)[0];
+            if (top && top !== '.last-run.json') testDirs.add(top);
+          }
+          for (const d of testDirs) {
+            if (d.includes('-failed') || failedSpecs.size) pwFailed++;
+            else if (d.includes('-retry')) pwFlaky++;
+            else pwPassed++;
+          }
+
+          const lines = [];
+          lines.push('<!-- seo-ci-dashboard -->');
+          lines.push('## SEO CI Dashboard');
+          lines.push('');
+          lines.push(`Run: [#${process.env.GITHUB_RUN_ID}](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}) · commit \`${(process.env.GITHUB_SHA||'').slice(0,7)}\``);
+          lines.push('');
+          lines.push('### Lighthouse');
+          if (lhRows.length === 0) {
+            lines.push('_No Lighthouse reports available (job skipped or failed early)._');
+          } else {
+            lines.push('| URL | Perf | SEO | A11y | Best Practices |');
+            lines.push('|---|---:|---:|---:|---:|');
+            for (const r of lhRows) {
+              lines.push(`| \`${r.url}\` | ${r.perf} | ${r.seo} | ${r.a11y} | ${r.bp} |`);
+            }
+          }
+          lines.push('');
+          lines.push('### Playwright (merge gate)');
+          lines.push(`- Passed: **${pwPassed}**`);
+          lines.push(`- Failed: **${pwFailed}**`);
+          lines.push(`- Flaky:  **${pwFlaky}**`);
+          if (failedSpecs.size) {
+            lines.push('');
+            lines.push('Failed tests:');
+            for (const t of failedSpecs) lines.push(`- \`${t}\``);
+            lines.push('');
+            lines.push('> Rerun only the failed specs via the **SEO rerun failed specs** workflow (Actions tab).');
+          }
+          lines.push('');
+          lines.push('See [CI SEO failure guide](../blob/' + (process.env.GITHUB_SHA||'main') + '/docs/ci-seo-failure-guide.md) for fix recipes.');
+          process.stdout.write(lines.join('\n'));
+          NODE
+
+      - name: Post / update PR dashboard comment
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: seo-ci-dashboard
+          path: dashboard.md
