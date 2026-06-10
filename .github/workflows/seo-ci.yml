@@ -85,6 +85,56 @@ jobs:
         if: always()
         run: bunx playwright test tests/e2e/jsonld-validation.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
 
+      - name: Canonical slug correctness on detail pages
+        if: always()
+        run: bunx playwright test tests/e2e/canonical-slug.spec.ts 2>&1 | tee -a "$PW_CONSOLE_LOG"
+
+      # ----- Lighthouse CI against staging homepage + a real product page -----
+      # Pulls the first /product/<slug> URL out of the live sitemap so the
+      # audit covers a representative detail page (not a fixture).
+      - name: Resolve a sample staging product URL
+        if: always()
+        id: sample
+        run: |
+          set -euo pipefail
+          SITEMAP="$(curl -fsSL --max-time 15 "$STAGING_BASE_URL/sitemap.xml" || true)"
+          PRODUCT_URL="$(printf '%s' "$SITEMAP" \
+            | grep -oE '<loc>[^<]+</loc>' \
+            | sed -E 's#</?loc>##g' \
+            | grep -E '/product/[A-Za-z0-9_-]+$' \
+            | head -n1 || true)"
+          if [ -z "$PRODUCT_URL" ]; then
+            echo "::warning::No /product/<slug> URL in sitemap; falling back to /products"
+            PRODUCT_URL="$STAGING_BASE_URL/products"
+          fi
+          echo "product_url=$PRODUCT_URL" >> "$GITHUB_OUTPUT"
+          echo "Sample product URL: $PRODUCT_URL"
+
+      - name: Render lighthouserc with staging URLs
+        if: always()
+        run: |
+          sed \
+            -e "s#STAGING_HOMEPAGE_PLACEHOLDER#${STAGING_BASE_URL%/}/#" \
+            -e "s#STAGING_PRODUCT_PLACEHOLDER#${{ steps.sample.outputs.product_url }}#" \
+            lighthouserc.merge-gate.json > lighthouserc.merge-gate.rendered.json
+          cat lighthouserc.merge-gate.rendered.json
+
+      - name: Lighthouse CI (homepage + product)
+        if: always()
+        run: bunx lhci autorun --config=./lighthouserc.merge-gate.rendered.json 2>&1 | tee -a "$PW_CONSOLE_LOG"
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-merge-gate
+          path: .lighthouseci
+          if-no-files-found: ignore
+          retention-days: 14
+
+
       # Always upload the full Playwright HTML report so failures are
       # diagnosable from the GitHub Actions UI without re-running.
       - name: Upload Playwright HTML report
