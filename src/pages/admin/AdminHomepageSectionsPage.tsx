@@ -204,7 +204,11 @@ export default function AdminHomepageSectionsPage() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => removeItems(sectionItems.filter((i) => selectedItemIds.has(i.id)).map((i) => i.id))}
+                      onClick={() => {
+                        const ids = sectionItems.filter((i) => selectedItemIds.has(i.id)).map((i) => i.id);
+                        setConfirmAction({ type: "remove", sectionKey: s.key, ids, count: ids.length });
+                        setConfirmOpen(true);
+                      }}
                     >
                       <Trash2 className="h-4 w-4 mr-1.5" />
                       Remove selected ({sectionSelectedCount})
