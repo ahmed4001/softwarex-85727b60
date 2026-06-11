@@ -150,7 +150,7 @@ export default function ProductDetailPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url")
+        .select("user_id, username, name, avatar_url")
         .in("user_id", reviewUserIds);
       return data || [];
     },
