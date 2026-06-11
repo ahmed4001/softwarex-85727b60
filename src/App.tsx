@@ -53,6 +53,7 @@ const AdminActivityPage = lazy(() => import("./pages/admin/AdminActivityPage"));
 const AdminBackfillLogPage = lazy(() => import("./pages/admin/AdminBackfillLogPage"));
 const AdminWebsiteReviewQueuePage = lazy(() => import("./pages/admin/AdminWebsiteReviewQueuePage"));
 const AdminSlugAuditPage = lazy(() => import("./pages/admin/AdminSlugAuditPage"));
+const AdminSeoRouteAuditPage = lazy(() => import("./pages/admin/AdminSeoRouteAuditPage"));
 const AdminProductEditorPage = lazy(() => import("./pages/admin/AdminProductEditorPage"));
 const AdminSubmissionsPage = lazy(() => import("./pages/admin/AdminSubmissionsPage"));
 const AdminAdsPage = lazy(() => import("./pages/admin/AdminAdsPage"));
