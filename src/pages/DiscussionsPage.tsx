@@ -123,7 +123,7 @@ export default function DiscussionsPage() {
         ) : (
           <div className="space-y-3">
             {data?.discussions.map((d: any) => (
-              <Link key={d.id} to={`/discussions/${d.id}`}>
+              <Link key={d.id} to={`/discussions/${d.slug || d.id}`}>
                 <Card className="hover:border-primary/30 transition-all">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">

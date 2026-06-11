@@ -1335,6 +1335,7 @@ export type Database = {
           is_pinned: boolean
           product_id: string | null
           reply_count: number
+          slug: string | null
           title: string
           updated_at: string
           upvote_count: number
@@ -1349,6 +1350,7 @@ export type Database = {
           is_pinned?: boolean
           product_id?: string | null
           reply_count?: number
+          slug?: string | null
           title: string
           updated_at?: string
           upvote_count?: number
@@ -1363,6 +1365,7 @@ export type Database = {
           is_pinned?: boolean
           product_id?: string | null
           reply_count?: number
+          slug?: string | null
           title?: string
           updated_at?: string
           upvote_count?: number
@@ -2856,6 +2859,7 @@ export type Database = {
           review_count: number | null
           total_points: number
           user_id: string
+          username: string | null
           verification_type: string | null
           verified_at: string | null
           verified_domain: string | null
@@ -2885,6 +2889,7 @@ export type Database = {
           review_count?: number | null
           total_points?: number
           user_id: string
+          username?: string | null
           verification_type?: string | null
           verified_at?: string | null
           verified_domain?: string | null
@@ -2914,6 +2919,7 @@ export type Database = {
           review_count?: number | null
           total_points?: number
           user_id?: string
+          username?: string | null
           verification_type?: string | null
           verified_at?: string | null
           verified_domain?: string | null
@@ -4499,6 +4505,7 @@ export type Database = {
           review_count: number | null
           total_points: number
           user_id: string
+          username: string | null
           verification_type: string | null
           verified_at: string | null
           verified_domain: string | null
@@ -4530,6 +4537,7 @@ export type Database = {
       increment_blog_view: { Args: { post_slug: string }; Returns: undefined }
       increment_deal_click: { Args: { _deal_id: string }; Returns: undefined }
       reset_brevo_daily_credits: { Args: never; Returns: undefined }
+      slugify: { Args: { _input: string }; Returns: string }
     }
     Enums: {
       ad_placement: "homepage" | "category" | "product" | "blog"

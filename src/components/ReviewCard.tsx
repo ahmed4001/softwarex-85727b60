@@ -29,7 +29,9 @@ interface ReviewCardProps {
   features_rating?: number | null;
   reviewer_name?: string;
   reviewer_user_id?: string;
+  reviewer_username?: string;
   reviewer_role?: string;
+
   company_size?: string;
   verified_reviewer?: boolean;
   verified_purchase?: boolean;
@@ -39,7 +41,7 @@ interface ReviewCardProps {
   cons_tags?: string[];
 }
 
-export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_of_use, customer_support, value_for_money, features_rating, reviewer_name, reviewer_user_id, reviewer_role, company_size, verified_reviewer, verified_purchase, created_at, media, pros_tags, cons_tags }: ReviewCardProps) {
+export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_of_use, customer_support, value_for_money, features_rating, reviewer_name, reviewer_user_id, reviewer_username, reviewer_role, company_size, verified_reviewer, verified_purchase, created_at, media, pros_tags, cons_tags }: ReviewCardProps) {
   const { user } = useAuth();
   const { up, down, userVote, vote, isVoting } = useReviewVotes(id);
   const { data: reviewerBadges = [] } = useUserBadges(reviewer_user_id);
@@ -196,7 +198,7 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_o
           <div>
             <span className="font-semibold text-foreground">
               {reviewer_user_id ? (
-                <Link to={`/user/${reviewer_user_id}`} className="hover:text-primary transition-colors">{reviewer_name || "Anonymous"}</Link>
+                <Link to={`/user/${reviewer_username || reviewer_user_id}`} className="hover:text-primary transition-colors">{reviewer_name || "Anonymous"}</Link>
               ) : (reviewer_name || "Anonymous")}
             </span>
             {reviewerBadges.length > 0 && <BadgeRow badges={reviewerBadges} max={3} size="xs" />}

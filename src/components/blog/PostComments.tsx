@@ -19,7 +19,7 @@ interface Comment {
   created_at: string;
   user_id: string;
   parent_id: string | null;
-  profile?: { name: string | null; avatar_url: string | null };
+  profile?: { name: string | null; avatar_url: string | null; username?: string | null };
 }
 
 export function PostComments({ postId }: Props) {
@@ -43,7 +43,7 @@ export function PostComments({ postId }: Props) {
       const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url")
+        .select("user_id, username, name, avatar_url")
         .in("user_id", userIds);
       const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       return rows.map((r) => ({ ...r, profile: profileMap.get(r.user_id) }));
@@ -152,7 +152,7 @@ function CommentRow({
   const initial = name[0]?.toUpperCase() || "?";
   return (
     <div className="flex gap-3">
-      <Link to={`/author/${c.user_id}`} className="flex-shrink-0">
+      <Link to={`/author/${c.profile?.username || c.user_id}`} className="flex-shrink-0">
         {c.profile?.avatar_url ? (
           <img src={c.profile.avatar_url} alt={name} className="h-9 w-9 rounded-full object-cover" />
         ) : (
@@ -163,7 +163,7 @@ function CommentRow({
       </Link>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-1 text-sm">
-          <Link to={`/author/${c.user_id}`} className="font-semibold text-foreground hover:text-primary">{name}</Link>
+          <Link to={`/author/${c.profile?.username || c.user_id}`} className="font-semibold text-foreground hover:text-primary">{name}</Link>
           <time className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}</time>
         </div>
         <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{c.body}</p>

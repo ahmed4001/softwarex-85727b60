@@ -150,7 +150,7 @@ export default function ProductDetailPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url")
+        .select("user_id, username, name, avatar_url")
         .in("user_id", reviewUserIds);
       return data || [];
     },
@@ -588,7 +588,9 @@ export default function ProductDetailPage() {
                     value_for_money={r.value_for_money} features_rating={r.features_rating}
                     reviewer_name={r.profiles?.name}
                     reviewer_user_id={r.user_id}
+                    reviewer_username={r.profiles?.username}
                     reviewer_role={r.reviewer_role} company_size={r.company_size}
+
                     verified_reviewer={r.verified_reviewer}
                     verified_purchase={r.verified_purchase}
                     created_at={r.created_at}

@@ -1,39 +1,54 @@
-import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { Breadcrumbs } from "@/components/blog/Breadcrumbs";
 import { Twitter, Linkedin, Globe } from "lucide-react";
+import { isUuid } from "@/lib/identifier";
 
 export default function AuthorPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["author-profile", id],
     queryFn: async () => {
+      // Slug-first lookup, UUID fallback for legacy links.
+      const column = isUuid(id) ? "user_id" : "username";
       const { data } = await supabase
         .from("profiles")
-        .select("id, user_id, name, avatar_url, bio, job_title, company, industry, is_verified_reviewer, review_count, helpful_votes_received, created_at, total_points, display_title, verification_type, verified_domain, verified_at, linkedin_verified")
-        .eq("user_id", id!)
+        .select("id, user_id, username, name, avatar_url, bio, job_title, company, industry, is_verified_reviewer, review_count, helpful_votes_received, created_at, total_points, display_title, verification_type, verified_domain, verified_at, linkedin_verified")
+        .eq(column, id!)
         .maybeSingle();
       return data;
     },
     enabled: !!id,
   });
 
+  // Redirect UUID URL to canonical /author/{username} for SEO.
+  useEffect(() => {
+    if (profile && isUuid(id) && (profile as any).username) {
+      navigate(`/author/${(profile as any).username}`, { replace: true });
+    }
+  }, [profile, id, navigate]);
+
+  const resolvedUserId = (profile as any)?.user_id as string | undefined;
+
   const { data: posts = [] } = useQuery({
-    queryKey: ["author-posts", id],
+    queryKey: ["author-posts", resolvedUserId],
     queryFn: async () => {
       const { data } = await supabase
         .from("blog_posts")
         .select("id, slug, title, excerpt, featured_image, published_at, reading_time, category")
-        .eq("author_id", id!)
+        .eq("author_id", resolvedUserId!)
         .eq("status", "published")
         .order("published_at", { ascending: false });
       return data || [];
     },
-    enabled: !!id,
+    enabled: !!resolvedUserId,
   });
+
 
   if (isLoading) return <div className="max-w-4xl mx-auto py-32 text-center text-muted-foreground">Loading…</div>;
   if (!profile) return <div className="max-w-4xl mx-auto py-32 text-center text-muted-foreground">Author not found.</div>;

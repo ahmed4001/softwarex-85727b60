@@ -33,8 +33,9 @@ export default function BlogPostPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url, bio")
+        .select("user_id, username, name, avatar_url, bio")
         .eq("user_id", post!.author_id!)
+
         .maybeSingle();
       return data;
     },
@@ -119,7 +120,7 @@ export default function BlogPostPage() {
               {/* Author + meta */}
               <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
                 {author && (
-                  <Link to={`/author/${(author as any).user_id}`} className="flex items-center gap-2 hover:text-foreground">
+                  <Link to={`/author/${(author as any).username || (author as any).user_id}`} className="flex items-center gap-2 hover:text-foreground">
                     {(author as any).avatar_url ? (
                       <img src={(author as any).avatar_url} alt={(author as any).name || ""} className="h-7 w-7 rounded-full object-cover" />
                     ) : (
@@ -187,7 +188,7 @@ export default function BlogPostPage() {
                 )}
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Written by</p>
-                  <Link to={`/author/${(author as any).user_id}`} className="text-lg font-bold text-foreground hover:text-primary">
+                  <Link to={`/author/${(author as any).username || (author as any).user_id}`} className="text-lg font-bold text-foreground hover:text-primary">
                     {(author as any).name || "Author"}
                   </Link>
                   <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{(author as any).bio}</p>
