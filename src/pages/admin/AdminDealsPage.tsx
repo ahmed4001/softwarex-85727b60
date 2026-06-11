@@ -195,7 +195,7 @@ export default function AdminDealsPage() {
   });
 
   const toggle = useMutation({
-    mutationFn: async ({ id, field, value }: { id: string; field: string; value: boolean }) => {
+    mutationFn: async ({ id, field, value }: { id: string; field: string; value: boolean | string }) => {
       const { error } = await supabase.from("deals" as any).update({ [field]: value }).eq("id", id);
       if (error) throw error;
     },
