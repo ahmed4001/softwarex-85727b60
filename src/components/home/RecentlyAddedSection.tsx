@@ -23,6 +23,22 @@ export function RecentlyAddedSection() {
     },
   });
 
+  const { data: featuredDeals } = useQuery({
+    queryKey: ["deals-featured-recently-added"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("deals" as any)
+        .select("id, slug, product_name, logo_url, discount_amount, discount_type, coupon_code, end_date, is_featured, is_trending, click_count")
+        .eq("is_visible", true)
+        .eq("review_status", "approved")
+        .or("is_featured.eq.true,is_trending.eq.true")
+        .order("is_featured", { ascending: false })
+        .order("click_count", { ascending: false })
+        .limit(4);
+      return (data || []) as any[];
+    },
+  });
+
   if (!recentProducts || recentProducts.length === 0) return null;
 
   return (
