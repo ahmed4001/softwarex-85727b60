@@ -220,6 +220,7 @@ Deno.serve(async (req) => {
           meta_title: d.meta_title || null,
           meta_description: d.meta_description || null,
           seo_keywords: Array.isArray(d.seo_keywords) ? d.seo_keywords.slice(0, 10) : null,
+          structured_data: d.structured_data && typeof d.structured_data === "object" ? d.structured_data : null,
         };
 
         let { error } = await supabase.from("deals").insert(record);
