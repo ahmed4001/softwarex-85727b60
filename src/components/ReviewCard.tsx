@@ -41,7 +41,7 @@ interface ReviewCardProps {
   cons_tags?: string[];
 }
 
-export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_of_use, customer_support, value_for_money, features_rating, reviewer_name, reviewer_user_id, reviewer_role, company_size, verified_reviewer, verified_purchase, created_at, media, pros_tags, cons_tags }: ReviewCardProps) {
+export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_of_use, customer_support, value_for_money, features_rating, reviewer_name, reviewer_user_id, reviewer_username, reviewer_role, company_size, verified_reviewer, verified_purchase, created_at, media, pros_tags, cons_tags }: ReviewCardProps) {
   const { user } = useAuth();
   const { up, down, userVote, vote, isVoting } = useReviewVotes(id);
   const { data: reviewerBadges = [] } = useUserBadges(reviewer_user_id);
