@@ -11,7 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Pencil, Trash2, Eye, CheckSquare, Square, ImageDown, Loader2, Monitor } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Eye, CheckSquare, Square, ImageDown, Loader2, Monitor, Sparkles } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
