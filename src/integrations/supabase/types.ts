@@ -1070,6 +1070,7 @@ export type Database = {
       }
       deals: {
         Row: {
+          canonical_url: string | null
           category: string | null
           click_count: number
           coupon_code: string | null
@@ -1096,6 +1097,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          canonical_url?: string | null
           category?: string | null
           click_count?: number
           coupon_code?: string | null
@@ -1122,6 +1124,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          canonical_url?: string | null
           category?: string | null
           click_count?: number
           coupon_code?: string | null
