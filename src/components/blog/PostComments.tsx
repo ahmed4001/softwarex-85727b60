@@ -43,7 +43,7 @@ export function PostComments({ postId }: Props) {
       const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url")
+        .select("user_id, username, name, avatar_url")
         .in("user_id", userIds);
       const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       return rows.map((r) => ({ ...r, profile: profileMap.get(r.user_id) }));
