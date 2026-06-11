@@ -243,6 +243,28 @@ export default function AdminHomepageSectionsPage() {
           </Card>
         );
       })}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.type === "remove"
+                ? `Remove ${confirmAction?.count} product${confirmAction?.count !== 1 ? "s" : ""}?`
+                : `Add ${confirmAction?.count} product${confirmAction?.count !== 1 ? "s" : ""}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "remove"
+                ? `This will permanently remove ${confirmAction?.count} curated product${confirmAction?.count !== 1 ? "s" : ""} from the section.`
+                : `This will add ${confirmAction?.count} product${confirmAction?.count !== 1 ? "s" : ""} to the curated list.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmAction(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeConfirm}>
+              {confirmAction?.type === "remove" ? "Remove" : "Add"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
