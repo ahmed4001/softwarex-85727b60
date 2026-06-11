@@ -1160,6 +1160,60 @@ export type Database = {
           },
         ]
       }
+      deals_import_jobs: {
+        Row: {
+          crawl_limit: number
+          created_at: string
+          deals: Json
+          deals_found: number
+          error: string | null
+          id: string
+          mode: string
+          page_progress: Json
+          pages_done: number
+          pages_total: number
+          stage: string | null
+          status: string
+          updated_at: string
+          urls: Json
+          user_id: string | null
+        }
+        Insert: {
+          crawl_limit?: number
+          created_at?: string
+          deals?: Json
+          deals_found?: number
+          error?: string | null
+          id?: string
+          mode?: string
+          page_progress?: Json
+          pages_done?: number
+          pages_total?: number
+          stage?: string | null
+          status?: string
+          updated_at?: string
+          urls?: Json
+          user_id?: string | null
+        }
+        Update: {
+          crawl_limit?: number
+          created_at?: string
+          deals?: Json
+          deals_found?: number
+          error?: string | null
+          id?: string
+          mode?: string
+          page_progress?: Json
+          pages_done?: number
+          pages_total?: number
+          stage?: string | null
+          status?: string
+          updated_at?: string
+          urls?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       digest_logs: {
         Row: {
           id: string
