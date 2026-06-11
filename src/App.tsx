@@ -53,6 +53,7 @@ const AdminActivityPage = lazy(() => import("./pages/admin/AdminActivityPage"));
 const AdminBackfillLogPage = lazy(() => import("./pages/admin/AdminBackfillLogPage"));
 const AdminWebsiteReviewQueuePage = lazy(() => import("./pages/admin/AdminWebsiteReviewQueuePage"));
 const AdminSlugAuditPage = lazy(() => import("./pages/admin/AdminSlugAuditPage"));
+const AdminSeoRouteAuditPage = lazy(() => import("./pages/admin/AdminSeoRouteAuditPage"));
 const AdminProductEditorPage = lazy(() => import("./pages/admin/AdminProductEditorPage"));
 const AdminSubmissionsPage = lazy(() => import("./pages/admin/AdminSubmissionsPage"));
 const AdminAdsPage = lazy(() => import("./pages/admin/AdminAdsPage"));
@@ -250,6 +251,7 @@ function AppContent() {
           <Route path="partner-links" element={<ErrorBoundary><AdminPartnerLinksPage /></ErrorBoundary>} />
           <Route path="affiliate-analytics" element={<ErrorBoundary><AdminAffiliateAnalyticsPage /></ErrorBoundary>} />
           <Route path="slug-audit" element={<ErrorBoundary><AdminSlugAuditPage /></ErrorBoundary>} />
+          <Route path="seo-route-audit" element={<ErrorBoundary><AdminSeoRouteAuditPage /></ErrorBoundary>} />
           <Route path="keyword-pages" element={<ErrorBoundary><AdminKeywordLandingPage /></ErrorBoundary>} />
           <Route path="deals" element={<ErrorBoundary><AdminDealsPage /></ErrorBoundary>} />
           <Route path="deals/import" element={<ErrorBoundary><AdminDealsImportPage /></ErrorBoundary>} />

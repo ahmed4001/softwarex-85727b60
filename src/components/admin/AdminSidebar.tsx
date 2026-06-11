@@ -47,6 +47,7 @@ const sidebarItems = [
       { label: "SEO Landing Pages", to: "/admin/keyword-pages" },
       { label: "Landing Page Library", to: "/admin/landing-pages" },
       { label: "Slug Audit", to: "/admin/slug-audit" },
+      { label: "SEO Route Audit", to: "/admin/seo-route-audit" },
       { label: "Buyer Guides", to: "/admin/buyer-guides" },
       { label: "Glossary", to: "/admin/glossary" },
     ]
