@@ -74,8 +74,8 @@ async function firecrawlCrawl(apiKey: string, url: string, limit: number) {
 
 async function extractDealsWithAI(apiKey: string, markdown: string, sourceUrl: string) {
   const truncated = markdown.slice(0, 18000);
-  const systemPrompt = `You extract software / SaaS deals from web pages. Output ONLY JSON.
-Return: { "deals": [ { "product_name", "description", "discount_amount" (e.g. "30%" or "$50"), "discount_type" ("percent" or "fixed"), "coupon_code" (null if none), "deal_url" (absolute URL the user clicks to redeem), "merchant_domain" (e.g. "notion.so"), "end_date" (ISO date or null), "category" (short label) } ] }
+  const systemPrompt = `You extract software / SaaS deals from web pages AND write SEO meta for each. Output ONLY JSON.
+Return: { "deals": [ { "product_name", "description" (1-2 sentences plain text), "discount_amount" (e.g. "30%" or "$50"), "discount_type" ("percent" or "fixed"), "coupon_code" (null if none), "deal_url" (absolute URL the user clicks to redeem), "merchant_domain" (e.g. "notion.so"), "end_date" (ISO date or null), "category" (short label), "meta_title" (<=60 chars, includes product + discount), "meta_description" (<=155 chars, compelling, includes discount and CTA), "seo_keywords" (array of 4-7 short lowercase keyword phrases) } ] }
 Only include real deals with a clear discount or promo. Skip generic blog text. If deal_url is relative, prefix with source URL origin.`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
