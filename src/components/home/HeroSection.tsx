@@ -188,7 +188,11 @@ export function HeroSection() {
               src={softwareCollage}
               alt="Software ecosystem showcasing popular business tools like Salesforce, Slack, Adobe, AWS, and more"
               className="w-full h-auto object-cover"
-              loading="lazy"
+              width={1600}
+              height={900}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
             />
           </div>
         </motion.div>
