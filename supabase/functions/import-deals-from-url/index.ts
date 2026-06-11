@@ -74,8 +74,8 @@ async function firecrawlCrawl(apiKey: string, url: string, limit: number) {
 
 async function extractDealsWithAI(apiKey: string, markdown: string, sourceUrl: string) {
   const truncated = markdown.slice(0, 18000);
-  const systemPrompt = `You extract software / SaaS deals from web pages AND write SEO meta for each. Output ONLY JSON.
-Return: { "deals": [ { "product_name", "description" (1-2 sentences plain text), "discount_amount" (e.g. "30%" or "$50"), "discount_type" ("percent" or "fixed"), "coupon_code" (null if none), "deal_url" (absolute URL the user clicks to redeem), "merchant_domain" (e.g. "notion.so"), "end_date" (ISO date or null), "category" (short label), "meta_title" (<=60 chars, includes product + discount), "meta_description" (<=155 chars, compelling, includes discount and CTA), "seo_keywords" (array of 4-7 short lowercase keyword phrases) } ] }
+  const systemPrompt = `You extract software / SaaS deals from web pages AND write SEO meta + Schema.org JSON-LD for each. Output ONLY JSON.
+Return: { "deals": [ { "product_name", "description" (1-2 sentences plain text), "discount_amount" (e.g. "30%" or "$50"), "discount_type" ("percent" or "fixed"), "coupon_code" (null if none), "deal_url" (absolute URL the user clicks to redeem), "merchant_domain" (e.g. "notion.so"), "end_date" (ISO date or null), "category" (short label), "meta_title" (<=60 chars, includes product + discount), "meta_description" (<=155 chars, compelling, includes discount and CTA), "seo_keywords" (array of 4-7 short lowercase keyword phrases), "structured_data" (a JSON object representing a Schema.org Offer with @context, @type, priceCurrency "USD", availability "https://schema.org/InStock", validThrough if end_date known, and seller as an Organization with the product_name) } ] }
 Only include real deals with a clear discount or promo. Skip generic blog text. If deal_url is relative, prefix with source URL origin.`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -220,6 +220,7 @@ Deno.serve(async (req) => {
           meta_title: d.meta_title || null,
           meta_description: d.meta_description || null,
           seo_keywords: Array.isArray(d.seo_keywords) ? d.seo_keywords.slice(0, 10) : null,
+          structured_data: d.structured_data && typeof d.structured_data === "object" ? d.structured_data : null,
         };
 
         let { error } = await supabase.from("deals").insert(record);

@@ -1092,6 +1092,7 @@ export type Database = {
           seo_keywords: string[] | null
           slug: string
           start_date: string | null
+          structured_data: Json | null
           updated_at: string
         }
         Insert: {
@@ -1117,6 +1118,7 @@ export type Database = {
           seo_keywords?: string[] | null
           slug: string
           start_date?: string | null
+          structured_data?: Json | null
           updated_at?: string
         }
         Update: {
@@ -1142,6 +1144,7 @@ export type Database = {
           seo_keywords?: string[] | null
           slug?: string
           start_date?: string | null
+          structured_data?: Json | null
           updated_at?: string
         }
         Relationships: [

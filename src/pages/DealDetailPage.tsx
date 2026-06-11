@@ -17,6 +17,7 @@ type Deal = {
   start_date: string | null; end_date: string | null; is_featured: boolean;
   is_trending: boolean; is_visible: boolean; click_count: number | null;
   product_id: string | null; created_at: string; review_status: string;
+  structured_data: Record<string, unknown> | null;
 };
 
 function useCountdown(endDate: string | null) {
@@ -123,49 +124,64 @@ export default function DealDetailPage() {
   const ogDesc = (deal as any).meta_description || deal.description || `Save on ${deal.product_name}. Exclusive coupon and offer.`;
   const seoKeywords: string[] = Array.isArray((deal as any).seo_keywords) ? (deal as any).seo_keywords : [];
 
-  const jsonLd = [
-    {
-      "@context": "https://schema.org",
-      "@type": "Offer",
-      url: canonical,
-      name: ogTitle,
-      description: ogDesc,
-      priceCurrency: "USD",
-      availability: deal.end_date && new Date(deal.end_date) < new Date()
-        ? "https://schema.org/Discontinued"
-        : "https://schema.org/InStock",
-      ...(deal.start_date && { validFrom: deal.start_date }),
-      ...(deal.end_date && { validThrough: deal.end_date }),
-      ...(deal.coupon_code && {
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          priceCurrency: "USD",
-          price: "0",
+  const storedStructured = deal.structured_data;
+  const jsonLd = storedStructured && typeof storedStructured === "object"
+    ? [
+        { ...storedStructured, url: canonical },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Deals", item: `${SITE_URL}/deals` },
+            ...(deal.category ? [{ "@type": "ListItem", position: 3, name: deal.category, item: `${SITE_URL}/deals?category=${encodeURIComponent(deal.category)}` }] : []),
+            { "@type": "ListItem", position: deal.category ? 4 : 3, name: deal.product_name, item: canonical },
+          ],
         },
-      }),
-      seller: {
-        "@type": "Organization",
-        name: deal.product_name,
-        ...(deal.logo_url && { logo: deal.logo_url }),
-      },
-      itemOffered: {
-        "@type": "Product",
-        name: deal.product_name,
-        ...(deal.logo_url && { image: deal.logo_url }),
-        ...(deal.category && { category: deal.category }),
-      },
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: "Deals", item: `${SITE_URL}/deals` },
-        ...(deal.category ? [{ "@type": "ListItem", position: 3, name: deal.category, item: `${SITE_URL}/deals?category=${encodeURIComponent(deal.category)}` }] : []),
-        { "@type": "ListItem", position: deal.category ? 4 : 3, name: deal.product_name, item: canonical },
-      ],
-    },
-  ];
+      ]
+    : [
+        {
+          "@context": "https://schema.org",
+          "@type": "Offer",
+          url: canonical,
+          name: ogTitle,
+          description: ogDesc,
+          priceCurrency: "USD",
+          availability: deal.end_date && new Date(deal.end_date) < new Date()
+            ? "https://schema.org/Discontinued"
+            : "https://schema.org/InStock",
+          ...(deal.start_date && { validFrom: deal.start_date }),
+          ...(deal.end_date && { validThrough: deal.end_date }),
+          ...(deal.coupon_code && {
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              priceCurrency: "USD",
+              price: "0",
+            },
+          }),
+          seller: {
+            "@type": "Organization",
+            name: deal.product_name,
+            ...(deal.logo_url && { logo: deal.logo_url }),
+          },
+          itemOffered: {
+            "@type": "Product",
+            name: deal.product_name,
+            ...(deal.logo_url && { image: deal.logo_url }),
+            ...(deal.category && { category: deal.category }),
+          },
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Deals", item: `${SITE_URL}/deals` },
+            ...(deal.category ? [{ "@type": "ListItem", position: 3, name: deal.category, item: `${SITE_URL}/deals?category=${encodeURIComponent(deal.category)}` }] : []),
+            { "@type": "ListItem", position: deal.category ? 4 : 3, name: deal.product_name, item: canonical },
+          ],
+        },
+      ];
 
   const expired = deal.end_date && new Date(deal.end_date) < new Date();
 
