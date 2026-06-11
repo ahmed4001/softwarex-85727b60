@@ -251,6 +251,7 @@ function AppContent() {
           <Route path="partner-links" element={<ErrorBoundary><AdminPartnerLinksPage /></ErrorBoundary>} />
           <Route path="affiliate-analytics" element={<ErrorBoundary><AdminAffiliateAnalyticsPage /></ErrorBoundary>} />
           <Route path="slug-audit" element={<ErrorBoundary><AdminSlugAuditPage /></ErrorBoundary>} />
+          <Route path="seo-route-audit" element={<ErrorBoundary><AdminSeoRouteAuditPage /></ErrorBoundary>} />
           <Route path="keyword-pages" element={<ErrorBoundary><AdminKeywordLandingPage /></ErrorBoundary>} />
           <Route path="deals" element={<ErrorBoundary><AdminDealsPage /></ErrorBoundary>} />
           <Route path="deals/import" element={<ErrorBoundary><AdminDealsImportPage /></ErrorBoundary>} />
