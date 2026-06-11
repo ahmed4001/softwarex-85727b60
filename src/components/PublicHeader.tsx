@@ -178,6 +178,9 @@ export function PublicHeader() {
           <button
             className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -185,7 +188,7 @@ export function PublicHeader() {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-border bg-card">
+        <div id="mobile-nav" className="lg:hidden border-t border-border bg-card">
           <div className="p-4 space-y-1">
             <SearchBar variant="compact" className="mb-3" />
             {navLinks.map((l) => (
