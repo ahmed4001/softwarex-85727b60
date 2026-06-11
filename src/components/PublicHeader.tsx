@@ -143,11 +143,11 @@ export function PublicHeader() {
           </div>
         </nav>
 
-        <div className="hidden lg:block w-[180px] xl:w-[220px] flex-shrink-0">
+        <div className="hidden lg:block w-[150px] xl:w-[200px] flex-shrink min-w-0">
           <SearchBar variant="compact" />
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 flex-shrink-0">
           <LanguageSwitcher />
           <NotificationBell />
           {user ? (
