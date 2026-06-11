@@ -120,7 +120,7 @@ export default function BlogPostPage() {
               {/* Author + meta */}
               <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
                 {author && (
-                  <Link to={`/author/${(author as any).user_id}`} className="flex items-center gap-2 hover:text-foreground">
+                  <Link to={`/author/${(author as any).username || (author as any).user_id}`} className="flex items-center gap-2 hover:text-foreground">
                     {(author as any).avatar_url ? (
                       <img src={(author as any).avatar_url} alt={(author as any).name || ""} className="h-7 w-7 rounded-full object-cover" />
                     ) : (
