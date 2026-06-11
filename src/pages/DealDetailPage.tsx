@@ -16,7 +16,7 @@ type Deal = {
   discount_type: string | null; coupon_code: string | null; category: string | null;
   start_date: string | null; end_date: string | null; is_featured: boolean;
   is_trending: boolean; is_visible: boolean; click_count: number | null;
-  product_id: string | null; created_at: string;
+  product_id: string | null; created_at: string; review_status: string;
 };
 
 function useCountdown(endDate: string | null) {

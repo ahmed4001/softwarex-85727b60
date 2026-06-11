@@ -78,7 +78,7 @@ export default function AdminDealsImportPage() {
     setImporting(true);
     try {
       const { data, error } = await supabase.functions.invoke("import-deals-from-url", {
-        body: { action: "import", deals: selected, is_visible: defaultActive },
+        body: { action: "import", deals: selected },
       });
       if (error) throw error;
       toast.success(`Imported ${data.inserted} deals${data.skipped ? `, skipped ${data.skipped}` : ""}`);
@@ -129,8 +129,7 @@ export default function AdminDealsImportPage() {
             </Tabs>
 
             <div className="flex items-center gap-2 pt-2">
-              <Checkbox id="active" checked={defaultActive} onCheckedChange={(c) => setDefaultActive(!!c)} />
-              <label htmlFor="active" className="text-sm">Make imported deals <strong>active</strong> (visible to public) immediately</label>
+              <Badge variant="secondary" className="text-xs">All imported deals enter <strong>Pending Review</strong> status</Badge>
             </div>
 
             <Button onClick={extract} disabled={loading} className="gap-2">

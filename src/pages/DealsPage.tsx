@@ -37,6 +37,7 @@ type Deal = {
   is_trending: boolean;
   click_count: number | null;
   created_at: string;
+  review_status: string;
 };
 
 type SortKey = "featured" | "popular" | "newest" | "expiring" | "discount";
