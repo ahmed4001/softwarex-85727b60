@@ -444,9 +444,9 @@ export default function AdminDealsPage() {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <CardTitle>All Deals ({totalCount})</CardTitle>
             <div className="flex gap-2 flex-wrap">
-              {(["all", "featured", "trending", "expired", "hidden"] as const).map((f) => (
+              {(["all", "featured", "trending", "expired", "hidden", "pending"] as const).map((f) => (
                 <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => { setFilter(f); setPage(0); }} className="capitalize">
-                  {f}
+                  {f === "pending" ? "Pending Review" : f}
                 </Button>
               ))}
             </div>
@@ -464,6 +464,8 @@ export default function AdminDealsPage() {
             <div className="sticky top-2 z-20 mb-3 flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 flex-wrap">
               <span className="text-sm font-medium">{selected.size} selected</span>
               <div className="flex-1" />
+              <Button size="sm" variant="outline" onClick={() => setBulkAction("approve")}><Check className="h-3.5 w-3.5 mr-1" /> Approve</Button>
+              <Button size="sm" variant="outline" onClick={() => setBulkAction("reject")}>Reject</Button>
               <Button size="sm" variant="outline" onClick={() => setBulkAction("feature")}><Star className="h-3.5 w-3.5 mr-1" /> Feature</Button>
               <Button size="sm" variant="outline" onClick={() => setBulkAction("unfeature")}>Unfeature</Button>
               <Button size="sm" variant="outline" onClick={() => setBulkAction("hide")}><EyeOff className="h-3.5 w-3.5 mr-1" /> Hide</Button>
@@ -543,6 +545,8 @@ export default function AdminDealsPage() {
                       <td className="py-3 px-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MousePointerClick className="h-3 w-3" />{d.click_count ?? 0}</span></td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1 flex-wrap">
+                          {d.review_status === "pending_review" && <Badge variant="outline" className="text-amber-600 border-amber-500/40 bg-amber-500/10">Pending</Badge>}
+                          {d.review_status === "rejected" && <Badge variant="destructive">Rejected</Badge>}
                           {expired && <Badge variant="destructive">Expired</Badge>}
                           {d.is_featured && <Badge variant="secondary"><Star className="h-3 w-3" /></Badge>}
                           {d.is_trending && <Badge variant="secondary"><TrendingUp className="h-3 w-3" /></Badge>}
@@ -551,6 +555,9 @@ export default function AdminDealsPage() {
                       </td>
                       <td className="py-3 px-2 text-right">
                         <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => toggle.mutate({ id: d.id, field: "review_status", value: d.review_status === "pending_review" ? "approved" : "pending_review" })} title={d.review_status === "pending_review" ? "Approve" : "Set pending"}>
+                            {d.review_status === "pending_review" ? <Check className="h-4 w-4 text-green-600" /> : <Check className="h-4 w-4" />}
+                          </Button>
                           <Button size="icon" variant="ghost" onClick={() => toggle.mutate({ id: d.id, field: "is_featured", value: !d.is_featured })} title="Feature"><Star className={`h-4 w-4 ${d.is_featured ? "fill-primary text-primary" : ""}`} /></Button>
                           <Button size="icon" variant="ghost" onClick={() => toggle.mutate({ id: d.id, field: "is_trending", value: !d.is_trending })} title="Trending"><TrendingUp className={`h-4 w-4 ${d.is_trending ? "text-primary" : ""}`} /></Button>
                           <Button size="icon" variant="ghost" onClick={() => toggle.mutate({ id: d.id, field: "is_visible", value: !d.is_visible })} title="Toggle visibility">{d.is_visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</Button>
@@ -614,6 +621,8 @@ export default function AdminDealsPage() {
               {bulkAction === "unfeature" && "Remove featured flag"}
               {bulkAction === "hide" && "Hide deals from site"}
               {bulkAction === "show" && "Make deals visible"}
+              {bulkAction === "approve" && "Approve deals"}
+              {bulkAction === "reject" && "Reject deals"}
               {bulkAction === "delete" && "Delete deals permanently"}
               {bulkAction === "extend" && "Extend end date"}
               {bulkAction === "set_category" && "Set category"}
