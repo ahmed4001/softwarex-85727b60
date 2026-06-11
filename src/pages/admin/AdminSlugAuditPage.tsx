@@ -194,7 +194,7 @@ export default function AdminSlugAuditPage() {
 
   return (
     <div className="space-y-6">
-      <SeoHead title="Slug Audit | Admin" noindex />
+      <SeoHead title="Slug Audit | Admin" robots="noindex" />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
