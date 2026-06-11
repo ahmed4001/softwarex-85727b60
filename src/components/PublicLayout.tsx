@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function PublicLayout() {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
+  const hideFooterRoutes = ["/login", "/submit-product", "/checkout", "/choose-plan"];
+  const hideFooter = hideFooterRoutes.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
 
   return (
     <div className="min-h-screen flex flex-col">
