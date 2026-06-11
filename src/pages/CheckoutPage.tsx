@@ -291,23 +291,23 @@ export default function CheckoutPage() {
   return (
     <>
       <SeoHead title={`Checkout — ${plan.name} Plan`} description="Complete your subscription on ReviewHunts." />
-      <div className="min-h-[80vh] py-12 md:py-16 relative">
+      <div className="py-6 relative">
         <div className="absolute inset-0 mesh-gradient opacity-20" />
-        <div className="container max-w-3xl relative">
+        <div className="container max-w-2xl relative">
           <button
             onClick={() => navigate("/choose-plan")}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to plans
           </button>
 
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="text-center mb-8">
-              <div className="h-14 w-14 rounded-2xl gradient-hero flex items-center justify-center mx-auto mb-5">
-                <CreditCard className="h-6 w-6 text-primary-foreground" />
+            <div className="text-center mb-4">
+              <div className="h-10 w-10 rounded-xl gradient-hero flex items-center justify-center mx-auto mb-2">
+                <CreditCard className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-3xl font-display font-bold">Complete your purchase</h1>
-              <p className="text-muted-foreground mt-2">You're one step away from going live.</p>
+              <h1 className="text-2xl font-display font-bold">Complete your purchase</h1>
+              <p className="text-xs text-muted-foreground mt-1">You're one step away from going live.</p>
             </div>
 
             {(confirming || confirmedSub || confirmError) && (
