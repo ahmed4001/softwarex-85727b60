@@ -1460,6 +1460,69 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_section_products: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          product_id: string
+          section_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          product_id: string
+          section_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          product_id?: string
+          section_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_section_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homepage_section_products_section_key_fkey"
+            columns: ["section_key"]
+            isOneToOne: false
+            referencedRelation: "homepage_sections"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      homepage_sections: {
+        Row: {
+          is_enabled: boolean
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          is_enabled?: boolean
+          key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          is_enabled?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       keyword_landing_pages: {
         Row: {
           canonical_override: string | null

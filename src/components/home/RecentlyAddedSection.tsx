@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
+import { useHomepageSection } from "@/hooks/useHomepageSection";
 
 function useCountdown(endDate: string | null) {
   const [now, setNow] = useState(Date.now());
@@ -47,9 +48,18 @@ function DealCountdown({ endDate }: { endDate: string | null }) {
 }
 
 export function RecentlyAddedSection() {
+  const cfg = useHomepageSection("recently_added");
   const { data: recentProducts } = useQuery({
-    queryKey: ["products-recent"],
+    queryKey: ["products-recent", cfg.curatedIds],
     queryFn: async () => {
+      if (cfg.curatedIds.length > 0) {
+        const { data } = await supabase
+          .from("products")
+          .select("id, slug, name, tagline, logo_url, created_at, info_score, avg_rating, total_reviews, categories!products_category_id_fkey(name)")
+          .in("id", cfg.curatedIds);
+        const order = new Map(cfg.curatedIds.map((id, i) => [id, i]));
+        return (data || []).slice().sort((a: any, b: any) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      }
       const { applyRealFirstOrder } = await import("@/lib/product-order");
       let query = supabase
         .from("products")
@@ -77,6 +87,7 @@ export function RecentlyAddedSection() {
     },
   });
 
+  if (!cfg.enabled) return null;
   if (!recentProducts || recentProducts.length === 0) return null;
 
   return (

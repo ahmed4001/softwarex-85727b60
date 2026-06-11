@@ -68,6 +68,7 @@ const sidebarItems = [
   { label: "Paddle Events", icon: Activity, to: "/admin/paddle-events" },
   { label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
   { label: "Settings", icon: Settings, to: "/admin/settings" },
+  { label: "Homepage Sections", icon: LayoutDashboard, to: "/admin/homepage-sections" },
   { label: "Backfill Log", icon: Globe, to: "/admin/backfill-log" },
   { label: "Website Review Queue", icon: CheckCircle, to: "/admin/website-review-queue" },
   { label: "Activity Log", icon: Activity, to: "/admin/activity" },

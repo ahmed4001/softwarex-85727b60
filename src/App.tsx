@@ -68,6 +68,7 @@ const AdminSubscribersPage = lazy(() => import("./pages/admin/AdminSubscribersPa
 const AdminSubscriptionsPage = lazy(() => import("./pages/admin/AdminSubscriptionsPage"));
 const AdminPaddleEventsPage = lazy(() => import("./pages/admin/AdminPaddleEventsPage"));
 const AdminPricingPage = lazy(() => import("./pages/admin/AdminPricingPage"));
+const AdminHomepageSectionsPage = lazy(() => import("./pages/admin/AdminHomepageSectionsPage"));
 const StaticPage = lazy(() => import("./pages/StaticPage"));
 const ActivityFeedPage = lazy(() => import("./pages/ActivityFeedPage"));
 const PricingComparisonPage = lazy(() => import("./pages/PricingComparisonPage"));
@@ -254,6 +255,7 @@ function AppContent() {
           <Route path="deals/import" element={<ErrorBoundary><AdminDealsImportPage /></ErrorBoundary>} />
           <Route path="subscriptions" element={<ErrorBoundary><AdminSubscriptionsPage /></ErrorBoundary>} />
           <Route path="paddle-events" element={<ErrorBoundary><AdminPaddleEventsPage /></ErrorBoundary>} />
+          <Route path="homepage-sections" element={<ErrorBoundary><AdminHomepageSectionsPage /></ErrorBoundary>} />
         </Route>
 
         {/* Vendor routes */}

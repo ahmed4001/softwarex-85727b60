@@ -24,6 +24,7 @@ import { ReadingProgress } from "@/components/home/ReadingProgress";
 import { StickyMobileCTA } from "@/components/home/StickyMobileCTA";
 import { RecentlyAddedSection } from "@/components/home/RecentlyAddedSection";
 import { DealsShowcaseSection } from "@/components/home/DealsShowcaseSection";
+import { useHomepageSection } from "@/hooks/useHomepageSection";
 
 const SITE_URL = "https://reviewhunts.com";
 
@@ -127,9 +128,19 @@ const breadcrumbJsonLd = {
 };
 
 export default function HomePage() {
+  const editorsChoiceCfg = useHomepageSection("editors_choice");
+  const dealsCfg = useHomepageSection("deals_showcase");
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
-    queryKey: ["products-featured"],
+    queryKey: ["products-featured", editorsChoiceCfg.curatedIds],
     queryFn: async () => {
+      if (editorsChoiceCfg.curatedIds.length > 0) {
+        const { data } = await supabase
+          .from("products")
+          .select("*, categories!products_category_id_fkey(name)")
+          .in("id", editorsChoiceCfg.curatedIds);
+        const order = new Map(editorsChoiceCfg.curatedIds.map((id, i) => [id, i]));
+        return (data || []).slice().sort((a: any, b: any) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      }
       const { data: featured } = await supabase
         .from("products")
         .select("*, categories!products_category_id_fkey(name)")
@@ -201,21 +212,23 @@ export default function HomePage() {
         <div className="section-gradient-divider" aria-hidden="true" />
 
         {/* 6. Editor's Choice */}
-        <section className="py-16 md:py-20" aria-labelledby="featured-heading">
-          <div className="container">
-            <SectionHeader id="featured-heading" label="Editor's Choice" title="Top-Rated Software Picks for 2026" subtitle="Hand-picked by our expert analysts based on user reviews, features, and value" />
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {loadingFeatured ? Array.from({ length: 12 }).map((_, i) => <ProductCardSkeleton key={i} />) :
-                featuredProducts && featuredProducts.length > 0 ?
-                  featuredProducts.map((p: any) => (
-                    <ProductCard key={p.id} id={p.id} slug={p.slug} name={p.name} tagline={p.tagline} logo_url={p.logo_url} avg_rating={Number(p.avg_rating)} total_reviews={p.total_reviews} pricing_model={p.pricing_model} category_name={p.categories?.name} is_featured={p.is_featured} is_sponsored={p.is_sponsored} />
-                  )) : (
-                    <EmptyBlock icon={<Sparkles className="h-6 w-6 text-muted-foreground/30" />} text="Featured software coming soon" sub="Expert picks arriving shortly" />
-                  )
-              }
+        {editorsChoiceCfg.enabled && (
+          <section className="py-16 md:py-20" aria-labelledby="featured-heading">
+            <div className="container">
+              <SectionHeader id="featured-heading" label="Editor's Choice" title="Top-Rated Software Picks for 2026" subtitle="Hand-picked by our expert analysts based on user reviews, features, and value" />
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {loadingFeatured ? Array.from({ length: 12 }).map((_, i) => <ProductCardSkeleton key={i} />) :
+                  featuredProducts && featuredProducts.length > 0 ?
+                    featuredProducts.map((p: any) => (
+                      <ProductCard key={p.id} id={p.id} slug={p.slug} name={p.name} tagline={p.tagline} logo_url={p.logo_url} avg_rating={Number(p.avg_rating)} total_reviews={p.total_reviews} pricing_model={p.pricing_model} category_name={p.categories?.name} is_featured={p.is_featured} is_sponsored={p.is_sponsored} />
+                    )) : (
+                      <EmptyBlock icon={<Sparkles className="h-6 w-6 text-muted-foreground/30" />} text="Featured software coming soon" sub="Expert picks arriving shortly" />
+                    )
+                }
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <div className="section-gradient-divider" aria-hidden="true" />
 
@@ -225,7 +238,7 @@ export default function HomePage() {
         <TrendingProductsSection />
 
         {/* 7.5 Deals Showcase */}
-        <DealsShowcaseSection />
+        {dealsCfg.enabled && <DealsShowcaseSection />}
 
         {/* 8. Popular Comparisons */}
         <PopularComparisonsSection />

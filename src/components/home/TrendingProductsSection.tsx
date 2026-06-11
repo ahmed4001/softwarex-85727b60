@@ -6,11 +6,22 @@ import { ProductLogo } from "@/components/ProductLogo";
 import { ArrowRight, TrendingUp, Star, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useHomepageSection } from "@/hooks/useHomepageSection";
 
 export function TrendingProductsSection() {
+  const cfg = useHomepageSection("trending");
   const { data: trending } = useQuery({
-    queryKey: ["trending-products"],
+    queryKey: ["trending-products", cfg.curatedIds],
     queryFn: async () => {
+      if (cfg.curatedIds.length > 0) {
+        const { data } = await supabase
+          .from("products")
+          .select("id, name, slug, logo_url, avg_rating, total_reviews, tagline, categories!products_category_id_fkey(name)")
+          .in("id", cfg.curatedIds);
+        const order = new Map(cfg.curatedIds.map((id, i) => [id, i]));
+        return (data || []).slice().sort((a: any, b: any) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+          .map((p: any) => ({ ...p, recentReviewCount: 0 }));
+      }
       // Products with most reviews in last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -59,6 +70,7 @@ export function TrendingProductsSection() {
     },
   });
 
+  if (!cfg.enabled) return null;
   if (!trending || trending.length === 0) return null;
 
   return (
