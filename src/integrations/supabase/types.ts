@@ -1084,9 +1084,12 @@ export type Database = {
           is_trending: boolean
           is_visible: boolean
           logo_url: string | null
+          meta_description: string | null
+          meta_title: string | null
           product_id: string | null
           product_name: string
           review_status: string
+          seo_keywords: string[] | null
           slug: string
           start_date: string | null
           updated_at: string
@@ -1106,9 +1109,12 @@ export type Database = {
           is_trending?: boolean
           is_visible?: boolean
           logo_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           product_id?: string | null
           product_name: string
           review_status?: string
+          seo_keywords?: string[] | null
           slug: string
           start_date?: string | null
           updated_at?: string
@@ -1128,9 +1134,12 @@ export type Database = {
           is_trending?: boolean
           is_visible?: boolean
           logo_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           product_id?: string | null
           product_name?: string
           review_status?: string
+          seo_keywords?: string[] | null
           slug?: string
           start_date?: string | null
           updated_at?: string
