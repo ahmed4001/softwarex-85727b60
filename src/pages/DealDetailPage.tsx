@@ -261,10 +261,8 @@ export default function DealDetailPage() {
                 </div>
               )}
 
-              <Button asChild size="lg" className="w-full" onClick={trackClick} disabled={!!expired}>
-                <a href={deal.deal_url} target="_blank" rel="noopener noreferrer sponsored">
-                  {expired ? "Deal expired" : "Get this deal"} <ExternalLink className="h-4 w-4 ml-2" />
-                </a>
+              <Button size="lg" className="w-full" onClick={trackDealClick} disabled={!!expired}>
+                {expired ? "Deal expired" : "Get this deal"} <ExternalLink className="h-4 w-4 ml-2" />
               </Button>
 
               <p className="text-xs text-muted-foreground text-center mt-3">
