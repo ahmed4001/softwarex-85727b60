@@ -22,6 +22,36 @@ function extractDomain(url: string | null | undefined): string | null {
   }
 }
 
+async function plainFetchScrape(url: string): Promise<{ markdown: string; links: string[]; url: string }> {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; DealImporter/1.0; +https://softwarex.lovable.app)",
+      "Accept": "text/html,application/xhtml+xml",
+    },
+  });
+  if (!res.ok) throw new Error(`Plain fetch failed (${res.status})`);
+  const html = await res.text();
+  // Collect links
+  const linkSet = new Set<string>();
+  const linkRe = /<a[^>]+href=["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(html)) !== null) {
+    try { linkSet.add(new URL(m[1], url).toString()); } catch { /* ignore */ }
+  }
+  // Strip to text
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { markdown: text.slice(0, 20000), links: [...linkSet], url };
+
 async function firecrawlScrape(apiKey: string, url: string) {
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
