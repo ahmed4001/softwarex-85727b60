@@ -1,8 +1,9 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ProductLogo } from "@/components/ProductLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, Tag, Flame } from "lucide-react";
+import { ArrowRight, Clock, Tag, Flame, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
