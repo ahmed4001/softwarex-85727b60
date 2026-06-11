@@ -314,13 +314,65 @@ Deno.serve(async (req) => {
       const { deals = [] } = body;
       let inserted = 0;
       let skipped = 0;
+      let productsCreated = 0;
       const errors: string[] = [];
+
+      // Helper: ensure a unique product slug derived from the product name
+      const ensureUniqueProductSlug = async (name: string): Promise<string> => {
+        const base = slugify(name) || `product-${Date.now()}`;
+        let candidate = base;
+        let attempt = 0;
+        while (attempt < 5) {
+          const { data: existing } = await supabase
+            .from("products")
+            .select("id")
+            .eq("slug", candidate)
+            .maybeSingle();
+          if (!existing) return candidate;
+          attempt++;
+          candidate = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+        }
+        return `${base}-${Date.now().toString(36)}`;
+      };
 
       for (const d of deals) {
         if (!d.product_name || !d.deal_url) {
           skipped++;
           continue;
         }
+
+        // Auto-create the product when the deal isn't linked to one — slug is
+        // derived from the product name so URLs look like /product/<product-name>
+        let productId: string | null = d.matched_product_id || d.product_id || null;
+        if (!productId) {
+          try {
+            const productSlug = await ensureUniqueProductSlug(d.product_name);
+            const websiteUrl = d.official_website || (d.domain ? `https://${d.domain}` : null);
+            const { data: created, error: pErr } = await supabase
+              .from("products")
+              .insert({
+                name: d.product_name,
+                slug: productSlug,
+                tagline: d.description ? String(d.description).slice(0, 160) : null,
+                description: d.description || null,
+                logo_url: d.logo_url || d.matched_logo_url || null,
+                website_url: websiteUrl,
+                status: "pending",
+                is_published: false,
+              })
+              .select("id, slug")
+              .single();
+            if (pErr) {
+              errors.push(`${d.product_name} (product): ${pErr.message}`);
+            } else if (created) {
+              productId = created.id;
+              productsCreated++;
+            }
+          } catch (e: any) {
+            errors.push(`${d.product_name} (product): ${e?.message || "create failed"}`);
+          }
+        }
+
         const baseSlug = slugify(`${d.product_name}-${d.discount_amount || "deal"}`);
         let slug = baseSlug || `deal-${Date.now()}`;
 
@@ -335,7 +387,7 @@ Deno.serve(async (req) => {
           coupon_code: d.coupon_code || null,
           category: d.category || null,
           end_date: d.end_date || null,
-          product_id: d.matched_product_id || d.product_id || null,
+          product_id: productId,
           is_visible: false,
           is_featured: !!d.is_featured,
           review_status: "pending_review",
@@ -354,7 +406,7 @@ Deno.serve(async (req) => {
         else inserted++;
       }
 
-      return new Response(JSON.stringify({ success: true, inserted, skipped, errors }), {
+      return new Response(JSON.stringify({ success: true, inserted, skipped, products_created: productsCreated, errors }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
