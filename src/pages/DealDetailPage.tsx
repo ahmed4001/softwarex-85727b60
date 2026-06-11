@@ -174,6 +174,7 @@ export default function DealDetailPage() {
       <Helmet>
         <title>{ogTitle} | ReviewHunts</title>
         <meta name="description" content={ogDesc} />
+        {seoKeywords.length > 0 && <meta name="keywords" content={seoKeywords.join(", ")} />}
         <link rel="canonical" href={canonical} />
         <meta property="og:type" content="product" />
         <meta property="og:title" content={ogTitle} />
