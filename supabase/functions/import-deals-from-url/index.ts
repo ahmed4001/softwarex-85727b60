@@ -135,14 +135,17 @@ async function firecrawlCrawl(apiKey: string, url: string, limit: number) {
   const jobId = startJson.id || startJson.jobId;
   if (!jobId) throw new Error("Crawl job id missing");
 
-  // Poll
+  // Poll — return partial results if the crawl hasn't finished within our budget
+  // so we still leave time for AI extraction inside the 150s edge timeout.
   const start = Date.now();
-  while (Date.now() - start < 90_000) {
-    await new Promise((r) => setTimeout(r, 3000));
+  let lastDocs: any[] = [];
+  while (Date.now() - start < 60_000) {
+    await new Promise((r) => setTimeout(r, 1500));
     const sRes = await fetch(`${FIRECRAWL_V2}/crawl/${jobId}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     const sJson = await sRes.json();
+    if (Array.isArray(sJson?.data)) lastDocs = sJson.data;
     if (sJson?.status === "completed") {
       const docs = sJson?.data ?? [];
       return docs.map((d: any) => ({
@@ -153,7 +156,12 @@ async function firecrawlCrawl(apiKey: string, url: string, limit: number) {
     }
     if (sJson?.status === "failed") throw new Error("Crawl failed");
   }
-  throw new Error("Crawl timeout");
+  // Crawl timed out — return whatever pages we have so the request still succeeds
+  return lastDocs.map((d: any) => ({
+    markdown: d?.markdown ?? "",
+    url: d?.metadata?.sourceURL ?? d?.metadata?.url ?? url,
+    links: [],
+  }));
 }
 
 async function extractDealsWithAI(apiKey: string, markdown: string, sourceUrl: string) {
@@ -280,15 +288,26 @@ Deno.serve(async (req) => {
         }
       }
 
-      for (const page of sourcePages) {
-        if (!page.markdown) continue;
-        try {
-          const deals = await extractDealsWithAI(LOVABLE_API_KEY, page.markdown, page.url);
-          for (const d of deals) all.push({ ...d, source_url: page.url });
-        } catch (e) {
-          console.warn("AI extract error", e);
-        }
-      }
+      // Parallelize AI extraction across pages (with concurrency cap) so we
+      // don't blow the 150s edge-function idle timeout on crawls of many pages.
+      const pages = sourcePages.filter((p) => p.markdown).slice(0, 25);
+      const CONCURRENCY = 5;
+      let cursor = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(CONCURRENCY, pages.length) }, async () => {
+          while (cursor < pages.length) {
+            const idx = cursor++;
+            const page = pages[idx];
+            try {
+              const deals = await extractDealsWithAI(LOVABLE_API_KEY, page.markdown, page.url);
+              for (const d of deals) all.push({ ...d, source_url: page.url });
+            } catch (e) {
+              console.warn("AI extract error", page.url, e);
+            }
+          }
+        }),
+      );
+
 
       // Auto-link to products by domain
       const domains = [...new Set(all.map((d) => extractDomain(d.merchant_domain) || extractDomain(d.deal_url)).filter(Boolean))];
