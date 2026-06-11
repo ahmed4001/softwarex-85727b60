@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ProductLogo } from "@/components/ProductLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, Tag, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 
 export function RecentlyAddedSection() {
@@ -19,6 +20,22 @@ export function RecentlyAddedSection() {
       query = applyRealFirstOrder(query, "newest");
       const { data } = await query.limit(12);
       return data || [];
+    },
+  });
+
+  const { data: featuredDeals } = useQuery({
+    queryKey: ["deals-featured-recently-added"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("deals" as any)
+        .select("id, slug, product_name, logo_url, discount_amount, discount_type, coupon_code, end_date, is_featured, is_trending, click_count")
+        .eq("is_visible", true)
+        .eq("review_status", "approved")
+        .or("is_featured.eq.true,is_trending.eq.true")
+        .order("is_featured", { ascending: false })
+        .order("click_count", { ascending: false })
+        .limit(4);
+      return (data || []) as any[];
     },
   });
 
@@ -44,6 +61,69 @@ export function RecentlyAddedSection() {
             </Button>
           </Link>
         </motion.div>
+
+        {featuredDeals && featuredDeals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-10"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Flame className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold">Hot Deals</h3>
+              <Link to="/deals" className="ml-auto text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                All deals <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {featuredDeals.map((deal: any, i: number) => (
+                <motion.div
+                  key={deal.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Link to={`/deals/${deal.slug}`} className="glass-card p-4 group block relative overflow-hidden">
+                    <div className="absolute top-0 right-0">
+                      {deal.discount_amount && (
+                        <Badge className="rounded-none rounded-bl-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-[10px]">
+                          {deal.discount_type === "amount" ? "$" : ""}{deal.discount_amount}{deal.discount_type === "percent" ? "% OFF" : deal.discount_type === "amount" ? " OFF" : ""}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      {deal.logo_url ? (
+                        <img src={deal.logo_url} alt={deal.product_name} className="h-10 w-10 rounded-lg object-contain bg-muted p-1" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                          {deal.product_name?.[0]}
+                        </div>
+                      )}
+                      <div className="min-w-0 pr-8">
+                        <h4 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{deal.product_name}</h4>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Tag className="h-3 w-3" />
+                          <span>Deal</span>
+                          {deal.coupon_code && (
+                            <>
+                              <span className="text-muted-foreground/30">·</span>
+                              <span className="font-mono text-primary">{deal.coupon_code}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="w-full text-xs">
+                      View Deal <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {recentProducts.map((p: any, i: number) => (
