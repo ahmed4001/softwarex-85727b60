@@ -371,7 +371,9 @@ Deno.serve(async (req) => {
       const enriched = await Promise.all(all.map(async (d) => {
         const domain = extractDomain(d.merchant_domain) || extractDomain(d.deal_url) || extractDomain(d.official_website);
         const matched = domain ? productMap.get(domain) : null;
-        const resolvedLogo = matched?.logo_url || await resolveLogoUrl(d.logo_url, domain);
+        const resolvedLogo = jobResolveLogos
+          ? (matched?.logo_url || await resolveLogoUrl(d.logo_url, domain))
+          : (matched?.logo_url || d.logo_url || null);
         const cleaned = cleanProductName(d.product_name);
         const finalName = matched?.name || cleaned || d.product_name;
         return {
