@@ -135,14 +135,17 @@ async function firecrawlCrawl(apiKey: string, url: string, limit: number) {
   const jobId = startJson.id || startJson.jobId;
   if (!jobId) throw new Error("Crawl job id missing");
 
-  // Poll
+  // Poll — return partial results if the crawl hasn't finished within our budget
+  // so we still leave time for AI extraction inside the 150s edge timeout.
   const start = Date.now();
-  while (Date.now() - start < 90_000) {
-    await new Promise((r) => setTimeout(r, 3000));
+  let lastDocs: any[] = [];
+  while (Date.now() - start < 60_000) {
+    await new Promise((r) => setTimeout(r, 1500));
     const sRes = await fetch(`${FIRECRAWL_V2}/crawl/${jobId}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     const sJson = await sRes.json();
+    if (Array.isArray(sJson?.data)) lastDocs = sJson.data;
     if (sJson?.status === "completed") {
       const docs = sJson?.data ?? [];
       return docs.map((d: any) => ({
@@ -153,7 +156,12 @@ async function firecrawlCrawl(apiKey: string, url: string, limit: number) {
     }
     if (sJson?.status === "failed") throw new Error("Crawl failed");
   }
-  throw new Error("Crawl timeout");
+  // Crawl timed out — return whatever pages we have so the request still succeeds
+  return lastDocs.map((d: any) => ({
+    markdown: d?.markdown ?? "",
+    url: d?.metadata?.sourceURL ?? d?.metadata?.url ?? url,
+    links: [],
+  }));
 }
 
 async function extractDealsWithAI(apiKey: string, markdown: string, sourceUrl: string) {
