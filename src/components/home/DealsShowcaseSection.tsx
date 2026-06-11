@@ -89,12 +89,24 @@ function DealCard({ deal, tick }: { deal: Deal; tick: number }) {
           <Link to={`/deals/${deal.slug}`} className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
               {deal.logo_url ? (
-                <img src={deal.logo_url} alt={deal.product_name} className="h-12 w-12 rounded-lg object-contain bg-muted p-1" />
-              ) : (
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold">
-                  {deal.product_name[0]}
-                </div>
-              )}
+                <img
+                  src={deal.logo_url}
+                  alt={deal.product_name}
+                  className="h-12 w-12 rounded-lg object-contain bg-muted p-1"
+                  onError={(e) => {
+                    const t = e.currentTarget;
+                    t.style.display = "none";
+                    const fb = t.nextElementSibling as HTMLElement | null;
+                    if (fb) fb.style.display = "flex";
+                  }}
+                />
+              ) : null}
+              <div
+                className="h-12 w-12 rounded-lg bg-primary/10 items-center justify-center text-primary font-bold uppercase"
+                style={{ display: deal.logo_url ? "none" : "flex" }}
+              >
+                {deal.product_name?.[0] ?? "?"}
+              </div>
               <div className="min-w-0">
                 <h3 className="font-semibold text-base truncate group-hover:text-primary transition">{deal.product_name}</h3>
               </div>
