@@ -115,6 +115,7 @@ const AdminKeywordLandingPage = lazy(() => import("./pages/admin/AdminKeywordLan
 const DealsPage = lazy(() => import("./pages/DealsPage"));
 const DealDetailPage = lazy(() => import("./pages/DealDetailPage"));
 const AdminDealsPage = lazy(() => import("./pages/admin/AdminDealsPage"));
+const AdminDealsImportPage = lazy(() => import("./pages/admin/AdminDealsImportPage"));
 const ChoosePlanPage = lazy(() => import("./pages/ChoosePlanPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 
