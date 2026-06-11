@@ -118,7 +118,7 @@ export default function DealDetailPage() {
     );
   }
 
-  const canonical = `${SITE_URL}/deals/${deal.slug}`;
+  const canonical = (deal as any).canonical_url || `${SITE_URL}/deals/${deal.slug}`;
   const fallbackTitle = `${deal.product_name} Deal${deal.discount_amount ? ` — ${deal.discount_amount}${deal.discount_type === "percent" ? "%" : ""} OFF` : ""}`;
   const ogTitle = (deal as any).meta_title || fallbackTitle;
   const ogDesc = (deal as any).meta_description || deal.description || `Save on ${deal.product_name}. Exclusive coupon and offer.`;
