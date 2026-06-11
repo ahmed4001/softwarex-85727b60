@@ -284,12 +284,17 @@ export default function AdminHomepageSectionsPage() {
 
 function ProductPicker({ existingIds, onPickMultiple }: { existingIds: string[]; onPickMultiple: (ids: string[]) => void }) {
   const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [selectedProducts, setSelectedProducts] = useState<Map<string, any>>(new Map());
   const debounced = useDebounce(search, 250);
 
   useEffect(() => {
-    setSelectedProductIds(new Set());
-  }, [debounced]);
+    if (!bulkMode) {
+      setSelectedProductIds(new Set());
+      setSelectedProducts(new Map());
+    }
+  }, [debounced, bulkMode]);
 
   const { data: results } = useQuery({
     queryKey: ["product-picker", debounced],
@@ -300,18 +305,38 @@ function ProductPicker({ existingIds, onPickMultiple }: { existingIds: string[];
         .select("id, name, slug, logo_url")
         .ilike("name", `%${debounced}%`)
         .eq("is_active", true)
-        .limit(8);
+        .limit(20);
       return data || [];
     },
   });
 
   const filtered = useMemo(() => (results || []).filter((p: any) => !existingIds.includes(p.id)), [results, existingIds]);
+  const allVisibleSelected = filtered.length > 0 && filtered.every((p: any) => selectedProductIds.has(p.id));
 
-  const toggleProduct = (id: string) => {
+  const toggleProduct = (p: any) => {
     setSelectedProductIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(p.id)) next.delete(p.id);
+      else next.add(p.id);
+      return next;
+    });
+    setSelectedProducts((prev) => {
+      const next = new Map(prev);
+      if (next.has(p.id)) next.delete(p.id);
+      else next.set(p.id, p);
+      return next;
+    });
+  };
+
+  const toggleAllVisible = (checked: boolean) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      filtered.forEach((p: any) => (checked ? next.add(p.id) : next.delete(p.id)));
+      return next;
+    });
+    setSelectedProducts((prev) => {
+      const next = new Map(prev);
+      filtered.forEach((p: any) => (checked ? next.set(p.id, p) : next.delete(p.id)));
       return next;
     });
   };
@@ -321,42 +346,104 @@ function ProductPicker({ existingIds, onPickMultiple }: { existingIds: string[];
     if (!ids.length) return;
     onPickMultiple(ids);
     setSelectedProductIds(new Set());
+    setSelectedProducts(new Map());
     setSearch("");
+    setBulkMode(false);
   };
 
   return (
-    <div className="border-t border-border pt-3">
+    <div className="border-t border-border pt-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">Add products</span>
+        <Button
+          type="button"
+          variant={bulkMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => {
+            const next = !bulkMode;
+            setBulkMode(next);
+            if (!next) {
+              setSelectedProductIds(new Set());
+              setSelectedProducts(new Map());
+            }
+          }}
+        >
+          {bulkMode ? "Exit bulk add" : "Bulk add mode"}
+        </Button>
+      </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search products to add..."
+          placeholder={bulkMode ? "Search & select multiple products..." : "Search products to add..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
         />
       </div>
+      {bulkMode && (
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-primary/5 border border-primary/20 rounded-md">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={allVisibleSelected}
+              disabled={filtered.length === 0}
+              onCheckedChange={(v) => toggleAllVisible(!!v)}
+            />
+            <span className="text-xs font-medium">
+              Select all visible {filtered.length > 0 ? `(${filtered.length})` : ""}
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <Button size="sm" disabled={selectedProductIds.size === 0} onClick={addSelected}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Review & add {selectedProductIds.size > 0 ? selectedProductIds.size : ""}
+          </Button>
+        </div>
+      )}
+      {bulkMode && selectedProducts.size > 0 && (
+        <div className="flex flex-wrap gap-1.5 p-2 rounded-md bg-muted/40 border border-border">
+          {Array.from(selectedProducts.values()).map((p: any) => (
+            <Badge key={p.id} variant="secondary" className="gap-1 pr-1">
+              {p.name}
+              <button
+                type="button"
+                onClick={() => toggleProduct(p)}
+                className="ml-1 rounded hover:bg-background/60 p-0.5"
+                aria-label={`Remove ${p.name}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
       {filtered.length > 0 && (
-        <div className="mt-2 space-y-1">
+        <div className="space-y-1 max-h-80 overflow-y-auto">
           {filtered.map((p: any) => (
             <div
               key={p.id}
-              className="flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-md text-sm"
+              className="flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-md text-sm cursor-pointer"
+              onClick={() => bulkMode && toggleProduct(p)}
             >
               <Checkbox
                 checked={selectedProductIds.has(p.id)}
-                onCheckedChange={() => toggleProduct(p.id)}
+                onCheckedChange={() => toggleProduct(p)}
               />
               {p.logo_url ? <img src={p.logo_url} alt="" className="h-6 w-6 rounded object-contain bg-muted" /> : <div className="h-6 w-6 rounded bg-muted" />}
               <span className="flex-1 truncate">{p.name}</span>
             </div>
           ))}
-          {selectedProductIds.size > 0 && (
+          {!bulkMode && selectedProductIds.size > 0 && (
             <Button size="sm" className="mt-2 w-full" onClick={addSelected}>
               <Plus className="h-4 w-4 mr-1.5" />
               Add {selectedProductIds.size} selected
             </Button>
           )}
         </div>
+      )}
+      {bulkMode && debounced.length >= 2 && filtered.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-2">No matching products</p>
       )}
     </div>
   );
