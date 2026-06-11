@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { action, urls = [], mode = "scrape", crawl_limit = 20 } = body;
+    const { action, urls = [], mode = "scrape", crawl_limit = 20, resolve_logos = true } = body;
 
     // ---- Async helpers (shared by `start` and legacy `extract`) ----------
     type PageProgress = { url: string; stage: "pending" | "crawling" | "extracting" | "done" | "failed"; deals_found?: number; error?: string };
