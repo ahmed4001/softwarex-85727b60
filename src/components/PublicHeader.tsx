@@ -73,7 +73,7 @@ export function PublicHeader() {
         : "bg-gradient-to-b from-card/30 to-transparent backdrop-blur-md border-b border-white/5"
     )}>
       <div
-        className="container flex items-center justify-between gap-4 min-h-[var(--header-h-mobile)] md:min-h-[var(--header-h-desktop)]"
+        className="container flex items-center justify-between gap-2 xl:gap-3 min-h-[var(--header-h-mobile)] md:min-h-[var(--header-h-desktop)]"
         style={{
           ['--logo-h-mobile' as any]: `${branding.logoHeightMobile}px`,
           ['--logo-h-desktop' as any]: `${branding.logoHeightDesktop}px`,
