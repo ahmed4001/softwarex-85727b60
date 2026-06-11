@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { Award, TrendingUp, CheckCircle } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
-import softwareCollage from "@/assets/bestsoftware.jpg";
+import softwareCollage from "@/assets/bestsoftware.webp";
+import softwareCollage800 from "@/assets/bestsoftware-800.webp";
+import softwareCollageJpg from "@/assets/bestsoftware.jpg";
 import { Link } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
 
@@ -184,16 +186,23 @@ export function HeroSection() {
           className="mt-8 sm:mt-12 max-w-5xl mx-auto"
         >
           <div className="rounded-2xl overflow-hidden shadow-xl border border-border/20">
-            <img
-              src={softwareCollage}
-              alt="Software ecosystem showcasing popular business tools like Salesforce, Slack, Adobe, AWS, and more"
-              className="w-full h-auto object-cover"
-              width={1600}
-              height={900}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-            />
+            <picture>
+              <source
+                type="image/webp"
+                srcSet={`${softwareCollage800} 800w, ${softwareCollage} 1024w`}
+                sizes="(max-width: 768px) 100vw, 1024px"
+              />
+              <img
+                src={softwareCollageJpg}
+                alt="Software ecosystem showcasing popular business tools like Salesforce, Slack, Adobe, AWS, and more"
+                className="w-full h-auto object-cover"
+                width={1024}
+                height={559}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </picture>
           </div>
         </motion.div>
       </div>

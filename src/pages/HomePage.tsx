@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
@@ -8,23 +9,26 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
+// Above-the-fold: eager
 import { HeroSection } from "@/components/home/HeroSection";
-import { StatsSection } from "@/components/home/StatsSection";
 import { TrustedBySection } from "@/components/home/TrustedBySection";
-import { HowItWorksSection } from "@/components/home/HowItWorksSection";
-import { NewsletterSection } from "@/components/home/NewsletterSection";
-import { PopularComparisonsSection } from "@/components/home/PopularComparisonsSection";
-import { FAQSection } from "@/components/home/FAQSection";
-import { BlogPreviewSection } from "@/components/home/BlogPreviewSection";
-import { VendorCTASection } from "@/components/home/VendorCTASection";
+import { StatsSection } from "@/components/home/StatsSection";
 import { MostPopularCategoriesSection } from "@/components/home/MostPopularCategoriesSection";
-import { TrendingProductsSection } from "@/components/home/TrendingProductsSection";
-import { ProductFinderQuiz } from "@/components/home/ProductFinderQuiz";
 import { ReadingProgress } from "@/components/home/ReadingProgress";
 import { StickyMobileCTA } from "@/components/home/StickyMobileCTA";
-import { RecentlyAddedSection } from "@/components/home/RecentlyAddedSection";
-import { DealsShowcaseSection } from "@/components/home/DealsShowcaseSection";
 import { useHomepageSection } from "@/hooks/useHomepageSection";
+
+// Below-the-fold: lazy-loaded to shrink initial JS
+const HowItWorksSection = lazy(() => import("@/components/home/HowItWorksSection").then(m => ({ default: m.HowItWorksSection })));
+const NewsletterSection = lazy(() => import("@/components/home/NewsletterSection").then(m => ({ default: m.NewsletterSection })));
+const PopularComparisonsSection = lazy(() => import("@/components/home/PopularComparisonsSection").then(m => ({ default: m.PopularComparisonsSection })));
+const FAQSection = lazy(() => import("@/components/home/FAQSection").then(m => ({ default: m.FAQSection })));
+const BlogPreviewSection = lazy(() => import("@/components/home/BlogPreviewSection").then(m => ({ default: m.BlogPreviewSection })));
+const VendorCTASection = lazy(() => import("@/components/home/VendorCTASection").then(m => ({ default: m.VendorCTASection })));
+const TrendingProductsSection = lazy(() => import("@/components/home/TrendingProductsSection").then(m => ({ default: m.TrendingProductsSection })));
+const ProductFinderQuiz = lazy(() => import("@/components/home/ProductFinderQuiz").then(m => ({ default: m.ProductFinderQuiz })));
+const RecentlyAddedSection = lazy(() => import("@/components/home/RecentlyAddedSection").then(m => ({ default: m.RecentlyAddedSection })));
+const DealsShowcaseSection = lazy(() => import("@/components/home/DealsShowcaseSection").then(m => ({ default: m.DealsShowcaseSection })));
 
 const SITE_URL = "https://reviewhunts.com";
 
