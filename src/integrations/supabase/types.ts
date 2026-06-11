@@ -1086,6 +1086,7 @@ export type Database = {
           logo_url: string | null
           product_id: string | null
           product_name: string
+          review_status: string
           slug: string
           start_date: string | null
           updated_at: string
@@ -1107,6 +1108,7 @@ export type Database = {
           logo_url?: string | null
           product_id?: string | null
           product_name: string
+          review_status?: string
           slug: string
           start_date?: string | null
           updated_at?: string
@@ -1128,6 +1130,7 @@ export type Database = {
           logo_url?: string | null
           product_id?: string | null
           product_name?: string
+          review_status?: string
           slug?: string
           start_date?: string | null
           updated_at?: string
