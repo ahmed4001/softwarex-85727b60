@@ -152,7 +152,7 @@ function CommentRow({
   const initial = name[0]?.toUpperCase() || "?";
   return (
     <div className="flex gap-3">
-      <Link to={`/author/${c.user_id}`} className="flex-shrink-0">
+      <Link to={`/author/${c.profile?.username || c.user_id}`} className="flex-shrink-0">
         {c.profile?.avatar_url ? (
           <img src={c.profile.avatar_url} alt={name} className="h-9 w-9 rounded-full object-cover" />
         ) : (
