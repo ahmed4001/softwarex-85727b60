@@ -290,18 +290,20 @@ Deno.serve(async (req) => {
         (ex || []).forEach((r: any) => existingUrls.add(r.deal_url));
       }
 
-      const enriched = all.map((d) => {
-        const domain = extractDomain(d.merchant_domain) || extractDomain(d.deal_url);
+      const enriched = await Promise.all(all.map(async (d) => {
+        const domain = extractDomain(d.merchant_domain) || extractDomain(d.deal_url) || extractDomain(d.official_website);
         const matched = domain ? productMap.get(domain) : null;
+        const resolvedLogo = matched?.logo_url || await resolveLogoUrl(d.logo_url, domain);
         return {
           ...d,
           domain,
+          logo_url: resolvedLogo,
           matched_product_id: matched?.id ?? null,
           matched_product_name: matched?.name ?? null,
           matched_logo_url: matched?.logo_url ?? null,
           already_exists: existingUrls.has(d.deal_url),
         };
-      });
+      }));
 
       return new Response(JSON.stringify({ success: true, deals: enriched, pages_scraped: sourcePages.length }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
