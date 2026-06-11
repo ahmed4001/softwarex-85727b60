@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { StarRating } from "./StarRating";
 import { ProductLogo } from "./ProductLogo";
+import { CategoryBadge } from "./CategoryBadge";
 import { ArrowUpRight, Sparkles, Bookmark, ArrowLeftRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
