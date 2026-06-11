@@ -118,8 +118,10 @@ export default function DealDetailPage() {
   }
 
   const canonical = `${SITE_URL}/deals/${deal.slug}`;
-  const ogTitle = `${deal.product_name} Deal${deal.discount_amount ? ` — ${deal.discount_amount}${deal.discount_type === "percent" ? "%" : ""} OFF` : ""}`;
-  const ogDesc = deal.description || `Save on ${deal.product_name}. Exclusive coupon and offer.`;
+  const fallbackTitle = `${deal.product_name} Deal${deal.discount_amount ? ` — ${deal.discount_amount}${deal.discount_type === "percent" ? "%" : ""} OFF` : ""}`;
+  const ogTitle = (deal as any).meta_title || fallbackTitle;
+  const ogDesc = (deal as any).meta_description || deal.description || `Save on ${deal.product_name}. Exclusive coupon and offer.`;
+  const seoKeywords: string[] = Array.isArray((deal as any).seo_keywords) ? (deal as any).seo_keywords : [];
 
   const jsonLd = [
     {
