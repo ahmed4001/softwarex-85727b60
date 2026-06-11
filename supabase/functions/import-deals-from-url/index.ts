@@ -280,15 +280,26 @@ Deno.serve(async (req) => {
         }
       }
 
-      for (const page of sourcePages) {
-        if (!page.markdown) continue;
-        try {
-          const deals = await extractDealsWithAI(LOVABLE_API_KEY, page.markdown, page.url);
-          for (const d of deals) all.push({ ...d, source_url: page.url });
-        } catch (e) {
-          console.warn("AI extract error", e);
-        }
-      }
+      // Parallelize AI extraction across pages (with concurrency cap) so we
+      // don't blow the 150s edge-function idle timeout on crawls of many pages.
+      const pages = sourcePages.filter((p) => p.markdown).slice(0, 25);
+      const CONCURRENCY = 5;
+      let cursor = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(CONCURRENCY, pages.length) }, async () => {
+          while (cursor < pages.length) {
+            const idx = cursor++;
+            const page = pages[idx];
+            try {
+              const deals = await extractDealsWithAI(LOVABLE_API_KEY, page.markdown, page.url);
+              for (const d of deals) all.push({ ...d, source_url: page.url });
+            } catch (e) {
+              console.warn("AI extract error", page.url, e);
+            }
+          }
+        }),
+      );
+
 
       // Auto-link to products by domain
       const domains = [...new Set(all.map((d) => extractDomain(d.merchant_domain) || extractDomain(d.deal_url)).filter(Boolean))];
