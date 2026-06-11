@@ -199,9 +199,12 @@ export default function DealsPage() {
   const [email, setEmail] = useState("");
   const [tick, setTick] = useState(Date.now());
   useEffect(() => {
-    const i = setInterval(() => setTick(Date.now()), 60_000);
+    const i = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(i);
   }, []);
+
+  const includeExpired = params.get("expired") === "1";
+  const setIncludeExpired = (v: boolean) => setParam("expired", v ? "1" : null);
 
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ["deals-public"],
