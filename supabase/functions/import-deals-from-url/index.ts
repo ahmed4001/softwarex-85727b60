@@ -53,11 +53,47 @@ async function plainFetchScrape(url: string): Promise<{ markdown: string; links:
   return { markdown: text.slice(0, 20000), links: [...linkSet], url };
 }
 
+function validateScrapeBody(body: Record<string, unknown>): Record<string, unknown> {
+  const allowed = new Set(["url", "formats", "onlyMainContent", "waitFor", "location"]);
+  const sanitized: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) sanitized[key] = body[key];
+  }
+  const stripped = Object.keys(body).filter((k) => !allowed.has(k));
+  if (stripped.length) console.warn("Stripped unrecognized scrape keys:", stripped.join(", "));
+  if (!sanitized.url || typeof sanitized.url !== "string") throw new Error("scrape body missing required 'url'");
+  return sanitized;
+}
+
+function validateCrawlBody(body: Record<string, unknown>): Record<string, unknown> {
+  const allowed = new Set(["url", "limit", "includePaths", "excludePaths", "scrapeOptions"]);
+  const sanitized: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) sanitized[key] = body[key];
+  }
+  if (body.scrapeOptions && typeof body.scrapeOptions === "object") {
+    const so = body.scrapeOptions as Record<string, unknown>;
+    const soAllowed = new Set(["formats"]);
+    const soSanitized: Record<string, unknown> = {};
+    for (const key of soAllowed) {
+      if (key in so) soSanitized[key] = so[key];
+    }
+    const soStripped = Object.keys(so).filter((k) => !soAllowed.has(k));
+    if (soStripped.length) console.warn("Stripped unrecognized scrapeOptions keys:", soStripped.join(", "));
+    sanitized.scrapeOptions = soSanitized;
+  }
+  const stripped = Object.keys(body).filter((k) => !allowed.has(k));
+  if (stripped.length) console.warn("Stripped unrecognized crawl keys:", stripped.join(", "));
+  if (!sanitized.url || typeof sanitized.url !== "string") throw new Error("crawl body missing required 'url'");
+  return sanitized;
+}
+
 async function firecrawlScrape(apiKey: string, url: string) {
+  const body = validateScrapeBody({ url, formats: ["markdown", "links"] });
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url, formats: ["markdown", "links"], onlyMainContent: true }),
+    body: JSON.stringify(body),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error || `Firecrawl scrape failed (${res.status})`);
