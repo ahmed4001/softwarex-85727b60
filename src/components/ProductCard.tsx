@@ -169,7 +169,7 @@ export function ProductCard({ id, slug, name, tagline, logo_url, avg_rating, tot
               </div>
               <div className="flex items-center gap-2 mt-2">
                 {category_name && (
-                  <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-medium">{category_name}</span>
+                  <CategoryBadge name={category_name} />
                 )}
                 {pricing_model && (
                   <span className="text-[11px] text-muted-foreground capitalize font-medium">{pricing_model}</span>
