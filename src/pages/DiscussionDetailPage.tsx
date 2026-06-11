@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,9 +12,11 @@ import { ArrowUp, ArrowLeft, Pin, Lock, CheckCircle, MessageCircle } from "lucid
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
+import { isUuid } from "@/lib/identifier";
 
 export default function DiscussionDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [replyBody, setReplyBody] = useState("");
@@ -22,21 +24,32 @@ export default function DiscussionDetailPage() {
   const { data: discussion, isLoading } = useQuery({
     queryKey: ["discussion", id],
     queryFn: async () => {
-      const { data } = await supabase.from("discussions").select("*").eq("id", id!).single();
+      // Look up by slug first; UUID fallback preserves legacy /discussions/<uuid> links.
+      const column = isUuid(id) ? "id" : "slug";
+      const { data } = await supabase.from("discussions").select("*").eq(column, id!).maybeSingle();
       if (!data) return null;
-      const { data: profile } = await supabase.from("profiles").select("user_id, name, avatar_url").eq("user_id", data.user_id).single();
+      const { data: profile } = await supabase.from("profiles").select("user_id, username, name, avatar_url").eq("user_id", data.user_id).single();
       return { ...data, profile };
     },
     enabled: !!id,
   });
 
+  // Canonical redirect from UUID → slug for SEO.
+  useEffect(() => {
+    if (discussion && isUuid(id) && (discussion as any).slug) {
+      navigate(`/discussions/${(discussion as any).slug}`, { replace: true });
+    }
+  }, [discussion, id, navigate]);
+
+  const discussionId = (discussion as any)?.id as string | undefined;
+
   const { data: replies = [] } = useQuery({
-    queryKey: ["discussion-replies", id],
+    queryKey: ["discussion-replies", discussionId],
     queryFn: async () => {
       const { data } = await supabase
         .from("discussion_replies")
         .select("*")
-        .eq("discussion_id", id!)
+        .eq("discussion_id", discussionId!)
         .order("created_at", { ascending: true });
       if (!data?.length) return [];
       const userIds = [...new Set(data.map((r: any) => r.user_id))];
@@ -44,8 +57,9 @@ export default function DiscussionDetailPage() {
       const pMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       return data.map((r: any) => ({ ...r, profile: pMap.get(r.user_id) }));
     },
-    enabled: !!id,
+    enabled: !!discussionId,
   });
+
 
   const { data: myVotes = [] } = useQuery({
     queryKey: ["discussion-my-votes", id, user?.id],
