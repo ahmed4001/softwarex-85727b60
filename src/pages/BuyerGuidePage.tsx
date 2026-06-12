@@ -22,11 +22,12 @@ export default function BuyerGuidePage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("buyer_guides")
-        .select("*")
+        .select("*, categories:category_id(id, name, slug)")
         .eq("slug", slug!)
         .eq("is_published", true)
         .single();
       return data;
+
     },
     enabled: !!slug,
   });
