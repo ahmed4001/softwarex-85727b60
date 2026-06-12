@@ -148,8 +148,17 @@ export default function BuyerGuidePage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          <RelatedInternalLinks
+            categoryId={(guide as any)?.categories?.id || (guide as any)?.category_id}
+            categorySlug={(guide as any)?.categories?.slug}
+            categoryName={(guide as any)?.categories?.name}
+            excludeGuideSlug={slug}
+            title="More guides and resources"
+          />
         </motion.div>
       </main>
     </>
   );
 }
+
