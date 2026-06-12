@@ -23,7 +23,7 @@ const staticEntries: Entry[] = [
   { loc: "/awards", changefreq: "monthly", priority: "0.6" },
   { loc: "/lists", changefreq: "weekly", priority: "0.6" },
   { loc: "/stacks", changefreq: "weekly", priority: "0.6" },
-  { loc: "/buyer-guides", changefreq: "weekly", priority: "0.7" },
+  { loc: "/guides", changefreq: "weekly", priority: "0.7" },
   { loc: "/glossary", changefreq: "monthly", priority: "0.5" },
   { loc: "/partners", changefreq: "monthly", priority: "0.5" },
   { loc: "/pricing", changefreq: "monthly", priority: "0.6" },
@@ -85,7 +85,7 @@ async function main() {
   push(posts, "/blog", "0.7");
   push(comparisons, "/compare", "0.7");
   push(pages, "/page", "0.5");
-  push(guides, "/buyer-guides", "0.6");
+  push(guides, "/guides", "0.6");
   push(lists, "/lists", "0.5");
   push(glossary, "/glossary", "0.4");
   push(landing, "", "0.6");
