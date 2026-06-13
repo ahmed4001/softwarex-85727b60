@@ -1,5 +1,7 @@
-// Generates public/sitemap.xml at predev/prebuild time.
-// Fetches dynamic slugs from Supabase via the public REST API (anon key).
+// Generates a sitemap INDEX plus per-type child sitemaps at predev/prebuild.
+// Splitting helps Google process high-value URLs first and reduces "Discovered –
+// currently not indexed" backlog. Only quality URLs are included; thin pages
+// (empty tag/author/category) are skipped.
 
 import { writeFileSync } from "fs";
 import { resolve } from "path";
@@ -13,115 +15,21 @@ const SUPABASE_KEY =
 
 interface Entry { loc: string; lastmod?: string; changefreq?: string; priority?: string; }
 
-const staticEntries: Entry[] = [
-  { loc: "/", changefreq: "daily", priority: "1.0" },
-  { loc: "/categories", changefreq: "weekly", priority: "0.9" },
-  { loc: "/search", changefreq: "weekly", priority: "0.7" },
-  { loc: "/compare", changefreq: "weekly", priority: "0.7" },
-  { loc: "/blog", changefreq: "daily", priority: "0.8" },
-  { loc: "/leaderboard", changefreq: "weekly", priority: "0.6" },
-  { loc: "/awards", changefreq: "monthly", priority: "0.6" },
-  { loc: "/lists", changefreq: "weekly", priority: "0.6" },
-  { loc: "/stacks", changefreq: "weekly", priority: "0.6" },
-  { loc: "/guides", changefreq: "weekly", priority: "0.7" },
-  { loc: "/glossary", changefreq: "monthly", priority: "0.5" },
-  { loc: "/partners", changefreq: "monthly", priority: "0.5" },
-  { loc: "/pricing", changefreq: "monthly", priority: "0.6" },
-  { loc: "/discussions", changefreq: "daily", priority: "0.6" },
-  { loc: "/activity", changefreq: "daily", priority: "0.4" },
-];
+const today = new Date().toISOString().split("T")[0];
 
 async function fetchTable(table: string, select: string, filter = ""): Promise<any[]> {
   try {
-    const url = `${SUPABASE_URL}/rest/v1/${table}?select=${select}${filter}&limit=2000`;
-    const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
-    });
-    if (!res.ok) {
-      console.warn(`[sitemap] ${table} -> ${res.status}`);
-      return [];
-    }
+    const url = `${SUPABASE_URL}/rest/v1/${table}?select=${select}${filter}&limit=5000`;
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    if (!res.ok) { console.warn(`[sitemap] ${table} -> ${res.status}`); return []; }
     return await res.json();
-  } catch (e) {
-    console.warn(`[sitemap] ${table} failed`, e);
-    return [];
-  }
+  } catch (e) { console.warn(`[sitemap] ${table} failed`, e); return []; }
 }
 
-function fmt(d?: string): string | undefined { return d ? d.split("T")[0] : undefined; }
+const fmt = (d?: string) => d ? d.split("T")[0] : undefined;
+const xmlEscape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-function xmlEscape(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-async function main() {
-  const entries: Entry[] = staticEntries.map(e => ({ ...e, loc: `${BASE_URL}${e.loc}` }));
-
-  const [products, categories, posts, comparisons, pages, guides, lists, glossary, landing, discussions, profilesData] =
-    await Promise.all([
-      fetchTable("products", "slug,updated_at", "&is_active=eq.true"),
-      fetchTable("categories", "slug,updated_at", "&is_active=eq.true"),
-      fetchTable("blog_posts", "slug,updated_at,tags,category,author_id", "&status=eq.published"),
-      fetchTable("comparisons", "slug,created_at", "&is_published=eq.true"),
-      fetchTable("pages", "slug,updated_at", "&is_active=eq.true"),
-      fetchTable("buyer_guides", "slug,updated_at"),
-      fetchTable("lists", "slug,updated_at", "&is_published=eq.true"),
-      fetchTable("glossary_terms", "slug,updated_at"),
-      fetchTable("keyword_landing_pages", "slug,updated_at", "&is_published=eq.true"),
-      fetchTable("discussions", "slug,updated_at"),
-      // user_id → username map so author/user URLs use SEO-friendly slugs
-      fetchTable("profiles", "user_id,username,updated_at"),
-    ]);
-
-
-  const push = (rows: any[], prefix: string, priority = "0.7") => {
-    for (const r of rows || []) {
-      if (!r?.slug) continue;
-      entries.push({ loc: `${BASE_URL}${prefix}/${r.slug}`, lastmod: fmt(r.updated_at), priority });
-    }
-  };
-  push(products, "/product", "0.8");
-  push(categories, "/category", "0.8");
-  push(posts, "/blog", "0.7");
-  push(comparisons, "/compare", "0.7");
-  push(pages, "/page", "0.5");
-  push(guides, "/guides", "0.6");
-  push(lists, "/lists", "0.5");
-  push(glossary, "/glossary", "0.4");
-  push(landing, "", "0.6");
-  push(discussions, "/discussions", "0.5");
-
-  // Build user_id → username lookup for SEO-friendly author/user URLs.
-  const usernameMap = new Map<string, string>();
-  for (const p of profilesData || []) {
-    if (p?.user_id && p?.username) usernameMap.set(String(p.user_id), String(p.username));
-  }
-
-  // Blog taxonomy + author pages derived from published posts.
-  const tagSet = new Set<string>();
-  const categorySet = new Set<string>();
-  const authorSet = new Set<string>();
-  for (const p of posts || []) {
-    if (Array.isArray(p?.tags)) for (const t of p.tags) if (t) tagSet.add(String(t));
-    if (p?.category) categorySet.add(String(p.category));
-    if (p?.author_id) authorSet.add(String(p.author_id));
-  }
-  const slugify = (s: string) =>
-    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  for (const tag of tagSet) {
-    entries.push({ loc: `${BASE_URL}/blog/tag/${encodeURIComponent(slugify(tag))}`, priority: "0.5" });
-  }
-  for (const cat of categorySet) {
-    entries.push({ loc: `${BASE_URL}/blog/category/${encodeURIComponent(slugify(cat))}`, priority: "0.5" });
-  }
-  for (const id of authorSet) {
-    const handle = usernameMap.get(id) || id;
-    entries.push({ loc: `${BASE_URL}/author/${handle}`, priority: "0.4" });
-  }
-
-
-
-
+function buildUrlset(entries: Entry[]): string {
   const body = entries.map(e => [
     "  <url>",
     `    <loc>${xmlEscape(e.loc)}</loc>`,
@@ -130,10 +38,96 @@ async function main() {
     e.priority ? `    <priority>${e.priority}</priority>` : null,
     "  </url>",
   ].filter(Boolean).join("\n")).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+}
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
-  writeFileSync(resolve("public/sitemap.xml"), xml);
-  console.log(`[sitemap] wrote ${entries.length} URLs to public/sitemap.xml`);
+function writeSitemap(filename: string, entries: Entry[]) {
+  if (!entries.length) return null;
+  writeFileSync(resolve(`public/${filename}`), buildUrlset(entries));
+  console.log(`[sitemap] ${filename}: ${entries.length} URLs`);
+  return filename;
+}
+
+async function main() {
+  // ---- Static high-priority pages ----
+  const staticEntries: Entry[] = [
+    { loc: "/", changefreq: "daily", priority: "1.0" },
+    { loc: "/categories", changefreq: "weekly", priority: "0.9" },
+    { loc: "/search", changefreq: "weekly", priority: "0.6" },
+    { loc: "/compare", changefreq: "weekly", priority: "0.7" },
+    { loc: "/blog", changefreq: "daily", priority: "0.8" },
+    { loc: "/leaderboard", changefreq: "weekly", priority: "0.6" },
+    { loc: "/awards", changefreq: "monthly", priority: "0.5" },
+    { loc: "/lists", changefreq: "weekly", priority: "0.6" },
+    { loc: "/stacks", changefreq: "weekly", priority: "0.6" },
+    { loc: "/guides", changefreq: "weekly", priority: "0.7" },
+    { loc: "/glossary", changefreq: "monthly", priority: "0.5" },
+    { loc: "/partners", changefreq: "monthly", priority: "0.4" },
+    { loc: "/pricing", changefreq: "monthly", priority: "0.6" },
+    { loc: "/discussions", changefreq: "daily", priority: "0.5" },
+  ].map(e => ({ ...e, loc: `${BASE_URL}${e.loc}`, lastmod: today }));
+
+  // ---- Fetch all content ----
+  const [products, categories, posts, comparisons, pages, guides, lists, glossary, landing, discussions] =
+    await Promise.all([
+      // Quality filter: must have description (skip thin pages Google would mark "Crawled - not indexed")
+      fetchTable("products", "slug,updated_at,description", "&is_active=eq.true"),
+      fetchTable("categories", "slug,updated_at,description", "&is_active=eq.true"),
+      fetchTable("blog_posts", "slug,updated_at", "&status=eq.published"),
+      fetchTable("comparisons", "slug,created_at", "&is_published=eq.true"),
+      fetchTable("pages", "slug,updated_at", "&is_active=eq.true"),
+      fetchTable("buyer_guides", "slug,updated_at"),
+      fetchTable("lists", "slug,updated_at", "&is_published=eq.true"),
+      fetchTable("glossary_terms", "slug,updated_at,definition"),
+      fetchTable("keyword_landing_pages", "slug,updated_at", "&is_published=eq.true"),
+      fetchTable("discussions", "slug,updated_at"),
+    ]);
+
+  const toEntries = (rows: any[], prefix: string, priority: string, qualityKey?: string): Entry[] =>
+    (rows || [])
+      .filter(r => r?.slug && (!qualityKey || (r[qualityKey] && String(r[qualityKey]).length > 40)))
+      .map(r => ({
+        loc: `${BASE_URL}${prefix}/${r.slug}`,
+        lastmod: fmt(r.updated_at || r.created_at) || today,
+        priority,
+      }));
+
+  const productEntries = toEntries(products, "/product", "0.8", "description");
+  const categoryEntries = toEntries(categories, "/category", "0.8", "description");
+  const blogEntries = toEntries(posts, "/blog", "0.7");
+  const compareEntries = toEntries(comparisons, "/compare", "0.7");
+  const pageEntries = toEntries(pages, "/page", "0.5");
+  const guideEntries = toEntries(guides, "/guides", "0.6");
+  const listEntries = toEntries(lists, "/lists", "0.5");
+  const glossaryEntries = toEntries(glossary, "/glossary", "0.4", "definition");
+  const discussionEntries = toEntries(discussions, "/discussions", "0.4");
+  const landingEntries = (landing || [])
+    .filter(r => r?.slug)
+    .map(r => ({ loc: `${BASE_URL}/${r.slug}`, lastmod: fmt(r.updated_at) || today, priority: "0.6" }));
+
+  // ---- Write per-type child sitemaps ----
+  const childMaps: string[] = [];
+  const add = (name: string, entries: Entry[]) => {
+    const f = writeSitemap(name, entries);
+    if (f) childMaps.push(f);
+  };
+  add("sitemap-main.xml", [...staticEntries, ...pageEntries]);
+  add("sitemap-products.xml", productEntries);
+  add("sitemap-categories.xml", categoryEntries);
+  add("sitemap-blog.xml", blogEntries);
+  add("sitemap-comparisons.xml", compareEntries);
+  add("sitemap-guides.xml", [...guideEntries, ...listEntries]);
+  add("sitemap-glossary.xml", glossaryEntries);
+  add("sitemap-landing.xml", landingEntries);
+  add("sitemap-discussions.xml", discussionEntries);
+
+  // ---- Write sitemap index ----
+  const indexBody = childMaps.map(name =>
+    `  <sitemap>\n    <loc>${BASE_URL}/${name}</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>`
+  ).join("\n");
+  const indexXml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexBody}\n</sitemapindex>\n`;
+  writeFileSync(resolve("public/sitemap.xml"), indexXml);
+  console.log(`[sitemap] sitemap.xml index: ${childMaps.length} child sitemaps`);
 }
 
 main().catch(err => { console.error(err); process.exit(0); });

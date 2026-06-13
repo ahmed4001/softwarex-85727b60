@@ -4,9 +4,16 @@ Disallow: /admin/
 Disallow: /vendor/
 Disallow: /login
 Disallow: /dashboard
+Disallow: /author/
+Disallow: /blog/tag/
+Disallow: /blog/category/
+Disallow: /*?*
 
 User-agent: Googlebot
 Allow: /
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /author/
 
 User-agent: Bingbot
 Allow: /
