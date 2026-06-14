@@ -211,6 +211,23 @@ export function PublicFooter() {
               loading="lazy"
             />
           </a>
+          <a href="https://launchpadly.co/startup/reviewhunts" target="_blank" rel="noopener noreferrer" data-launchpadly-badge="reviewhunts" data-launchpadly-badge-variant="listed-on">
+            <img
+              src="https://launchpadly.co/embed/badges/startup/reviewhunts.svg?variant=listed-on"
+              alt="Launchpadly Startup Directory"
+              width={260}
+              height={48}
+              style={{ display: "block", border: 0 }}
+              loading="lazy"
+            />
+          </a>
+          <a href="https://indieshowcase.io" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://indieshowcase.io/badge/featured-dark.svg"
+              alt="Featured"
+              loading="lazy"
+            />
+          </a>
         </div>
       </div>
     </footer>
