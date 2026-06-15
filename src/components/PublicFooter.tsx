@@ -228,6 +228,15 @@ export function PublicFooter() {
               loading="lazy"
             />
           </a>
+          <a
+            href="https://launchpadly.co/startup/reviewhunts"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-launchpadly-badge="reviewhunts"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Proudly listed on Launchpadly Startup Directory
+          </a>
         </div>
       </div>
     </footer>
