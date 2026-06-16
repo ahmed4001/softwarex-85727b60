@@ -83,10 +83,10 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
             />
             {screenshots.length > 1 && (
               <>
-                <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors">
+                <button onClick={prev} aria-label="Previous screenshot" type="button" className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors">
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors">
+                <button onClick={next} aria-label="Next screenshot" type="button" className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors">
                   <ChevronRight className="h-5 w-5" />
                 </button>
               </>
@@ -380,7 +380,7 @@ export default function ProductDetailPage() {
                 {product.logo_url ? <img src={product.logo_url} alt={product.name} className="h-full w-full object-cover" /> : <span className="text-3xl sm:text-4xl font-display font-bold gradient-text">{product.name.charAt(0)}</span>}
               </div>
               <div className="flex-1 lg:hidden min-w-0">
-                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight">{product.name}</h1>
+                <p className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight" role="heading" aria-level={1}>{product.name}</p>
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
                   {product.is_verified && (
                     <Badge className="bg-success/10 text-success border-0 gap-1 font-semibold text-[10px]"><CheckCircle className="h-3 w-3" />{t("productDetail.verified")}</Badge>
