@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FooterBadge, DEFAULT_FOOTER_BADGES, type FooterBadgeItem } from "@/components/FooterBadge";
+import { DEFAULT_FOOTER_BADGES, type FooterBadgeItem } from "@/components/FooterBadge";
+import { BadgeMarquee } from "@/components/BadgeMarquee";
 const logoAsset = { url: "/reviewhunts-logo.png" };
 
 
