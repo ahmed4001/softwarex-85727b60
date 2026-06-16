@@ -24,4 +24,4 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-Sitemap: https://reviewhunts.com/sitemap.xml
+Sitemap: https://softwarex.lovable.app/sitemap.xml

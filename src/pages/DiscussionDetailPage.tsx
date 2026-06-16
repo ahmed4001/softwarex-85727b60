@@ -118,7 +118,15 @@ export default function DiscussionDetailPage() {
 
   return (
     <>
-      <SeoHead title={discussion.title} />
+      <SeoHead
+        title={discussion.title}
+        description={
+          (discussion as any).body
+            ? String((discussion as any).body).replace(/\s+/g, " ").trim().slice(0, 155)
+            : `Join the discussion: ${discussion.title}. Read community insights, replies, and expert takes on ReviewHunts.`
+        }
+        type="article"
+      />
       <div className="container py-8 max-w-3xl">
         <Link to="/discussions" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Back to Discussions

@@ -43,7 +43,15 @@ export function SeoHead({
   const settings = useSeoSettings();
 
   const siteName = settings.siteName || "ReviewHunts";
-  const fullTitle = `${title} | ${siteName}`;
+  // Keep combined title under 60 chars for SERP display: trim page title
+  // when concatenation with " | siteName" would overflow.
+  const suffix = ` | ${siteName}`;
+  const MAX = 60;
+  const trimmedTitle =
+    title.length + suffix.length > MAX
+      ? title.slice(0, Math.max(0, MAX - suffix.length - 1)).trimEnd() + "…"
+      : title;
+  const fullTitle = `${trimmedTitle}${suffix}`;
   const effectiveDescription = description || settings.defaultDescription;
   const effectiveKeywords = keywords || settings.defaultKeywords;
   const effectiveOgImage = ogImage || settings.defaultOgImage;
