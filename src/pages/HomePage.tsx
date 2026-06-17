@@ -53,7 +53,7 @@ const organizationJsonLd = {
   "@type": "Organization",
   name: "ReviewHunts",
   url: SITE_URL,
-  logo: `${SITE_URL}/favicon.ico`,
+  logo: `${SITE_URL}/reviewhunts-logo.png`,
   description: "ReviewHunts helps businesses discover, compare, and choose the best software tools through verified user reviews and expert analysis.",
   sameAs: [],
   contactPoint: {
