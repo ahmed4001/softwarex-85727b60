@@ -52,9 +52,19 @@ export function SeoHead({
       ? title.slice(0, Math.max(0, MAX - suffix.length - 1)).trimEnd() + "…"
       : title;
   const fullTitle = `${trimmedTitle}${suffix}`;
-  const effectiveDescription = description || settings.defaultDescription;
+  const FALLBACK_DESCRIPTION =
+    "ReviewHunts helps you discover, compare, and review top software tools. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories.";
+  const FALLBACK_OG_IMAGE = "/og-image.png";
+  const effectiveDescription = description || settings.defaultDescription || FALLBACK_DESCRIPTION;
   const effectiveKeywords = keywords || settings.defaultKeywords;
-  const effectiveOgImage = ogImage || settings.defaultOgImage;
+  const effectiveOgImage = ogImage || settings.defaultOgImage || FALLBACK_OG_IMAGE;
+
+  // Dev-only: warn loudly if any critical SEO field is missing or falls back.
+  if (import.meta.env?.DEV && typeof window !== "undefined") {
+    if (!title || title === siteName) console.warn("[SeoHead] Missing/generic title", { route: window.location.pathname });
+    if (!description) console.warn("[SeoHead] Missing description (using fallback)", { route: window.location.pathname });
+    if (!ogImage && !settings.defaultOgImage) console.warn("[SeoHead] Missing og:image (using fallback)", { route: window.location.pathname });
+  }
 
   const rawJsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
   // Runtime validation: drop malformed blocks before they reach <head>.

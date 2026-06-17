@@ -2,18 +2,13 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /vendor/
-Disallow: /login
 Disallow: /dashboard
-Disallow: /author/
-Disallow: /blog/tag/
-Disallow: /blog/category/
-Disallow: /*?*
+Disallow: /login
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin/
 Disallow: /vendor/
-Disallow: /author/
 
 User-agent: Bingbot
 Allow: /
@@ -22,6 +17,18 @@ User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://reviewhunts.com/sitemap.xml
