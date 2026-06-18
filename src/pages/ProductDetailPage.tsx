@@ -380,7 +380,7 @@ export default function ProductDetailPage() {
                 {product.logo_url ? <img src={product.logo_url} alt={product.name} className="h-full w-full object-cover" /> : <span className="text-3xl sm:text-4xl font-display font-bold gradient-text">{product.name.charAt(0)}</span>}
               </div>
               <div className="flex-1 lg:hidden min-w-0">
-                <p className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight" role="heading" aria-level={1}>{product.name}</p>
+                <p className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight" aria-hidden="true">{product.name}</p>
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
                   {product.is_verified && (
                     <Badge className="bg-success/10 text-success border-0 gap-1 font-semibold text-[10px]"><CheckCircle className="h-3 w-3" />{t("productDetail.verified")}</Badge>

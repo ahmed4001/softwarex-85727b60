@@ -238,7 +238,7 @@ export default function ComparePage() {
                   {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
                 </div>
                 <span className="text-sm font-semibold text-foreground">{p.name}</span>
-                <button onClick={() => removeProduct(p.id)} className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                <button onClick={() => removeProduct(p.id)} aria-label={`Remove ${p.name} from comparison`} className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </motion.div>

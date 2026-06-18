@@ -53,7 +53,7 @@ export function SeoHead({
       : title;
   const fullTitle = `${trimmedTitle}${suffix}`;
   const FALLBACK_DESCRIPTION =
-    "ReviewHunts helps you discover, compare, and review top software tools. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories.";
+    "Discover, compare, and review top software tools. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories.";
   const FALLBACK_OG_IMAGE = "/og-image.png";
   const effectiveDescription = description || settings.defaultDescription || FALLBACK_DESCRIPTION;
   const effectiveKeywords = keywords || settings.defaultKeywords;
