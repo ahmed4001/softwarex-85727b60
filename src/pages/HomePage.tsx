@@ -189,7 +189,7 @@ export default function HomePage() {
     <>
       <SeoHead
         title="Best Software Reviews & Comparisons 2026"
-        description="Find the best business software with 10,000+ verified user reviews. Compare CRM, project management, marketing automation, and 50+ SaaS categories. Free forever."
+        description="Find the best business software with 10,000+ verified reviews. Compare CRM, project management, and 50+ SaaS categories. Free forever."
         keywords="software reviews, SaaS comparison, best business software, CRM software, project management tools, marketing automation, software ratings, B2B software, software directory, business tools comparison, best SaaS tools 2026, software recommendations, enterprise software reviews, SMB software guide"
         canonicalUrl={SITE_URL}
         ogImage={`${SITE_URL}/og-image.png`}
