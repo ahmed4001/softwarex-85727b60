@@ -272,7 +272,7 @@ export default function CategoryPage() {
 
                   <Sheet onOpenChange={(o) => o && handleFilterDrawerOpen("tier")}>
                     <SheetTrigger asChild>
-                      <Button variant="outline" size="sm" className="rounded-xl h-9 w-9 p-0 flex-shrink-0 relative">
+                      <Button variant="outline" size="sm" aria-label="Open tier filters" className="rounded-xl h-9 w-9 p-0 flex-shrink-0 relative">
                         <ListFilter className="h-4 w-4" />
                         {tierFilter !== "all" && <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary" />}
                       </Button>
