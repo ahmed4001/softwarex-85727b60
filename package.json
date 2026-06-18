@@ -9,6 +9,8 @@
     "prebuild": "tsx scripts/generate-sitemap.ts || true",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "prerender": "tsx scripts/prerender.ts",
+    "build:prerender": "vite build && tsx scripts/prerender.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
