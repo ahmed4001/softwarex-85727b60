@@ -1,42 +1,69 @@
-# Sitewide Improvements — Phased Plan
+## Goal
 
-26 items is too much for a single change without breaking things. I'll ship in 5 focused phases. You approve once; I'll execute Phase 1 immediately, then continue through the phases unless you say stop.
+Extend `scripts/prerender.ts` so the build snapshots fully-rendered HTML for every DB-driven detail page (products, categories, blog, glossary, comparisons, alternatives, buyer guides) in addition to the static marketing routes it already covers.
 
-## Phase 1 — Critical fixes (ship first)
-1. **A11y sweep** — add `aria-label` to every icon-only button (NotificationBell, FollowButton, ProductWatchButton, ReviewReactions, header menu, search clear, etc.).
-2. **Mobile header search drawer** — collapse SearchBar into an icon on <768px; tap opens a full-width sheet.
-3. **Route error boundaries** — wrap every lazy route in `RouteErrorBoundary` so a single page failure doesn't blank the app.
-4. **Toast position on mobile** — top-center on <640px to avoid covering bottom UI.
+## Approach
 
-## Phase 2 — UX wins
-5. **URL-synced filters** on CategoryPage + SearchPage (shareable/bookmarkable).
-6. **Sticky Compare bar** — bottom pill that appears when ≥2 products are added, with Compare / Clear actions.
-7. **Standardized empty states** — audit all list pages to use `<EmptyState>` with CTA.
-8. **Smart 404** — `NotFound` suggests products/categories based on the bad slug.
-9. **Review form autosave** to localStorage with restore prompt.
+Reuse the same Supabase REST pattern from `scripts/generate-sitemap.ts` (anon key, `/rest/v1/<table>?select=slug&...`) so prerender shares a single source of truth for what's "indexable" and never falls out of sync with the sitemap.
 
-## Phase 3 — Performance
-10. **Lazy-load heavy components**: Hero3DScene, IntegrationGraph, RatingTrendChart, RichTextEditor, ProductAIChatbot.
-11. **Image attrs**: `loading="lazy"`, explicit width/height, `decoding="async"` on ProductLogo + screenshots.
-12. **TanStack Query staleTime** tuning for homepage/category queries (5–10 min).
+Add a concurrent Playwright worker pool — the current loop is sequential, which is fine for ~20 routes but unworkable for thousands.
 
-## Phase 4 — SEO
-13. **JSON-LD audit** — ensure Product+AggregateRating on ProductDetail, BreadcrumbList on deep pages, FAQPage where applicable.
-14. **Paginated canonicals** on list pages.
-15. **Glossary auto-linking** inside long-form content (blog/buyer guides).
+Apply quality filters and per-type caps so we don't waste minutes prerendering 9,398 products on every build. Caps are env-overridable for full runs.
 
-## Phase 5 — Engagement & polish
-16. **Notification preferences** screen (which Smart Alerts to receive).
-17. **Onboarding** 3-step modal for new users.
-18. **Claim product CTA** on unclaimed product pages.
-19. **Deal countdown timers** on DealsPage.
-20. **Dark mode QA** pass on gradients/glows.
-21. **Stagger animations** on list reveals.
+### Route shapes (verified against `src/App.tsx` + sitemap generator)
 
-## Technical notes
-- All changes frontend-only except where new tables/columns are required (none in Phase 1–3; Phase 5 #16 may add a `notification_preferences` table — I'll flag before).
-- No design tokens changed; everything uses existing semantic tokens.
-- Each phase ends with a TypeScript check.
+| Type        | Path pattern               | Source table              | Filter                             |
+| ----------- | -------------------------- | ------------------------- | ---------------------------------- |
+| Products    | `/product/:slug`           | `products`                | `is_active=true`, has description  |
+| Categories  | `/category/:slug`          | `categories`              | `is_active=true`, has description  |
+| Blog        | `/blog/:slug`              | `blog_posts`              | `status=published`                 |
+| Glossary    | `/glossary/:slug`          | `glossary_terms`          | `length(definition) > 40`          |
+| Comparisons | `/compare/:slug`           | `comparisons`             | `is_published=true`                |
+| Alternatives| `/alternatives/:slug`      | `alternative_pages`       | (all rows; only 3 today)           |
+| Guides      | `/guides/:slug`            | `buyer_guides`            | (all rows; only 1 today)           |
 
-## What I need from you
-Reply **"go"** to start Phase 1. Say **"only phase X"** to scope down, or **"skip #N"** to drop specific items.
+### Caps (env-overridable)
+
+```
+PRERENDER_LIMIT_PRODUCTS   default 500   (top by avg_rating desc, nulls last)
+PRERENDER_LIMIT_CATEGORIES default 200   (all 138 today)
+PRERENDER_LIMIT_BLOG       default 500   (all 25 today)
+PRERENDER_LIMIT_GLOSSARY   default 500   (1,204 in DB — top 500 by updated_at)
+PRERENDER_LIMIT_COMPARISONS default 500
+PRERENDER_LIMIT_ALTERNATIVES default 500
+PRERENDER_LIMIT_GUIDES     default 500
+PRERENDER_CONCURRENCY      default 6
+PRERENDER_ALL=1            ignores all caps (used on demand / weekly)
+```
+
+Default run: ~138 categories + 25 blog + 500 glossary + 500 products + 3 comparisons + 3 alternatives + 1 guide + ~17 static ≈ **1,190 pages**, ~3-4 min at concurrency 6. Full run with `PRERENDER_ALL=1` would do ~11k pages; user can opt in for nightly/weekly jobs.
+
+## Implementation
+
+Rewrite `scripts/prerender.ts`:
+
+1. **`fetchSlugs(table, opts)`** — small REST helper mirroring `generate-sitemap.ts` (same env-resolved `SUPABASE_URL` + anon key, same filter style), returns `string[]` of slugs. Supports `order` + `limit` query params for the products/glossary caps.
+
+2. **`collectRoutes()`** — runs all 7 fetches in parallel, prepends the existing static route list, dedupes, returns `string[]`.
+
+3. **Worker pool** — replace the `for...of` loop with N parallel workers (default 6) each owning a Playwright `BrowserContext`/`Page`, pulling from a shared queue. Keeps memory bounded (one context per worker, not one per route).
+
+4. **`snapshot()`** — unchanged logic; just add a try/catch that logs and continues (one failed product slug must not abort the whole build). Failures still increment the `fail` counter so `PRERENDER_STRICT=1` can gate CI.
+
+5. **Output paths** — same `dist/<route>/index.html` convention already used. Nested paths (`dist/product/<slug>/index.html`) get `mkdir -p` via `recursive: true` (already in place).
+
+6. **Logging** — switch the per-route log to a periodic progress line (`[prerender] 240/1190 done, 2 failed`) every 25 routes to keep build logs readable.
+
+7. **`vercel.json`** — no change needed; existing rewrite (`"/(.*) → /index.html"`) only fires when no static file matches, so the new nested `index.html` files will take precedence automatically.
+
+## Files touched
+
+- `scripts/prerender.ts` — rewrite (single file, ~180 lines).
+- No package.json changes (script entry `build:prerender` already invokes it).
+- No sitemap changes.
+
+## Out of scope
+
+- Lists, tech-stacks, discussions, pages, keyword landing pages — not requested. (They're in the sitemap; easy to add later by extending the `collectRoutes()` table list.)
+- SSR / Next.js migration — explicitly declined earlier.
+- Hydration mismatch hardening — `data-prerendered="true"` flag is already set; components already tolerate it.
