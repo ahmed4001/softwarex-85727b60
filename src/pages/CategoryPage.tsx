@@ -144,9 +144,9 @@ export default function CategoryPage() {
   return (
     <>
       <SeoHead
-        title={(category as any)?.seo_title || category?.name || t("categories.title")}
-        description={(category as any)?.seo_description || category?.description || t("categories.subtitle")}
-        keywords={(category as any)?.seo_keywords || `${category?.name} software, best ${category?.name} tools, ${category?.name} reviews`}
+        title={(category as any)?.seo_title || (category?.name ? `Best ${category.name} Software in 2026 — Compared` : t("categories.title"))}
+        description={(category as any)?.seo_description || (category?.name ? `Compare the best ${category.name} software in 2026. Real user reviews, pricing, pros & cons across ${totalCount || 'top'} tools — pick the right one in minutes.`.slice(0, 154) : t("categories.subtitle"))}
+        keywords={(category as any)?.seo_keywords || `${category?.name} software, best ${category?.name} tools, ${category?.name} reviews 2026`}
         canonicalUrl={`${window.location.origin}/category/${slug}`}
         jsonLd={[
           {
