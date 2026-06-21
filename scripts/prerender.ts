@@ -24,6 +24,7 @@
  *   PRERENDER_LIMIT_STACKS        default ALL
  *   PRERENDER_LIMIT_DISCUSSIONS   default ALL
  *   PRERENDER_LIMIT_LANDING       default ALL
+ *   PRERENDER_LIMIT_BEST          default ALL
  *   PRERENDER_LIMIT_PROFILES      default ALL
  *   PRERENDER_CONCURRENCY         default 3
  *   PRERENDER_STRICT=1            non-zero exit on any failure
@@ -148,7 +149,7 @@ const landingRoutes = (rows: any[]): string[] =>
     });
 
 async function collectRoutes(): Promise<string[]> {
-  const [products, categories, posts, comparisons, guides, glossary, deals, pages, lists, stacks, discussions, landing, profiles] =
+  const [products, categories, posts, comparisons, guides, glossary, deals, pages, lists, stacks, discussions, landing, bestLanding, profiles] =
     await Promise.all([
       fetchRows("products", "slug", "&is_active=eq.true", "&order=info_score.desc.nullslast,avg_rating.desc.nullslast", cap("PRERENDER_LIMIT_PRODUCTS")),
       fetchRows("categories", "slug", "&is_active=eq.true", "&order=product_count.desc.nullslast", cap("PRERENDER_LIMIT_CATEGORIES")),
@@ -162,6 +163,7 @@ async function collectRoutes(): Promise<string[]> {
       fetchRows("tech_stacks", "slug", "&is_published=eq.true", "&order=updated_at.desc", cap("PRERENDER_LIMIT_STACKS")),
       fetchRows("discussions", "slug", "&slug=not.is.null", "&order=updated_at.desc", cap("PRERENDER_LIMIT_DISCUSSIONS")),
       fetchRows("keyword_landing_pages", "slug,page_type", "&is_published=eq.true&status=eq.published", "&order=updated_at.desc", cap("PRERENDER_LIMIT_LANDING")),
+      fetchRows("seo_landing_pages", "slug", "&is_published=eq.true", "&order=updated_at.desc", cap("PRERENDER_LIMIT_BEST")),
       fetchRows("profiles", "username", "&username=not.is.null&is_banned=is.false", "&order=review_count.desc.nullslast", cap("PRERENDER_LIMIT_PROFILES")),
     ]);
 
@@ -185,11 +187,12 @@ async function collectRoutes(): Promise<string[]> {
     ...toRoutes(stacks, "/stacks"),
     ...toRoutes(discussions, "/discussions"),
     ...landingRoutes(landing),
+    ...toRoutes(bestLanding, "/best"),
     ...profiles.filter((p) => p?.username).flatMap((p) => [`/author/${p.username}`, `/user/${p.username}`]),
   ];
 
   console.log(
-    `[prerender] slugs: products=${products.length} categories=${categories.length} blog=${posts.length} compare=${comparisons.length} guides=${guides.length} glossary=${glossary.length} deals=${deals.length} alternatives=${alternatives.length} pages=${pages.length} lists=${lists.length} stacks=${stacks.length} discussions=${discussions.length} landing=${landing.length} profiles=${profiles.length}`,
+    `[prerender] slugs: products=${products.length} categories=${categories.length} blog=${posts.length} compare=${comparisons.length} guides=${guides.length} glossary=${glossary.length} deals=${deals.length} alternatives=${alternatives.length} pages=${pages.length} lists=${lists.length} stacks=${stacks.length} discussions=${discussions.length} landing=${landing.length} best=${bestLanding.length} profiles=${profiles.length}`,
   );
 
   return Array.from(new Set([...STATIC_ROUTES, ...dynamic]));
