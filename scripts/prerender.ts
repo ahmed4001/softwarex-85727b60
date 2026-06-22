@@ -329,10 +329,37 @@ async function main() {
     console.log(`[prerender] preview server ready at ${BASE}`);
 
     browser = await chromium.launch();
-    const { ok, fail } = await runPool(browser, distDir, routes);
-    console.log(
-      `[prerender] done: ${ok} ok, ${fail} failed (of ${routes.length})`,
+    const { ok, fail, reports } = await runPool(browser, distDir, routes);
+
+    // Persist a build-time manifest of prerendered routes + SEO field signals.
+    const manifestPath = path.join(distDir, "prerender-manifest.json");
+    await writeFile(
+      manifestPath,
+      JSON.stringify(
+        {
+          generatedAt: new Date().toISOString(),
+          total: routes.length,
+          ok,
+          fail,
+          reports: reports.sort((a, b) => a.route.localeCompare(b.route)),
+        },
+        null,
+        2,
+      ),
+      "utf8",
     );
+
+    const flagged = reports.filter((r) => r.ok && r.corrections && r.corrections.length);
+    console.log(
+      `[prerender] done: ${ok} ok, ${fail} failed (of ${routes.length}); ${flagged.length} routes with SEO warnings`,
+    );
+    if (flagged.length > 0) {
+      console.log(`[prerender] SEO warnings sample:`);
+      for (const r of flagged.slice(0, 20)) {
+        console.log(`  - ${r.route}: ${r.corrections!.join(", ")}`);
+      }
+    }
+    console.log(`[prerender] manifest: ${manifestPath}`);
     if (fail > 0 && process.env.PRERENDER_STRICT === "1") {
       process.exit(1);
     }
