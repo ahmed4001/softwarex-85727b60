@@ -310,7 +310,7 @@ export default function ProductDetailPage() {
           ? `${product.name} review (2026): ${product.tagline}. Pricing, pros & cons, features, and verified user ratings.`.slice(0, 154)
           : `${product.name} review for 2026 — pricing, pros & cons, features, and verified user ratings on ReviewHunts.`.slice(0, 154))}
         keywords={product.seo_keywords || `${product.name}, ${product.name} review, ${product.name} pricing, ${product.name} pros and cons, ${(product.categories as any)?.name || "software"} 2026`}
-        canonicalUrl={`${window.location.origin}/product/${product.slug}`}
+        canonicalUrl={`https://reviewhunts.com/product/${product.slug}`}
         ogImage={product.logo_url || undefined}
         type="product"
         author="ReviewHunts Editorial Team"
@@ -320,7 +320,7 @@ export default function ProductDetailPage() {
             "@type": "SoftwareApplication",
             "name": product.name,
             "description": product.tagline || product.description?.substring(0, 160),
-            "url": `${window.location.origin}/product/${product.slug}`,
+            "url": `https://reviewhunts.com/product/${product.slug}`,
             "applicationCategory": (product.categories as any)?.name || "BusinessApplication",
             "operatingSystem": "Web",
             ...(product.logo_url && { "image": product.logo_url }),
@@ -361,8 +361,8 @@ export default function ProductDetailPage() {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Home", "item": window.location.origin },
-              ...((product.categories as any)?.name ? [{ "@type": "ListItem", "position": 2, "name": (product.categories as any).name, "item": `${window.location.origin}/category/${(product.categories as any).slug}` }] : []),
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://reviewhunts.com" },
+              ...((product.categories as any)?.name ? [{ "@type": "ListItem", "position": 2, "name": (product.categories as any).name, "item": `https://reviewhunts.com/category/${(product.categories as any).slug}` }] : []),
               { "@type": "ListItem", "position": (product.categories as any)?.name ? 3 : 2, "name": product.name }
             ]
           },
