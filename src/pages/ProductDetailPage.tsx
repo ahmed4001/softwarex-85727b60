@@ -320,7 +320,7 @@ export default function ProductDetailPage() {
             "@type": "SoftwareApplication",
             "name": product.name,
             "description": product.tagline || product.description?.substring(0, 160),
-            "url": `${window.location.origin}/product/${product.slug}`,
+            "url": `https://reviewhunts.com/product/${product.slug}`,
             "applicationCategory": (product.categories as any)?.name || "BusinessApplication",
             "operatingSystem": "Web",
             ...(product.logo_url && { "image": product.logo_url }),
