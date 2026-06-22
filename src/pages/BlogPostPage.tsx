@@ -53,7 +53,7 @@ export default function BlogPostPage() {
   if (!post) return <div className="max-w-3xl mx-auto py-32 text-center text-muted-foreground">{t("blog.postNotFound")}</div>;
 
   const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
-  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/blog/${slug}`;
+  const url = `https://reviewhunts.com/blog/${slug}`;
 
   return (
     <>

@@ -147,22 +147,22 @@ export default function CategoryPage() {
         title={(category as any)?.seo_title || (category?.name ? `Best ${category.name} Software in 2026 — Compared` : t("categories.title"))}
         description={(category as any)?.seo_description || (category?.name ? `Compare the best ${category.name} software in 2026. Real user reviews, pricing, pros & cons across ${totalCount || 'top'} tools — pick the right one in minutes.`.slice(0, 154) : t("categories.subtitle"))}
         keywords={(category as any)?.seo_keywords || `${category?.name} software, best ${category?.name} tools, ${category?.name} reviews 2026`}
-        canonicalUrl={`${window.location.origin}/category/${slug}`}
+        canonicalUrl={`https://reviewhunts.com/category/${slug}`}
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             "name": category?.name || t("categories.title"),
             "description": category?.description || t("categories.subtitle"),
-            "url": `${window.location.origin}/category/${slug}`,
+            "url": `https://reviewhunts.com/category/${slug}`,
             ...(totalCount && { "numberOfItems": totalCount })
           },
           {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Home", "item": window.location.origin },
-              { "@type": "ListItem", "position": 2, "name": "Categories", "item": `${window.location.origin}/categories` },
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://reviewhunts.com" },
+              { "@type": "ListItem", "position": 2, "name": "Categories", "item": `https://reviewhunts.com/categories` },
               { "@type": "ListItem", "position": 3, "name": category?.name || t("categories.title") }
             ]
           }

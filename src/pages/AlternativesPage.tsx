@@ -69,7 +69,7 @@ export default function AlternativesPage() {
       <SeoHead
         title={page.title}
         description={page.meta_description || `Top alternatives to ${product?.name}`}
-        canonicalUrl={`${window.location.origin}/alternatives/${slug}`}
+        canonicalUrl={`https://reviewhunts.com/alternatives/${slug}`}
         keywords={`${product?.name} alternatives, software like ${product?.name}, ${product?.name} competitors`}
         jsonLd={[
           {
@@ -77,7 +77,7 @@ export default function AlternativesPage() {
             "@type": "CollectionPage",
             "name": page.title,
             "description": page.meta_description || `Top alternatives to ${product?.name}`,
-            "url": `${window.location.origin}/alternatives/${slug}`,
+            "url": `https://reviewhunts.com/alternatives/${slug}`,
             "numberOfItems": alternatives.length
           },
           ...(faqSchema.length > 0 ? [{
