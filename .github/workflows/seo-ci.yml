@@ -40,6 +40,16 @@ jobs:
         env:
           SITE_URL: ${{ matrix.site_url }}
         run: bun run check:sitemap-hosts
+      - name: Verify sitemapindex + nested sitemap hosts (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+        run: bun run check:sitemap-index-hosts
+      - name: Verify PWA manifest URL fields (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+        run: bun run check:manifest-hosts
 
   prerender-canonical-check:
     name: Prerender canonical host check
@@ -81,6 +91,20 @@ jobs:
           SOCIAL_URL_CHECK_SAMPLE: "25"
           SOCIAL_URL_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:social-url-hosts
+      - name: Verify prerendered og:image + twitter:image hosts (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          SOCIAL_IMAGE_CHECK_SAMPLE: "25"
+          SOCIAL_IMAGE_CHECK_DIRS: "product,category,compare,blog,guides"
+        run: bun run check:social-image-hosts
+      - name: Verify prerendered hreflang alternates (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          HREFLANG_CHECK_SAMPLE: "25"
+          HREFLANG_CHECK_DIRS: "product,category,compare,blog,guides"
+        run: bun run check:hreflang-hosts
       - name: Upload failing HTML samples
         if: failure()
         uses: actions/upload-artifact@v4
