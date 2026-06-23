@@ -21,6 +21,26 @@ jobs:
           SEO_BASE_URL: https://id-preview--example.lovable.app
         run: bunx vitest run src/test/seo/routes-seo.test.tsx
 
+  sitemap-host-check:
+    name: Sitemap + robots host check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: production
+            site_url: https://reviewhunts.com
+          - label: staging
+            site_url: https://id-preview--8f8ab8bf-14f5-4085-9849-266b90f727c8.lovable.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Regenerate sitemap and verify hosts (${{ matrix.label }})
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+        run: bun run check:sitemap-hosts
+
   lighthouse-ci:
     runs-on: ubuntu-latest
     needs: seo-regression-tests
