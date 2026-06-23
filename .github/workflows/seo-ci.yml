@@ -100,6 +100,7 @@ jobs:
       - name: Verify prerendered canonicals (${{ matrix.label }})
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
           PRERENDER_CHECK_SAMPLE: "25"
           PRERENDER_CHECK_DIRS: "product,category"
         run: bun run check:prerender-canonicals
@@ -107,6 +108,7 @@ jobs:
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
           JSONLD_CHECK_SAMPLE: "25"
           JSONLD_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:jsonld-hosts
@@ -114,6 +116,7 @@ jobs:
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
           SOCIAL_URL_CHECK_SAMPLE: "25"
           SOCIAL_URL_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:social-url-hosts
@@ -121,6 +124,7 @@ jobs:
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
           SOCIAL_IMAGE_CHECK_SAMPLE: "25"
           SOCIAL_IMAGE_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:social-image-hosts
@@ -128,17 +132,19 @@ jobs:
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
           HREFLANG_CHECK_SAMPLE: "25"
           HREFLANG_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:hreflang-hosts
-      - name: Generate consolidated SEO host-gate report (${{ matrix.label }})
+      - name: Consolidated host-gate report (reuse mode, ${{ matrix.label }})
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
           REPORT_LABEL: ${{ matrix.label }}
-        # Wrapper re-runs each gate and aggregates violations into a
-        # single JSON+MD report. Continue-on-error so the artifact
-        # uploads even if individual gates fail (which is the point).
+          SEO_REPORT_DIR: seo-host-report
+          # Reuse mode: assemble from per-gate JSON written by the
+          # finalizeGate() helper, instead of re-spawning every gate.
+          SEO_REUSE_REPORTS: "1"
         continue-on-error: true
         run: bun run report:seo-host-gates
       - name: Upload consolidated SEO host-gate report
