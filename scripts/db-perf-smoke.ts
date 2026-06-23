@@ -272,13 +272,24 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
         `- \`${q.query_id}\` · **${label}** · mean ${q.mean_ms}ms (≤${q.applied_mean_ms ?? thresholds.mean_ms}) · max ${q.max_ms}ms (≤${q.applied_max_ms ?? thresholds.max_ms})`,
       );
     }
-    if (breachCount > 3) lines.push(`- … +${breachCount - 3} more (see table below)`);
+    if (breachCount > 3) lines.push(`- … +${breachCount - 3} more (see [breaches table](#breaches))`);
   }
 
-  lines.push("");
+  // Jump-to TOC for the collapsible sections below. GitHub auto-generates
+  // anchors from the `####` headings we emit ahead of each <details>.
+  const toc: string[] = [];
+  if (breachCount) toc.push("[🔥 Breaches](#breaches)");
+  if (uncovered.length) toc.push("[🛡 Coverage gaps](#coverage-gaps)");
+  if (missingIdxCount) toc.push("[🧱 Missing indexes](#missing-indexes)");
+  toc.push("[⚙ Active thresholds](#active-thresholds)");
+  // Suggested-patch link is appended later once we know it was applied.
+
+  lines.push("", `**Jump to:** ${toc.join(" · ")}`);
+
   lines.push(
     "",
-    "<details><summary><strong>Active thresholds</strong></summary>",
+    "#### Active thresholds",
+    "<details><summary>Resolved profile + per-query overrides</summary>",
     "",
     renderActiveThresholds(thresholds),
     "",
@@ -290,7 +301,7 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   if (diff) lines.push("", diff);
 
   if (missingIdxCount) {
-    lines.push("", "**Missing indexes**");
+    lines.push("", "#### Missing indexes", "");
     for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
   }
 
@@ -307,7 +318,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
     lines.push(
       "",
-      `<details><summary><strong>Breaching hot queries — top ${top.length} of ${failures.length}</strong> (click to expand)</summary>`,
+      "#### Breaches",
+      `<details><summary>Top ${top.length} of ${failures.length} breaching hot queries (click to expand)</summary>`,
       "",
     );
     lines.push("| id | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |");
@@ -342,7 +354,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     const icon = coverageStrict ? "❌" : "⚠";
     lines.push(
       "",
-      `<details${coverageStrict ? " open" : ""}><summary><strong>${icon} Coverage gaps — ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule</strong></summary>`,
+      "#### Coverage gaps",
+      `<details${coverageStrict ? " open" : ""}><summary>${icon} ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule</summary>`,
       "",
     );
     lines.push("| id | preview |");
@@ -370,7 +383,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       : "";
     lines.push(
       "",
-      `<details><summary><strong>Suggested patch</strong> — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote}</summary>`,
+      "#### Suggested patch",
+      `<details><summary>${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote}</summary>`,
       "",
       "Applied to `perf-thresholds.json` in this run. Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff below.",
       "",
@@ -401,7 +415,15 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       `[View full CI logs ↗](${runUrl})`,
     );
   }
-  fs.writeFileSync(path.join(outDir, "perf-smoke-summary.md"), lines.join("\n"));
+  // Patch the TOC retroactively to include the Suggested-patch anchor when present.
+  let summary = lines.join("\n");
+  if (suggestionsPatch && mergeStats) {
+    summary = summary.replace(
+      "**Jump to:** ",
+      "**Jump to:** [🩹 Suggested patch](#suggested-patch) · ",
+    );
+  }
+  fs.writeFileSync(path.join(outDir, "perf-smoke-summary.md"), summary);
 
   if (passed) {
     console.log("✅ db-perf-smoke PASS");
