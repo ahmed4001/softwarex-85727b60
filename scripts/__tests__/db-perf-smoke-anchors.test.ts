@@ -33,13 +33,16 @@ function tocAnchors(src: string): string[] {
 }
 
 /** Extract every `#### Heading` literal we emit as a markdown heading. */
-function headingSlugs(src: string): string[] {
-  const slugs = new Set<string>();
-  // Matches `"#### Heading"` and `'#### Heading'` literals in lines.push() calls.
+function headingLiterals(src: string): string[] {
+  const out: string[] = [];
   const re = /["']####\s+([^"'\\]+)["']/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(src))) slugs.add(slugifyHeading(m[1]));
-  return Array.from(slugs);
+  while ((m = re.exec(src))) out.push(m[1].trim());
+  return out;
+}
+
+function headingSlugs(src: string): string[] {
+  return headingLiterals(src).map(slugifyHeading);
 }
 
 describe("db-perf-smoke PR comment anchors", () => {
@@ -72,5 +75,46 @@ describe("db-perf-smoke PR comment anchors", () => {
       expect(slugs.has(expected), `Missing heading for #${expected}`).toBe(true);
       expect(anchors.includes(expected), `TOC never links to #${expected}`).toBe(true);
     }
+  });
+
+  it("no duplicate `#### Heading` literals in the source", () => {
+    const headings = headingLiterals(SOURCE);
+    const counts = new Map<string, number>();
+    for (const h of headings) counts.set(h, (counts.get(h) ?? 0) + 1);
+    const dupes = Array.from(counts.entries()).filter(([, n]) => n > 1);
+    expect(
+      dupes,
+      `Duplicate heading literals: ${dupes.map(([h, n]) => `"${h}" ×${n}`).join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("no duplicate slugs after normalization (two headings → same anchor)", () => {
+    const slugList = headingSlugs(SOURCE);
+    const counts = new Map<string, number>();
+    for (const s of slugList) counts.set(s, (counts.get(s) ?? 0) + 1);
+    const collisions = Array.from(counts.entries()).filter(([, n]) => n > 1);
+    expect(
+      collisions,
+      `Anchor slug collisions (GitHub would suffix -1/-2 and break TOC links): ` +
+        collisions.map(([s, n]) => `#${s} ×${n}`).join(", "),
+    ).toEqual([]);
+  });
+
+  it("every TOC entry is itself unique (no duplicate `[…](#anchor)` links)", () => {
+    const re = /\[[^\]]+\]\(#([a-z0-9-]+)\)/g;
+    const seen = new Map<string, number>();
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(SOURCE))) seen.set(m[1], (seen.get(m[1]) ?? 0) + 1);
+    // Only flag duplicates that appear inside a literal beginning with
+    // "**Jump to:**" — same anchor referenced twice from the TOC line.
+    const tocMatch = SOURCE.match(/\*\*Jump to:\*\*[^"`]*?(?=["`])/);
+    if (tocMatch) {
+      const inToc = Array.from(tocMatch[0].matchAll(/#([a-z0-9-]+)/g)).map((x) => x[1]);
+      const tocCounts = new Map<string, number>();
+      for (const a of inToc) tocCounts.set(a, (tocCounts.get(a) ?? 0) + 1);
+      const tocDupes = Array.from(tocCounts.entries()).filter(([, n]) => n > 1);
+      expect(tocDupes, `TOC has duplicate anchors: ${tocDupes.map(([a]) => `#${a}`).join(", ")}`).toEqual([]);
+    }
+    expect(seen.size).toBeGreaterThan(0);
   });
 });
