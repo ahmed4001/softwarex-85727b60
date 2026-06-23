@@ -105,6 +105,30 @@ jobs:
           HREFLANG_CHECK_SAMPLE: "25"
           HREFLANG_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:hreflang-hosts
+      - name: Generate consolidated SEO host-gate report (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          REPORT_LABEL: ${{ matrix.label }}
+        # Wrapper re-runs each gate and aggregates violations into a
+        # single JSON+MD report. Continue-on-error so the artifact
+        # uploads even if individual gates fail (which is the point).
+        continue-on-error: true
+        run: bun run report:seo-host-gates
+      - name: Upload consolidated SEO host-gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-host-gate-report-${{ matrix.label }}
+          path: seo-host-report/**
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Append report to GitHub step summary
+        if: always()
+        run: |
+          if [ -f "seo-host-report/report-${{ matrix.label }}.md" ]; then
+            cat "seo-host-report/report-${{ matrix.label }}.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Upload failing HTML samples
         if: failure()
         uses: actions/upload-artifact@v4

@@ -24,6 +24,7 @@
     "check:social-url-hosts": "tsx scripts/check-social-url-hosts.ts",
     "check:social-image-hosts": "tsx scripts/check-social-image-hosts.ts",
     "check:hreflang-hosts": "tsx scripts/check-hreflang-hosts.ts",
+    "report:seo-host-gates": "tsx scripts/aggregate-seo-host-report.ts",
     "test:perf": "tsx scripts/db-perf-smoke.ts",
     "lint:perf-thresholds": "tsx scripts/lint-perf-thresholds.ts",
     "suggest:perf-thresholds": "tsx scripts/suggest-perf-thresholds.ts",
