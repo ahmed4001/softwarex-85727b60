@@ -354,7 +354,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     const icon = coverageStrict ? "❌" : "⚠";
     lines.push(
       "",
-      `<details${coverageStrict ? " open" : ""}><summary><strong>${icon} Coverage gaps — ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule</strong></summary>`,
+      "#### Coverage gaps",
+      `<details${coverageStrict ? " open" : ""}><summary>${icon} ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule</summary>`,
       "",
     );
     lines.push("| id | preview |");
