@@ -61,15 +61,16 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   }
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
     lines.push("", "**Breaching hot queries**", "");
-    lines.push("| mean (ms) | max (ms) | calls | query |");
-    lines.push("|---:|---:|---:|---|");
+    lines.push("| mode | mean (ms) | max (ms) | calls | query |");
+    lines.push("|---|---:|---:|---:|---|");
     for (const q of body.threshold_failures) {
       const preview = String(q.query_preview ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
-      lines.push(`| ${q.mean_ms} | ${q.max_ms} | ${q.calls} | \`${preview}\` |`);
+      const mode = String(q.explain_mode ?? "ANALYZE").split(" ")[0];
+      lines.push(`| ${mode} | ${q.mean_ms} | ${q.max_ms} | ${q.calls} | \`${preview}\` |`);
     }
     lines.push("");
     lines.push(
-      "Full `EXPLAIN (GENERIC_PLAN, BUFFERS)` plans are in the **`perf-smoke-report`** artifact attached to this run.",
+      "Full `EXPLAIN (ANALYZE, BUFFERS)` plans (with GENERIC_PLAN fallback for parameterized queries) are in the **`perf-smoke-report`** artifact attached to this run.",
     );
   }
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
@@ -102,7 +103,7 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
           .split("\n")
           .map((l: string) => "      " + l)
           .join("\n");
-        console.error("    EXPLAIN (GENERIC_PLAN, BUFFERS):");
+        console.error(`    EXPLAIN (${q.explain_mode ?? "ANALYZE"}, BUFFERS):`);
         console.error(indented);
       }
     }
