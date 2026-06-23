@@ -88,14 +88,31 @@ export function SeoHead({
 
   // Always emit a self-referencing canonical for indexable pages, locked
   // to the production domain so crawlers consolidate to reviewhunts.com.
+  // Any incoming canonicalUrl pointing at a Lovable preview/staging host
+  // is rewritten to reviewhunts.com so softwarex.lovable.app (and any
+  // other *.lovable.app preview) can never leak into <head>.
   const SITE_URL = "https://reviewhunts.com";
+  const FORBIDDEN_HOST_FRAGMENTS = ["lovable.app", "lovableproject.com"];
+  const stripForbiddenHost = (url: string): string => {
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+      if (FORBIDDEN_HOST_FRAGMENTS.some((f) => host.includes(f))) {
+        return `${SITE_URL}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  };
   const pathname =
     typeof window !== "undefined" ? window.location.pathname : "/";
-  const resolvedCanonical = canonicalUrl
+  const rawCanonical = canonicalUrl
     ? canonicalUrl.startsWith("http")
       ? canonicalUrl
       : `${SITE_URL}${canonicalUrl.startsWith("/") ? "" : "/"}${canonicalUrl}`
     : `${SITE_URL}${pathname}`;
+  const resolvedCanonical = stripForbiddenHost(rawCanonical);
   const resolvedOgImage =
     effectiveOgImage && !effectiveOgImage.startsWith("http")
       ? `${SITE_URL}${effectiveOgImage.startsWith("/") ? "" : "/"}${effectiveOgImage}`

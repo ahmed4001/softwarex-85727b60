@@ -1,21 +1,26 @@
-## Goal
+## Context
 
-Persist the db-perf-smoke / `perf-thresholds.json` system to project memory so future sessions know it exists and follow the established conventions instead of reinventing them.
+I searched the project for `softwarex.lovable.app` — it does not appear anywhere in `src/`, `public/`, or `index.html`. The only match is inside an old, immutable database migration file, which has no runtime effect.
+
+Your canonical domain across `robots.txt`, all `sitemap*.xml` files, `SeoHead`, and `seo-canonical.ts` is already `https://reviewhunts.com`.
+
+So there is nothing user-visible to remove. What I'll do is harden things so `softwarex.lovable.app` (or any other `*.lovable.app` host) can never sneak in as a canonical/og:url.
 
 ## Changes
 
-1. **Create `mem://features/perf-thresholds-ci`** — a single feature-type memory describing:
-   - Purpose: CI guard that runs `EXPLAIN ANALYZE` on hot queries via the `db-perf-smoke` edge function and fails on threshold breaches / missing indexes / coverage gaps.
-   - Layered config: base `perf-thresholds.json` → `perf-thresholds.<PERF_ENV>.json` → `perf-thresholds.local.json` → `PERF_THRESHOLDS_FILES`. Later wins; queries merge by `label` (fallback `match`).
-   - Scripts: `test:perf`, `lint:perf-thresholds` (`--dry-run`), `suggest:perf-thresholds` (`--write`, `--max-change-pct=N`).
-   - Library entry points in `scripts/lib/perf-thresholds.ts`: `loadLayeredThresholds`, `resolveThresholdsLayers`, `mergeSuggestions` (with `maxChangePct` clamp), `findUncovered`, `queryId`, `renderHtmlReport`, `buildAnnotations`.
-   - Env vars: `PERF_ENV`, `PERF_APPLY_SUGGESTIONS`, `PERF_COVERAGE_STRICT`, `PERF_MAX_CHANGE_PCT`, `PERF_ANNOTATIONS`.
-   - Artifacts: `perf-smoke-report.json`, `perf-smoke-report.html`, `perf-smoke-resolved-profile.json`, `perf-smoke-summary.md`, `perf-thresholds.diff.patch`.
-   - Workflow: `.github/workflows/db-perf-smoke.yml` (push, PR, hourly cron, manual dispatch with toggles).
-   - Conventions: never edit generated artifacts; stable `query_id` anchors are the link key in PR comments; annotations are emitted as `::error file=…` workflow commands.
+1. **`src/lib/seo-canonical.ts`** — Hard-pin the canonical base to `https://reviewhunts.com`. Explicitly reject any host containing `lovable.app` (including `softwarex.lovable.app`) and fall back to the pinned domain.
 
-2. **Update `mem://index.md`** — add a Core one-liner ("Perf CI uses layered `perf-thresholds.*.json` files; per-query rules keyed by label/match.") and a Memories reference line linking to the new file.
+2. **`src/components/SeoHead.tsx`** — Already strips preview/lovable.app hosts (line 26). Extend it to always rewrite the host to `reviewhunts.com` for emitted `<link rel="canonical">` and `og:url`, never leaving a Lovable preview URL in head tags even during local/preview rendering.
+
+3. **`src/pages/admin/AdminSlugAuditPage.tsx`** (line 299) — This admin-only "open in preview" link uses the Lovable preview host on purpose (for staging QA). Leave it alone unless you want it removed too.
+
+4. **Add a test** in `src/test/seo/` asserting no rendered route emits a canonical or og:url containing `lovable.app`. This prevents regressions.
 
 ## Out of scope
 
-No code changes — memory only.
+- The migration file mentioning `softwarex` — migrations are immutable history and have no runtime impact.
+- Switching the canonical to any other domain (staying on `reviewhunts.com`).
+
+## Question
+
+Should I also remove the admin slug-audit preview link (item 3), or keep it for staging QA?
