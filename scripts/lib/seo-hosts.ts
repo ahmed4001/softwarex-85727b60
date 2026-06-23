@@ -31,6 +31,32 @@ export type Violation = {
   workspacePath?: string;
   /** 1-indexed line within `workspacePath`, when known. */
   line?: number;
+  /**
+   * Trimmed single-line excerpt of the source around the URL, e.g. the
+   * full <meta>/<loc>/JSON property containing the bad host. Surfaced in
+   * the aggregated report so a reviewer doesn't need to open the file
+   * to understand the root cause.
+   */
+  snippet?: string;
+  /**
+   * For violations that were *filtered out* by the allowlist, the
+   * exact entry that matched (e.g. "*.cdn.example.com"). Empty on kept
+   * violations. Used to compute allowlist usage stats in the report.
+   */
+  allowlistEntry?: string;
+};
+
+export type AllowlistEntryOrigin =
+  | "file:gate"
+  | "file:_default"
+  | "env:gate"
+  | "env:global";
+
+export type AllowlistEntry = {
+  /** Lowercased entry text, e.g. "cdn.example.com" or "*.example.com". */
+  entry: string;
+  /** Where this entry came from — used in the usage report. */
+  source: AllowlistEntryOrigin;
 };
 
 export type GateReport = {
@@ -38,7 +64,14 @@ export type GateReport = {
   site_url: string;
   expected_host: string;
   generated_at: string;
+  /** Flat lowercased entries (backwards-compatible). */
   allowlisted_hosts: string[];
+  /** Per-entry origin tracking — drives the "used vs. unused" summary. */
+  allowlist_entries: AllowlistEntry[];
+  /** entry → number of filtered-out violations that matched it. */
+  allowlist_match_counts: Record<string, number>;
+  /** Entries that did not match anything during this run. */
+  allowlist_unused: string[];
   raw_violation_count: number;
   filtered_violation_count: number;
   violations: Violation[];
@@ -72,6 +105,30 @@ export function isAllowedHost(host: string, expectedHost: string, allowlist: Rea
     }
   }
   return false;
+}
+
+/**
+ * Return the first allowlist entry (in the supplied iteration order)
+ * that explains why `host` is allowed, or `null` if nothing matches.
+ * Used by finalizeGate to attribute each filtered-out violation back
+ * to a specific allowlist row.
+ *
+ * NOTE: matching the expected host is NOT counted as an allowlist hit.
+ */
+export function matchingAllowlistEntry(
+  host: string,
+  expectedHost: string,
+  entries: readonly string[],
+): string | null {
+  if (host === expectedHost) return null;
+  for (const entry of entries) {
+    if (entry === host) return entry;
+    if (entry.startsWith("*.")) {
+      const suffix = entry.slice(1);
+      if (host.endsWith(suffix) && host.length > suffix.length) return entry;
+    }
+  }
+  return null;
 }
 
 // ---------- Allowlist config ----------
@@ -128,8 +185,10 @@ export function validateAllowlistConfig(
   }
   const known = new Set(knownGates);
   for (const [key, raw] of Object.entries(parsed as Record<string, unknown>)) {
-    // Underscore-prefixed metadata keys (e.g. "_comment") are free-form,
-    // EXCEPT "_default" which must follow the host-list schema.
+    // Free-form metadata keys: underscore-prefixed (e.g. "_comment"),
+    // EXCEPT "_default" which must follow the host-list schema, and
+    // "$"-prefixed (e.g. "$schema") used by JSON Schema-aware editors.
+    if (key.startsWith("$")) continue;
     if (key.startsWith("_") && key !== "_default") continue;
     if (key !== "_default" && !known.has(key)) {
       errors.push(`unknown gate key "${key}" (known gates: ${[...known].sort().join(", ")})`);
@@ -184,31 +243,48 @@ export function readAllowlistFile(rootDir = process.cwd()): AllowlistFile {
 }
 
 /**
- * Resolve the effective allowlist for a gate, combining:
- *   - the gate's entry in seo-host-allowlist.json
- *   - the "_default" entry in that file (applies to every gate)
- *   - the env var SEO_ALLOWED_HOSTS_<GATE_UPPER_SNAKE> (comma-separated)
- *   - the env var SEO_ALLOWED_HOSTS (comma-separated, applies globally)
- *
- * Returns lowercased Set. Wildcard entries like "*.example.com" supported.
- * Throws AllowlistConfigError if the file is invalid.
+ * Resolve the effective ordered allowlist for a gate, preserving where
+ * each entry came from. Lowercased + deduped (first-seen wins). Order:
+ *   1. file: gate-specific
+ *   2. file: _default
+ *   3. env:  gate-specific (SEO_ALLOWED_HOSTS_<GATE>)
+ *   4. env:  global (SEO_ALLOWED_HOSTS)
  */
-export function loadAllowlist(gate: string, env: NodeJS.ProcessEnv = process.env, rootDir = process.cwd()): Set<string> {
+export function loadAllowlistEntries(
+  gate: string,
+  env: NodeJS.ProcessEnv = process.env,
+  rootDir = process.cwd(),
+): AllowlistEntry[] {
   const file = readAllowlistFile(rootDir);
-  const out = new Set<string>();
-  const asList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
-  for (const h of asList(file[gate])) out.add(h.toLowerCase());
-  for (const h of asList(file["_default"])) out.add(h.toLowerCase());
-  const envGate = `SEO_ALLOWED_HOSTS_${gate.replace(/-/g, "_").toUpperCase()}`;
-  for (const h of (env[envGate] ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)) out.add(h);
-  for (const h of (env.SEO_ALLOWED_HOSTS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)) out.add(h);
+  const out: AllowlistEntry[] = [];
+  const seen = new Set<string>();
+  const push = (entry: string, source: AllowlistEntryOrigin) => {
+    const e = entry.toLowerCase();
+    if (seen.has(e)) return;
+    seen.add(e);
+    out.push({ entry: e, source });
+  };
+  const asList = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  for (const h of asList(file[gate])) push(h, "file:gate");
+  for (const h of asList(file["_default"])) push(h, "file:_default");
+  const envGateName = `SEO_ALLOWED_HOSTS_${gate.replace(/-/g, "_").toUpperCase()}`;
+  for (const h of (env[envGateName] ?? "").split(",").map((s) => s.trim()).filter(Boolean)) push(h, "env:gate");
+  for (const h of (env.SEO_ALLOWED_HOSTS ?? "").split(",").map((s) => s.trim()).filter(Boolean)) push(h, "env:global");
   return out;
 }
 
 /**
+ * Backwards-compatible Set form. See loadAllowlistEntries for origin
+ * tracking.
+ */
+export function loadAllowlist(gate: string, env: NodeJS.ProcessEnv = process.env, rootDir = process.cwd()): Set<string> {
+  return new Set(loadAllowlistEntries(gate, env, rootDir).map((e) => e.entry));
+}
+
+/**
  * Return the 1-indexed line number where `needle` first appears in `text`,
- * or 1 when the needle is empty / not found. Used by gates to annotate
- * violations on the real source line instead of a hard-coded line=1.
+ * or 1 when the needle is empty / not found.
  */
 export function lineOf(text: string, needle: string, fromIndex = 0): number {
   if (!needle || !text) return 1;
@@ -219,12 +295,28 @@ export function lineOf(text: string, needle: string, fromIndex = 0): number {
   return line;
 }
 
+/**
+ * Extract a one-line excerpt of `text` containing the first occurrence
+ * of `needle`, with up to `span` characters of context on each side.
+ * Newlines / extra whitespace are collapsed so it renders cleanly in a
+ * markdown table cell. Returns `""` if the needle is missing.
+ */
+export function snippetAt(text: string, needle: string, span = 140, fromIndex = 0): string {
+  if (!needle || !text) return "";
+  const idx = text.indexOf(needle, fromIndex);
+  if (idx < 0) return "";
+  const start = Math.max(0, idx - span);
+  const end = Math.min(text.length, idx + needle.length + span);
+  let slice = text.slice(start, end);
+  // Collapse whitespace and pipe chars (markdown table cell hostile).
+  slice = slice.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
+  const prefix = start > 0 ? "…" : "";
+  const suffix = end < text.length ? "…" : "";
+  return `${prefix}${slice}${suffix}`;
+}
+
 // ---------- HTML extractors ----------
 
-/**
- * Extract `content` attribute for every `<meta {attr}="{value}">` tag,
- * tolerant of attribute ordering and quote style.
- */
 export function extractMetaContent(html: string, attr: "property" | "name", value: string): string[] {
   const v = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = new RegExp(
@@ -236,7 +328,6 @@ export function extractMetaContent(html: string, attr: "property" | "name", valu
   return out;
 }
 
-/** Extract `href` from every `<link rel="canonical">` tag. */
 export function extractCanonicalHrefs(html: string): string[] {
   const out: string[] = [];
   for (const m of html.matchAll(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/gi)) out.push(m[1]);
@@ -244,7 +335,6 @@ export function extractCanonicalHrefs(html: string): string[] {
   return Array.from(new Set(out));
 }
 
-/** Extract `[{hreflang, href}]` for every `<link rel="alternate" hreflang="…">`. */
 export function extractHreflangLinks(html: string): { hreflang: string; href: string | null }[] {
   const out: { hreflang: string; href: string | null }[] = [];
   const linkRe = /<link\b[^>]*\brel=["']alternate["'][^>]*>/gi;
@@ -257,7 +347,6 @@ export function extractHreflangLinks(html: string): { hreflang: string; href: st
   return out;
 }
 
-/** Extract raw JSON text inside every `<script type="application/ld+json">`. */
 export function extractJsonLdBlocks(html: string): string[] {
   const out: string[] = [];
   for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
@@ -266,10 +355,6 @@ export function extractJsonLdBlocks(html: string): string[] {
   return out;
 }
 
-/**
- * Walk a parsed JSON-LD node and return every URL-like value found
- * under one of `fields`. Pointer paths follow JSON Pointer-ish syntax.
- */
 export function walkJsonLdUrls(
   node: unknown,
   fields: ReadonlySet<string>,
@@ -302,12 +387,10 @@ export function walkJsonLdUrls(
   return out;
 }
 
-/** Extract every `<loc>…</loc>` text node from a sitemap (urlset or sitemapindex). */
 export function extractSitemapLocs(xml: string): string[] {
   return Array.from(xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)).map((m) => m[1]);
 }
 
-/** Extract `<loc>` values that appear inside `<sitemap>` blocks (index-only). */
 export function extractSitemapIndexLocs(xml: string): string[] {
   const out: string[] = [];
   for (const block of xml.match(/<sitemap\b[\s\S]*?<\/sitemap>/gi) ?? []) {
@@ -317,7 +400,6 @@ export function extractSitemapIndexLocs(xml: string): string[] {
   return out;
 }
 
-/** Parse `Sitemap:` directives from robots.txt content (case-insensitive). */
 export function parseRobotsSitemapLines(txt: string): string[] {
   const out: string[] = [];
   for (const line of txt.split(/\r?\n/)) {
@@ -345,24 +427,45 @@ export function finalizeGate(args: {
   /** Optional prefix prepended to v.file when building workspacePath
    *  for annotations (e.g. "public/", "dist/"). */
   workspacePrefix?: string;
+  /**
+   * Optional map of `file → original source text`. When provided,
+   * finalizeGate fills in `violation.snippet` for any violation whose
+   * `url` is present in the source. Lets the aggregator surface the
+   * offending tag/JSON line without re-reading the file.
+   */
+  sources?: Record<string, string>;
   env?: NodeJS.ProcessEnv;
 }): { kept: Violation[]; filteredOut: Violation[]; exitCode: number } {
   const env = args.env ?? process.env;
-  const allow = loadAllowlist(args.gate, env);
+  const allowEntries = loadAllowlistEntries(args.gate, env);
+  const entryList = allowEntries.map((e) => e.entry);
+  const matchCounts: Record<string, number> = {};
 
   const kept: Violation[] = [];
   const filteredOut: Violation[] = [];
   for (const v of args.violations) {
+    // Auto-fill snippet from sources map when caller provided it.
+    if (!v.snippet && args.sources && v.url && args.sources[v.file]) {
+      const s = snippetAt(args.sources[v.file], v.url);
+      if (s) v.snippet = s;
+    }
     const host = hostOf(v.url, args.siteUrl);
-    if (host && host !== args.expectedHost && isAllowedHost(host, args.expectedHost, allow)) {
-      filteredOut.push(v);
-      continue;
+    if (host && host !== args.expectedHost) {
+      const matchedEntry = matchingAllowlistEntry(host, args.expectedHost, entryList);
+      if (matchedEntry) {
+        v.allowlistEntry = matchedEntry;
+        matchCounts[matchedEntry] = (matchCounts[matchedEntry] ?? 0) + 1;
+        filteredOut.push(v);
+        continue;
+      }
     }
     if (args.workspacePrefix && !v.workspacePath) {
       v.workspacePath = (args.workspacePrefix.replace(/\/+$/, "") + "/" + v.file).replace(/\/{2,}/g, "/");
     }
     kept.push(v);
   }
+
+  const unused = entryList.filter((e) => !matchCounts[e]);
 
   // Write per-gate JSON report.
   const reportDir = env.SEO_REPORT_DIR;
@@ -373,7 +476,10 @@ export function finalizeGate(args: {
       site_url: args.siteUrl,
       expected_host: args.expectedHost,
       generated_at: new Date().toISOString(),
-      allowlisted_hosts: [...allow].sort(),
+      allowlisted_hosts: entryList.slice().sort(),
+      allowlist_entries: allowEntries,
+      allowlist_match_counts: matchCounts,
+      allowlist_unused: unused,
       raw_violation_count: args.violations.length,
       filtered_violation_count: kept.length,
       violations: kept,
@@ -392,24 +498,17 @@ export function finalizeGate(args: {
   return { kept, filteredOut, exitCode: kept.length > 0 ? 1 : 0 };
 }
 
-/**
- * Print a `::error file=…,line=…,title=…::message` workflow command so
- * GitHub renders the violation inline on the PR's Files Changed tab.
- */
 export function emitAnnotation(gate: string, expectedHost: string, v: Violation): void {
   const file = v.workspacePath ?? v.file;
   const line = v.line ?? 1;
   const title = `SEO host mismatch (${gate})`;
   const safe = (s: string) =>
     s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/:/g, "%3A").replace(/,/g, "%2C");
-  const msg = `[${v.tag}] ${v.url}  (${v.reason}); expected host=${expectedHost}`;
+  const tail = v.snippet ? `; snippet: ${v.snippet}` : "";
+  const msg = `[${v.tag}] ${v.url}  (${v.reason}); expected host=${expectedHost}${tail}`;
   console.log(`::error file=${safe(file)},line=${line},title=${safe(title)}::${safe(msg)}`);
 }
 
-/**
- * Standard tail printer for gate scripts: prints kept violations and
- * exits the process. Always call this AFTER finalizeGate.
- */
 export function reportAndExit(gate: string, kept: Violation[], filteredOut: Violation[], successMessage: string): never {
   if (filteredOut.length) {
     console.log(`[${gate}] allowlisted ${filteredOut.length} off-SITE_URL violation(s)`);
@@ -417,7 +516,8 @@ export function reportAndExit(gate: string, kept: Violation[], filteredOut: Viol
   if (kept.length > 0) {
     console.error(`\n[${gate}] FAILED — ${kept.length} violation(s):\n`);
     for (const v of kept.slice(0, 50)) {
-      console.error(`  ${v.file} [${v.tag}]: ${v.url}  (${v.reason})`);
+      const snip = v.snippet ? `\n      snippet: ${v.snippet}` : "";
+      console.error(`  ${v.file} [${v.tag}]: ${v.url}  (${v.reason})${snip}`);
     }
     if (kept.length > 50) console.error(`  …and ${kept.length - 50} more`);
     process.exit(1);
