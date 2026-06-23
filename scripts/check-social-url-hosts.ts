@@ -84,6 +84,7 @@ function sampleHtmlFiles(sectionDir: string): string[] {
   return picked.map((name) => join(sectionDir, name, "index.html"));
 }
 
+const sources: Record<string, string> = {};
 for (const section of SECTIONS) {
   const sectionDir = join(distDir, section);
   const files = sampleHtmlFiles(sectionDir);
@@ -96,6 +97,7 @@ for (const section of SECTIONS) {
     scanned++;
     const html = readFileSync(file, "utf8");
     const rel = file.replace(distDir + "/", "");
+    sources[rel] = html;
     const ogUrls = extractMeta(html, "property", "og:url");
     const twUrls = extractMeta(html, "name", "twitter:url");
     for (const url of ogUrls) checkUrl(rel, "og:url", url, html);
@@ -108,5 +110,6 @@ console.log(`[${GATE}] scanned ${scanned} file(s) across ${SECTIONS.length} sect
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations,
   workspacePrefix: "dist/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "all og:url + twitter:url tags match SITE_URL host");
