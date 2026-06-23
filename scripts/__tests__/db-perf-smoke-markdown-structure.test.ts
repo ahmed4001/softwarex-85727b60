@@ -216,13 +216,19 @@ describe("buildPrComment — markdown structure lint", () => {
 
       it("bullet-list blocks never lose their `- ` prefix mid-block", () => {
         const all = lines(md);
+        // Track code-fence state so `diff` lines starting with `- ` / `+ `
+        // aren't mistaken for list items.
+        let inFence = false;
         for (let i = 0; i < all.length; i++) {
+          if (/^```/.test(all[i])) {
+            inFence = !inFence;
+            continue;
+          }
+          if (inFence) continue;
           if (!all[i].startsWith("- ")) continue;
-          // Walk the contiguous list and assert each non-empty line is still a bullet.
           let j = i;
-          while (j < all.length && all[j] !== "") {
+          while (j < all.length && all[j] !== "" && !/^```/.test(all[j])) {
             const ln = all[j];
-            // Allow `- ` bullets and indented continuations starting with 2+ spaces.
             const ok = ln.startsWith("- ") || ln.startsWith("  ");
             expect(ok, `list starting at line ${i} broke at line ${j}: ${JSON.stringify(ln)}`).toBe(true);
             j++;
