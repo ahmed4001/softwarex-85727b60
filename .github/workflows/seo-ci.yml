@@ -74,6 +74,13 @@ jobs:
           JSONLD_CHECK_SAMPLE: "25"
           JSONLD_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:jsonld-hosts
+      - name: Verify prerendered og:url + twitter:url hosts (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          SOCIAL_URL_CHECK_SAMPLE: "25"
+          SOCIAL_URL_CHECK_DIRS: "product,category,compare,blog,guides"
+        run: bun run check:social-url-hosts
       - name: Upload failing HTML samples
         if: failure()
         uses: actions/upload-artifact@v4
