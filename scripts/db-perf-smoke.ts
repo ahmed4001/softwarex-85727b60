@@ -318,7 +318,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
     lines.push(
       "",
-      `<details><summary><strong>Breaching hot queries — top ${top.length} of ${failures.length}</strong> (click to expand)</summary>`,
+      "#### Breaches",
+      `<details><summary>Top ${top.length} of ${failures.length} breaching hot queries (click to expand)</summary>`,
       "",
     );
     lines.push("| id | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |");
