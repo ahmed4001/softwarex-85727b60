@@ -218,7 +218,7 @@ export default function ListEditorPage() {
             ? "Edit your curated list of software tools on ReviewHunts — update items, ordering, and description."
             : "Create a new curated list of software tools on ReviewHunts. Group your favorite apps, add commentary, and share with the community."
         }
-        robots="noindex, follow"
+        robots="noindex, nofollow"
       />
       <main className="container py-10 max-w-2xl">
         <h1 className="text-2xl font-extrabold text-foreground mb-6">
