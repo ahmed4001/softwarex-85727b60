@@ -1,141 +1,141 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://example.com/</loc>
+    <loc>https://reviewhunts.com/</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://example.com/categories</loc>
+    <loc>https://reviewhunts.com/categories</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://example.com/search</loc>
+    <loc>https://reviewhunts.com/search</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://example.com/compare</loc>
+    <loc>https://reviewhunts.com/compare</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://example.com/blog</loc>
+    <loc>https://reviewhunts.com/blog</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://example.com/leaderboard</loc>
+    <loc>https://reviewhunts.com/leaderboard</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://example.com/awards</loc>
+    <loc>https://reviewhunts.com/awards</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/lists</loc>
+    <loc>https://reviewhunts.com/lists</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://example.com/stacks</loc>
+    <loc>https://reviewhunts.com/stacks</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://example.com/guides</loc>
+    <loc>https://reviewhunts.com/guides</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://example.com/glossary</loc>
+    <loc>https://reviewhunts.com/glossary</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/partners</loc>
+    <loc>https://reviewhunts.com/partners</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://example.com/pricing</loc>
+    <loc>https://reviewhunts.com/pricing</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://example.com/discussions</loc>
+    <loc>https://reviewhunts.com/discussions</loc>
     <lastmod>2026-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/contact</loc>
+    <loc>https://reviewhunts.com/page/contact</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/terms</loc>
+    <loc>https://reviewhunts.com/page/terms</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/privacy</loc>
+    <loc>https://reviewhunts.com/page/privacy</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/about</loc>
+    <loc>https://reviewhunts.com/page/about</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/community-guidelines</loc>
+    <loc>https://reviewhunts.com/page/community-guidelines</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/trust</loc>
+    <loc>https://reviewhunts.com/page/trust</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/careers</loc>
+    <loc>https://reviewhunts.com/page/careers</loc>
     <lastmod>2026-02-25</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/refund-policy</loc>
+    <loc>https://reviewhunts.com/page/refund-policy</loc>
     <lastmod>2026-05-31</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/how-we-review</loc>
+    <loc>https://reviewhunts.com/page/how-we-review</loc>
     <lastmod>2026-06-20</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/privacy-policy</loc>
+    <loc>https://reviewhunts.com/page/privacy-policy</loc>
     <lastmod>2026-06-20</lastmod>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://example.com/page/affiliate-disclosure</loc>
+    <loc>https://reviewhunts.com/page/affiliate-disclosure</loc>
     <lastmod>2026-06-20</lastmod>
     <priority>0.5</priority>
   </url>
