@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const SOURCE = fs.readFileSync(
-  path.resolve(__dirname, "..", "db-perf-smoke.ts"),
+  path.resolve(__dirname, "..", "lib", "perf-pr-comment.ts"),
   "utf8",
 );
 
