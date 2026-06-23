@@ -323,10 +323,10 @@ export function mergeSuggestions(
   const abs = path.resolve(filePath);
   const beforeText = fs.readFileSync(abs, "utf8");
   const raw = JSON.parse(beforeText);
-  const actualEnv = raw[envKey] && typeof raw[envKey] === "object" ? envKey : "default";
-  if (!raw[actualEnv] || typeof raw[actualEnv] !== "object") {
+  if (!raw[envKey] || typeof raw[envKey] !== "object") {
     throw new Error(`Cannot merge: env block "${envKey}" missing in ${abs}`);
   }
+  const actualEnv = envKey;
   const existing: QueryRule[] = Array.isArray(raw[actualEnv].queries)
     ? raw[actualEnv].queries
     : [];
