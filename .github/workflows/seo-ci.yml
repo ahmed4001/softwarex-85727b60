@@ -20,6 +20,8 @@ jobs:
         env:
           SEO_BASE_URL: https://id-preview--example.lovable.app
         run: bunx vitest run src/test/seo/routes-seo.test.tsx
+      - name: SEO host-gate helper unit tests
+        run: bunx vitest run scripts/lib
 
   sitemap-host-check:
     name: Sitemap + robots host check
