@@ -179,7 +179,7 @@ export default function CategoryPage() {
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-60 flex-shrink-0">
             <div className="glass-card p-5 lg:sticky lg:top-24">
-              <h3 className="font-display font-bold text-foreground mb-4 text-sm uppercase tracking-wider">{t("categories.title")}</h3>
+              <div role="heading" aria-level={2} className="font-display font-bold text-foreground mb-4 text-sm uppercase tracking-wider">{t("categories.title")}</div>
               <div className="space-y-0.5">
                 <Link to="/category/all" className={cn(
                   "block px-3 py-2.5 text-sm rounded-xl transition-all duration-200 font-medium",
