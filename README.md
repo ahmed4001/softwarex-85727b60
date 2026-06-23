@@ -131,6 +131,32 @@ For each row returned by `pg_stat_statements`, the RPC walks `queries` in order 
 | `PERF_REPORT_DIR` | `.` | Where the runner writes `perf-smoke-report.json` + `perf-smoke-summary.md`. |
 | `PERF_REPORT_FILE` | `./perf-smoke-report/perf-smoke-report.json` | Where `suggest:perf-thresholds` reads from. |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | — | Required by `test:perf` to reach the edge function. |
+| `PERF_THRESHOLDS_FILES` | — | Comma-separated extra override files appended after the conventional layers. |
+| `PERF_MAX_CHANGE_PCT` | — | Caps how much `mean_ms`/`max_ms` may move per `--apply-suggestions` run (e.g. `25` = ±25%). Empty = no cap. |
+| `PERF_COVERAGE_STRICT` | `0` | When `1`, fail CI if any hot query lacks a matching threshold rule. |
+| `PERF_APPLY_SUGGESTIONS` | `0` | When `1`, the runner merges suggested values back into `perf-thresholds.json` and emits `perf-thresholds.diff.patch`. |
+| `PERF_ANNOTATIONS` | `1` | When running under `GITHUB_ACTIONS`, prints `::error file=…` workflow commands so failing rules surface as inline PR check annotations. Set to `0` to disable. |
+
+### Layered overrides
+
+`loadLayeredThresholds` resolves files in this order (later wins; missing files are skipped except for the base):
+
+1. `perf-thresholds.json` — committed defaults (the only required layer).
+2. `perf-thresholds.<PERF_ENV>.json` — per-environment overrides next to the base file.
+3. `perf-thresholds.local.json` — developer-only overrides (gitignore it).
+4. Any extra files from `PERF_THRESHOLDS_FILES` (comma-separated).
+
+Per layer the merge rules are: scalar fields (`mean_ms`, `max_ms`) replace earlier values; `queries[]` entries are merged by `label` (or `match` if unlabeled), with later entries overriding earlier ones. Override layers may omit scalar fields (they inherit from earlier layers).
+
+### Artifacts
+
+Each CI run uploads:
+
+- `perf-smoke-report.json` — full hot-query list + EXPLAIN plans, with stable `query_id` anchors.
+- `perf-smoke-report.html` — visual report of the resolved profile and per-query before/after threshold changes.
+- `perf-smoke-resolved-profile.json` — the exact merged profile that was applied.
+- `perf-smoke-summary.md` — markdown used for the PR sticky comment.
+- `perf-thresholds.diff.patch` — only when `PERF_APPLY_SUGGESTIONS=1`; ready to commit.
 
 ### CI dry run
 
