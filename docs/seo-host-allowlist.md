@@ -148,4 +148,12 @@ SEO_REUSE_REPORTS=1 SEO_REPORT_DIR=./seo-host-report \
 ```
 
 The aggregated report (`seo-host-report/report-<label>.md`) is also the
-artifact uploaded by the GitHub workflow.
+artifact uploaded by the GitHub workflow. It includes:
+
+- **Per-violation snippets** — the actual `<meta>`/`<loc>`/JSON
+  fragment around the offending host, so root-causing a failure does
+  not require opening the file.
+- **Allowlist usage tables** — every configured entry is split into
+  *“matched at least once”* (with hit count + which gates) and
+  *“unused — consider removing”*. Use this to keep the allowlist tight
+  over time and to spot entries that quietly became dead code.
