@@ -18,6 +18,7 @@
     "test:seo": "vitest run src/test/seo",
     "test:perf": "tsx scripts/db-perf-smoke.ts",
     "lint:perf-thresholds": "tsx scripts/lint-perf-thresholds.ts",
+    "suggest:perf-thresholds": "tsx scripts/suggest-perf-thresholds.ts",
     "test:seo:staging": "SEO_BASE_URL=https://id-preview--example.lovable.app vitest run src/test/seo/routes-seo.test.tsx",
     "lhci": "lhci autorun --config=./lighthouserc.json",
     "test:e2e": "playwright test",

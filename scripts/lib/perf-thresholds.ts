@@ -1,8 +1,9 @@
 /**
  * Shared loader + zod schema for `perf-thresholds.json`.
  *
- * Used by both the perf-smoke runner and the standalone linter so any
- * invalid file fails fast with the same clear error message.
+ * Used by the perf-smoke runner, the standalone linter, and the
+ * threshold-suggestion script. Any invalid file fails fast with the same
+ * clear error message everywhere.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -194,4 +195,54 @@ export function loadBaseThresholds(
   } catch {
     return null;
   }
+}
+
+// ------------------ Suggestion helpers ------------------
+
+export interface SuggestedRule {
+  label: string;
+  match: string;
+  mean_ms: number;
+  max_ms: number;
+}
+
+/** Slugify a query preview into a short stable label. */
+export function deriveLabel(preview: string): string {
+  return (
+    preview
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .split("-")
+      .filter(Boolean)
+      .slice(0, 6)
+      .join("-") || "query"
+  );
+}
+
+/** Add 20% headroom, round up to nearest 10ms (floor 10). */
+export function bumpThreshold(observed: number): number {
+  const v = Math.ceil((observed * 1.2) / 10) * 10;
+  return Math.max(10, v);
+}
+
+export function suggestRule(input: {
+  matched_rule?: { label?: string; match?: string };
+  query_preview: string;
+  mean_ms: number;
+  max_ms: number;
+}): SuggestedRule {
+  const label =
+    input.matched_rule?.label ??
+    (input.matched_rule?.match
+      ? deriveLabel(input.matched_rule.match)
+      : deriveLabel(input.query_preview));
+  const match =
+    input.matched_rule?.match ?? input.query_preview.slice(0, 80).toLowerCase();
+  return {
+    label,
+    match,
+    mean_ms: bumpThreshold(input.mean_ms),
+    max_ms: bumpThreshold(input.max_ms),
+  };
 }

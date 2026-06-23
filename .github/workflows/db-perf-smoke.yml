@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only lint perf-thresholds.json and print the resolved profile (skip EXPLAIN ANALYZE)."
+        type: boolean
+        default: false
   schedule:
     # Run hourly so latency regressions are caught even without code changes.
     - cron: "0 * * * *"
@@ -34,10 +39,11 @@ jobs:
       - name: Lint perf thresholds (resolve PERF_ENV profile)
         env:
           PERF_ENV: ci
-        run: bun run lint:perf-thresholds
+        run: bun run lint:perf-thresholds ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '-- --dry-run' || '' }}
 
       - name: Run db-perf-smoke
         id: smoke
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         continue-on-error: true
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -47,7 +53,7 @@ jobs:
         run: bun run test:perf
 
       - name: Upload perf report artifact
-        if: always()
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         uses: actions/upload-artifact@v4
         with:
           name: perf-smoke-report
