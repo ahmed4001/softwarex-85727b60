@@ -9,6 +9,10 @@ import {
   bumpThreshold,
   deriveLabel,
   suggestRule,
+  queryId,
+  findUncovered,
+  mergeSuggestions,
+  unifiedDiff,
   ThresholdsValidationError,
 } from "../perf-thresholds";
 
