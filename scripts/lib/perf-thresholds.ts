@@ -65,53 +65,120 @@ export function loadThresholds(
   filePath: string,
   envKey: string,
 ): ResolvedThresholds {
-  const thresholdsPath = path.resolve(filePath);
+  return loadLayeredThresholds([filePath], envKey);
+}
 
-  if (!fs.existsSync(thresholdsPath)) {
-    throw new ThresholdsValidationError(
-      `Thresholds file not found: ${thresholdsPath}`,
-    );
+/**
+ * Load and merge multiple thresholds files in order (later overrides earlier).
+ *
+ * Layering rules per environment block:
+ *  - scalar fields (`mean_ms`, `max_ms`) — later file wins
+ *  - `queries[]` — merged by key (`label` || `match`); later occurrences
+ *    replace earlier ones, additional rules are appended preserving order.
+ *
+ * Missing files are silently skipped (so an optional `perf-thresholds.local.json`
+ * is safe to leave out). The first file is treated as the base and MUST exist.
+ */
+export function loadLayeredThresholds(
+  filePaths: string[],
+  envKey: string,
+): ResolvedThresholds {
+  if (!filePaths.length) {
+    throw new ThresholdsValidationError("No thresholds files provided");
+  }
+  const resolvedPaths = filePaths.map((p) => path.resolve(p));
+  const layers: { path: string; data: ThresholdsFile }[] = [];
+  for (let idx = 0; idx < resolvedPaths.length; idx++) {
+    const abs = resolvedPaths[idx];
+    if (!fs.existsSync(abs)) {
+      if (idx === 0) {
+        throw new ThresholdsValidationError(`Thresholds file not found: ${abs}`);
+      }
+      continue;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(fs.readFileSync(abs, "utf8"));
+    } catch (e) {
+      throw new ThresholdsValidationError(
+        `Invalid JSON in ${abs}: ${(e as Error).message}`,
+      );
+    }
+    const result = ThresholdsFileSchema.safeParse(parsed);
+    if (!result.success) {
+      const details = formatZodError(result.error);
+      throw new ThresholdsValidationError(
+        `${abs} failed schema validation:\n${details.join("\n")}`,
+        details,
+      );
+    }
+    layers.push({ path: abs, data: result.data });
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(fs.readFileSync(thresholdsPath, "utf8"));
-  } catch (e) {
-    throw new ThresholdsValidationError(
-      `Invalid JSON in ${thresholdsPath}: ${(e as Error).message}`,
-    );
+  const pickBlock = (file: ThresholdsFile, key: string): EnvBlock | undefined => {
+    const c = (file as Record<string, unknown>)[key];
+    if (c && typeof c === "object") return c as EnvBlock;
+    return undefined;
+  };
+
+  let effectiveKey = "default";
+  for (const l of layers) {
+    if (pickBlock(l.data, envKey)) {
+      effectiveKey = envKey;
+      break;
+    }
   }
 
-  const result = ThresholdsFileSchema.safeParse(parsed);
-  if (!result.success) {
-    const details = formatZodError(result.error);
-    throw new ThresholdsValidationError(
-      `perf-thresholds.json failed schema validation:\n${details.join("\n")}`,
-      details,
-    );
+  let mean_ms: number | undefined;
+  let max_ms: number | undefined;
+  const queryMap = new Map<string, QueryRule>();
+  const keyOf = (q: QueryRule) => q.label ?? q.match;
+
+  for (const l of layers) {
+    const block = pickBlock(l.data, effectiveKey) ?? pickBlock(l.data, "default");
+    if (!block) continue;
+    if (typeof block.mean_ms === "number") mean_ms = block.mean_ms;
+    if (typeof block.max_ms === "number") max_ms = block.max_ms;
+    for (const q of block.queries ?? []) queryMap.set(keyOf(q), q);
   }
 
-  const file = result.data;
-  const candidate = (file as Record<string, unknown>)[envKey];
-  const block: EnvBlock | undefined =
-    candidate && typeof candidate === "object"
-      ? (candidate as EnvBlock)
-      : file.default;
-
-  if (!block) {
+  if (mean_ms === undefined || max_ms === undefined) {
     throw new ThresholdsValidationError(
-      `No "${envKey}" or "default" block in ${thresholdsPath}`,
+      `No "${envKey}" or "default" block resolvable across ${resolvedPaths.join(", ")}`,
     );
   }
 
   return {
-    envKey: (file as Record<string, unknown>)[envKey] ? envKey : "default",
-    mean_ms: block.mean_ms,
-    max_ms: block.max_ms,
-    queries: block.queries ?? [],
-    thresholdsPath,
-    raw: file,
+    envKey: effectiveKey,
+    mean_ms,
+    max_ms,
+    queries: Array.from(queryMap.values()),
+    thresholdsPath: resolvedPaths[0],
+    raw: layers[layers.length - 1].data,
   };
+}
+
+/**
+ * Resolve the default layered file list:
+ *   1. base file (PERF_THRESHOLDS_FILE or perf-thresholds.json)
+ *   2. perf-thresholds.<env>.json    (next to the base, if present)
+ *   3. perf-thresholds.local.json    (next to the base, if present)
+ *   4. extra files from PERF_THRESHOLDS_FILES (comma-separated)
+ */
+export function resolveThresholdsLayers(
+  baseFile: string,
+  envKey: string,
+  extra: string[] = [],
+): string[] {
+  const dir = path.dirname(path.resolve(baseFile));
+  const baseName = path.basename(baseFile, path.extname(baseFile));
+  const ext = path.extname(baseFile) || ".json";
+  return [
+    baseFile,
+    path.join(dir, `${baseName}.${envKey}${ext}`),
+    path.join(dir, `${baseName}.local${ext}`),
+    ...extra,
+  ];
 }
 
 /** Render a resolved threshold profile as a markdown block. */
