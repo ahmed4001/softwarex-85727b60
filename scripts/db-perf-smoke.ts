@@ -56,8 +56,16 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     );
     for (const q of body.threshold_failures) {
       console.error(
-        `  • mean=${q.mean_ms}ms max=${q.max_ms}ms calls=${q.calls} — ${q.query}`,
+        `\n  • mean=${q.mean_ms}ms max=${q.max_ms}ms calls=${q.calls}\n    ${q.query_preview}`,
       );
+      if (q.explain) {
+        const indented = String(q.explain)
+          .split("\n")
+          .map((l: string) => "      " + l)
+          .join("\n");
+        console.error("    EXPLAIN (GENERIC_PLAN, BUFFERS):");
+        console.error(indented);
+      }
     }
   }
   console.error(pretty);
