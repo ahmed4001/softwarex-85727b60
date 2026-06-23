@@ -44,6 +44,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const NAV_TIMEOUT = 30_000;
 const SETTLE_MS = 600;
 
+const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || "https://ffeimjfunghzxgeqiwma.supabase.co";
 const SUPABASE_KEY =
@@ -245,7 +246,7 @@ async function snapshot(
     if (!meta.d) report.corrections!.push("missing-description");
     if (meta.d.length > 160) report.corrections!.push(`desc-too-long(${meta.d.length})`);
     if (!meta.c) report.corrections!.push("missing-canonical");
-    else if (!meta.c.startsWith("https://reviewhunts.com")) {
+    else if (!meta.c.startsWith(SITE_URL)) {
       report.corrections!.push(`canonical-host(${meta.c})`);
     }
     if (meta.j === 0) report.corrections!.push("no-json-ld");

@@ -18,15 +18,25 @@ export const PAGE_INTENT: Record<string, Intent> = {
   blog: "informational",
 };
 
-export const SITE_URL = "https://reviewhunts.com";
+// Resolved at build time from VITE_SITE_URL (set per environment in .env,
+// Vercel project settings, or `SITE_URL=... vite build`). Falls back to
+// the production host so existing builds keep working unchanged.
+export const SITE_URL = (
+  (import.meta as any).env?.VITE_SITE_URL || "https://reviewhunts.com"
+).replace(/\/+$/, "");
 
-// Hosts we must never emit as canonical/og:url. Lovable preview hosts
-// (e.g. softwarex.lovable.app, id-preview--*.lovable.app) leak into
-// crawler caches if they ever slip through, so we strip them here and
-// in SeoHead.
+// Lovable preview hosts (softwarex.lovable.app, id-preview--*.lovable.app)
+// must never leak as canonical when SITE_URL is the production domain.
+// When SITE_URL itself is a lovable host (intentional preview canonicals),
+// we skip the rewrite so preview builds self-reference cleanly.
 const FORBIDDEN_HOST_FRAGMENTS = ["lovable.app", "lovableproject.com"];
+const SITE_URL_HOST = (() => {
+  try { return new URL(SITE_URL).hostname.toLowerCase(); } catch { return ""; }
+})();
+const SITE_URL_IS_PREVIEW = FORBIDDEN_HOST_FRAGMENTS.some((f) => SITE_URL_HOST.includes(f));
 
 function isForbiddenHost(url: string): boolean {
+  if (SITE_URL_IS_PREVIEW) return false;
   try {
     const host = new URL(url).hostname.toLowerCase();
     return FORBIDDEN_HOST_FRAGMENTS.some((frag) => host.includes(frag));

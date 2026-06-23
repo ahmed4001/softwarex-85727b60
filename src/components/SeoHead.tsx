@@ -87,13 +87,16 @@ export function SeoHead({
   }
 
   // Always emit a self-referencing canonical for indexable pages, locked
-  // to the production domain so crawlers consolidate to reviewhunts.com.
-  // Any incoming canonicalUrl pointing at a Lovable preview/staging host
-  // is rewritten to reviewhunts.com so softwarex.lovable.app (and any
-  // other *.lovable.app preview) can never leak into <head>.
-  const SITE_URL = "https://reviewhunts.com";
+  // to the configured SITE_URL (VITE_SITE_URL env var, falls back to
+  // production). Incoming canonicalUrls pointing at a Lovable preview
+  // host are rewritten to SITE_URL — unless SITE_URL itself is a preview
+  // host, in which case preview canonicals are intentional and kept.
+  const SITE_URL = ((import.meta as any).env?.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
   const FORBIDDEN_HOST_FRAGMENTS = ["lovable.app", "lovableproject.com"];
+  const siteUrlHost = (() => { try { return new URL(SITE_URL).hostname.toLowerCase(); } catch { return ""; } })();
+  const siteUrlIsPreview = FORBIDDEN_HOST_FRAGMENTS.some((f) => siteUrlHost.includes(f));
   const stripForbiddenHost = (url: string): string => {
+    if (siteUrlIsPreview) return url;
     try {
       const parsed = new URL(url);
       const host = parsed.hostname.toLowerCase();
