@@ -28,7 +28,7 @@ describe("lint-perf-thresholds CLI", () => {
     });
     const r = runLinter(f, { PERF_ENV: "ci" });
     expect(r.status).toBe(0);
-    expect(r.stdout).toMatch(/perf-thresholds\.json is valid/);
+    expect(r.stdout).toMatch(/perf-thresholds is valid/);
     expect(r.stdout).toMatch(/Resolved PERF_ENV profile: ci/);
     expect(r.stdout).toMatch(/per-query overrides \(1\)/);
   });
