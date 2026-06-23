@@ -40,11 +40,50 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   const body = await res.json().catch(() => ({}));
   const pretty = JSON.stringify(body, null, 2);
 
-  if (res.status === 200 && body?.pass) {
+  // Persist full report for CI artifact upload / PR-comment step.
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const outDir = process.env.PERF_REPORT_DIR || ".";
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, "perf-smoke-report.json"), pretty);
+
+  // Markdown summary used by the PR-comment step.
+  const lines: string[] = [];
+  const passed = res.status === 200 && body?.pass;
+  lines.push(`### ${passed ? "✅" : "❌"} db-perf-smoke ${passed ? "PASS" : "FAIL"}`);
+  lines.push("");
+  lines.push(
+    `Thresholds: mean ≤ **${body?.thresholds?.mean_ms ?? "?"} ms**, max ≤ **${body?.thresholds?.max_ms ?? "?"} ms**`,
+  );
+  if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
+    lines.push("", "**Missing indexes**");
+    for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
+  }
+  if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
+    lines.push("", "**Breaching hot queries**", "");
+    lines.push("| mean (ms) | max (ms) | calls | query |");
+    lines.push("|---:|---:|---:|---|");
+    for (const q of body.threshold_failures) {
+      const preview = String(q.query_preview ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+      lines.push(`| ${q.mean_ms} | ${q.max_ms} | ${q.calls} | \`${preview}\` |`);
+    }
+    lines.push("");
+    lines.push(
+      "Full `EXPLAIN (GENERIC_PLAN, BUFFERS)` plans are in the **`perf-smoke-report`** artifact attached to this run.",
+    );
+  }
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
+    const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+    lines.push("", `[View full CI logs ↗](${runUrl})`);
+  }
+  fs.writeFileSync(path.join(outDir, "perf-smoke-summary.md"), lines.join("\n"));
+
+  if (passed) {
     console.log("✅ db-perf-smoke PASS");
     console.log(pretty);
     process.exit(0);
   }
+
 
   console.error(`❌ db-perf-smoke FAIL (HTTP ${res.status})`);
   if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
