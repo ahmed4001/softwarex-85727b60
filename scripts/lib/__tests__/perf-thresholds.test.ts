@@ -306,3 +306,140 @@ describe("unifiedDiff", () => {
   });
 });
 
+
+import {
+  loadLayeredThresholds,
+  resolveThresholdsLayers,
+  clampChange,
+  renderHtmlReport,
+  buildAnnotations,
+  formatAnnotation,
+} from "../perf-thresholds";
+
+describe("loadLayeredThresholds", () => {
+  it("merges scalars from later layers and unions queries by key", () => {
+    const base = writeTempFile(
+      JSON.stringify({
+        default: { mean_ms: 100, max_ms: 400 },
+        ci: { mean_ms: 250, max_ms: 1000, queries: [{ label: "a", match: "x", mean_ms: 10, max_ms: 20 }] },
+      }),
+    );
+    const dir = path.dirname(base);
+    const env = path.join(dir, "perf-thresholds.ci.json");
+    fs.writeFileSync(
+      env,
+      JSON.stringify({
+        default: { mean_ms: 100, max_ms: 400 },
+        ci: { mean_ms: 300, queries: [{ label: "a", match: "x", mean_ms: 50, max_ms: 200 }, { label: "b", match: "y", mean_ms: 5, max_ms: 10 }] } as any,
+      }),
+    );
+    const t = loadLayeredThresholds([base, env, path.join(dir, "missing.json")], "ci");
+    expect(t.envKey).toBe("ci");
+    expect(t.mean_ms).toBe(300);
+    expect(t.max_ms).toBe(1000); // not overridden by env file
+    const a = t.queries.find((q) => q.label === "a")!;
+    expect(a.mean_ms).toBe(50);
+    expect(a.max_ms).toBe(200);
+    expect(t.queries.find((q) => q.label === "b")).toBeTruthy();
+  });
+
+  it("throws when the base file is missing", () => {
+    expect(() => loadLayeredThresholds(["/nope/x.json"], "default")).toThrow(/not found/);
+  });
+
+  it("resolveThresholdsLayers builds env + local conventional names", () => {
+    const layers = resolveThresholdsLayers("/tmp/perf-thresholds.json", "ci", ["/tmp/extra.json"]);
+    expect(layers).toEqual([
+      "/tmp/perf-thresholds.json",
+      "/tmp/perf-thresholds.ci.json",
+      "/tmp/perf-thresholds.local.json",
+      "/tmp/extra.json",
+    ]);
+  });
+});
+
+describe("clampChange", () => {
+  it("returns next unchanged when prev or pct missing", () => {
+    expect(clampChange(undefined, 999, 25)).toBe(999);
+    expect(clampChange(100, 200, undefined)).toBe(200);
+    expect(clampChange(100, 200, 0)).toBe(200);
+  });
+  it("clamps upward and downward", () => {
+    expect(clampChange(100, 500, 25)).toBe(125);
+    expect(clampChange(100, 10, 25)).toBe(75);
+    expect(clampChange(100, 110, 25)).toBe(110);
+  });
+});
+
+describe("mergeSuggestions with maxChangePct", () => {
+  it("clamps suggestions exceeding the cap and reports them", () => {
+    const p = writeTempFile(
+      JSON.stringify({
+        default: { mean_ms: 100, max_ms: 400 },
+        ci: { mean_ms: 200, max_ms: 800, queries: [{ label: "a", match: "x", mean_ms: 100, max_ms: 200 }] },
+      }),
+    );
+    const merge = mergeSuggestions(
+      p,
+      "ci",
+      [{ label: "a", match: "x", mean_ms: 1000, max_ms: 2000 }],
+      { maxChangePct: 25 },
+    );
+    expect(merge.clamped.length).toBe(2);
+    expect(merge.replaced[0].mean_ms).toBe(125);
+    expect(merge.replaced[0].max_ms).toBe(250);
+  });
+});
+
+describe("renderHtmlReport", () => {
+  it("renders an HTML doc with the resolved env and failure rows", () => {
+    const p = writeTempFile(JSON.stringify(validFile));
+    const t = loadThresholds(p, "ci");
+    const html = renderHtmlReport({
+      resolved: t,
+      layers: [p],
+      hotQueries: [{ query_preview: "select 1", mean_ms: 10, max_ms: 20 }],
+      failures: [
+        { query_id: "rule-product-by-slug", matched_rule: { label: "product-by-slug", match: "from products where slug =" }, mean_ms: 300, max_ms: 800, applied_mean_ms: 50, applied_max_ms: 150, query_preview: "from products where slug =" },
+      ],
+    });
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain("PERF_ENV = ci");
+    expect(html).toContain("rule-product-by-slug");
+    expect(html).toContain("Breaching queries");
+  });
+});
+
+describe("buildAnnotations + formatAnnotation", () => {
+  it("locates rule line in thresholds and query_id line in report", () => {
+    const thr = writeTempFile(JSON.stringify(validFile, null, 2));
+    const dir = path.dirname(thr);
+    const reportPath = path.join(dir, "perf-smoke-report.json");
+    fs.writeFileSync(
+      reportPath,
+      JSON.stringify(
+        { threshold_failures: [{ query_id: "rule-product-by-slug", mean_ms: 300, max_ms: 800 }] },
+        null,
+        2,
+      ),
+    );
+    const anns = buildAnnotations({
+      thresholdsPath: thr,
+      reportPath,
+      failures: [
+        {
+          query_id: "rule-product-by-slug",
+          matched_rule: { label: "product-by-slug", match: "from products where slug =" },
+          mean_ms: 300,
+          max_ms: 800,
+          applied_mean_ms: 50,
+          applied_max_ms: 150,
+        },
+      ],
+    });
+    expect(anns.length).toBeGreaterThanOrEqual(2);
+    const cmd = formatAnnotation(anns[0]);
+    expect(cmd.startsWith("::error file=")).toBe(true);
+    expect(cmd).toContain("line=");
+  });
+});
