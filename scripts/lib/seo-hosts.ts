@@ -297,6 +297,26 @@ export function emitAnnotation(gate: string, expectedHost: string, v: Violation)
   console.log(`::error file=${safe(file)},line=${line},title=${safe(title)}::${safe(msg)}`);
 }
 
+/**
+ * Standard tail printer for gate scripts: prints kept violations and
+ * exits the process. Always call this AFTER finalizeGate.
+ */
+export function reportAndExit(gate: string, kept: Violation[], filteredOut: Violation[], successMessage: string): never {
+  if (filteredOut.length) {
+    console.log(`[${gate}] allowlisted ${filteredOut.length} off-SITE_URL violation(s)`);
+  }
+  if (kept.length > 0) {
+    console.error(`\n[${gate}] FAILED — ${kept.length} violation(s):\n`);
+    for (const v of kept.slice(0, 50)) {
+      console.error(`  ${v.file} [${v.tag}]: ${v.url}  (${v.reason})`);
+    }
+    if (kept.length > 50) console.error(`  …and ${kept.length - 50} more`);
+    process.exit(1);
+  }
+  console.log(`[${gate}] ${successMessage}`);
+  process.exit(0);
+}
+
 // ---------- Path helpers (exported for the aggregator + tests) ----------
 
 export function findGateReports(dir: string): string[] {
