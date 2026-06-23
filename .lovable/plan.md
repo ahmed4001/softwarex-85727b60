@@ -1,43 +1,21 @@
-## Goals
+## Goal
 
-1. **Coverage check** — fail CI when a query in `perf-smoke-report.json` has neither a matching per-query rule nor falls under an explicit env override.
-2. **Apply-suggestions option** — let the suggestion script (and a CI step on `workflow_dispatch`) write suggestions back into `perf-thresholds.json` and surface a ready-to-commit diff in the PR comment.
-3. **Stable anchors** — emit deterministic `query_id` for each entry in `perf-smoke-report.json`; PR comment links use anchors instead of line numbers.
-4. **Resolved-profile artifact** — write the fully resolved `PERF_ENV` profile (env defaults + merged per-query overrides) and upload as a CI artifact.
+Persist the db-perf-smoke / `perf-thresholds.json` system to project memory so future sessions know it exists and follow the established conventions instead of reinventing them.
 
 ## Changes
 
-### 1. Stable query IDs — `scripts/lib/perf-thresholds.ts`
-Add `queryId(input)` → short stable hash:
-- If `matched_rule.label` exists, use `rule-<slug(label)>`.
-- Else if `matched_rule.match` exists, use `match-<sha1(match).slice(0,10)>`.
-- Else `q-<sha1(normalize(query_preview)).slice(0,10)>` where `normalize` lowercases and collapses whitespace.
+1. **Create `mem://features/perf-thresholds-ci`** — a single feature-type memory describing:
+   - Purpose: CI guard that runs `EXPLAIN ANALYZE` on hot queries via the `db-perf-smoke` edge function and fails on threshold breaches / missing indexes / coverage gaps.
+   - Layered config: base `perf-thresholds.json` → `perf-thresholds.<PERF_ENV>.json` → `perf-thresholds.local.json` → `PERF_THRESHOLDS_FILES`. Later wins; queries merge by `label` (fallback `match`).
+   - Scripts: `test:perf`, `lint:perf-thresholds` (`--dry-run`), `suggest:perf-thresholds` (`--write`, `--max-change-pct=N`).
+   - Library entry points in `scripts/lib/perf-thresholds.ts`: `loadLayeredThresholds`, `resolveThresholdsLayers`, `mergeSuggestions` (with `maxChangePct` clamp), `findUncovered`, `queryId`, `renderHtmlReport`, `buildAnnotations`.
+   - Env vars: `PERF_ENV`, `PERF_APPLY_SUGGESTIONS`, `PERF_COVERAGE_STRICT`, `PERF_MAX_CHANGE_PCT`, `PERF_ANNOTATIONS`.
+   - Artifacts: `perf-smoke-report.json`, `perf-smoke-report.html`, `perf-smoke-resolved-profile.json`, `perf-smoke-summary.md`, `perf-thresholds.diff.patch`.
+   - Workflow: `.github/workflows/db-perf-smoke.yml` (push, PR, hourly cron, manual dispatch with toggles).
+   - Conventions: never edit generated artifacts; stable `query_id` anchors are the link key in PR comments; annotations are emitted as `::error file=…` workflow commands.
 
-### 2. Runner — `scripts/db-perf-smoke.ts`
-- After receiving the response, enrich each `threshold_failures[i]` and each `hot_queries[i]` with a `query_id` before writing `perf-smoke-report.json` (so the artifact carries the stable ID).
-- Use those IDs in the PR comment table's first column. Links point to the run page `#artifacts` plus a `?q=<id>` query hint (and a tooltip explaining the ID is searchable inside `perf-smoke-report.json`).
-- Always also write `perf-smoke-resolved-profile.json` containing: `{ envKey, mean_ms, max_ms, queries }` (merged from file + any rule that actually matched a row, so reviewers see what was applied).
-- Coverage check: compute uncovered = hot queries with no matching rule. Default behavior is **warn only**; when `PERF_COVERAGE_STRICT=1`, exit non-zero and list them in the PR comment under a **Coverage gaps** section.
-- Apply-suggestions: when `PERF_APPLY_SUGGESTIONS=1`, after computing suggestions, call shared `mergeSuggestions(thresholdsPath, envKey, suggestions)` from the suggest lib, write the file, generate `perf-thresholds.diff.patch` next to the report (via `git diff --no-index`), and embed a fenced diff block in the PR comment as **Suggested patch (ready to commit)**.
-
-### 3. Suggestion script — `scripts/suggest-perf-thresholds.ts`
-- Extract the merge logic into `scripts/lib/perf-thresholds.ts` as `mergeSuggestions(filePath, envKey, suggestions): { before: string, after: string }` so the runner can reuse it.
-- Keep the existing `--write` CLI flag delegating to the new helper. Print the unified diff using the helper output.
-
-### 4. Workflow — `.github/workflows/db-perf-smoke.yml`
-- Add `workflow_dispatch` inputs:
-  - `apply_suggestions` (boolean, default false) — sets `PERF_APPLY_SUGGESTIONS=1` for the run.
-  - `coverage_strict` (boolean, default false) — sets `PERF_COVERAGE_STRICT=1`.
-- Both env vars default to `0` on push/pull_request/schedule unless set.
-- Upload `perf-smoke-resolved-profile.json` and `perf-thresholds.diff.patch` (if present) alongside the existing report artifact.
-
-### 5. Unit tests — `scripts/lib/__tests__/perf-thresholds.test.ts`
-Add cases for:
-- `queryId` determinism + label/match/preview precedence.
-- `mergeSuggestions` adds new rules, replaces by label, leaves other env blocks untouched, fails when env block missing.
-- `findUncovered(hotQueries, rules, envKey)` returns the right set when no rule matches.
+2. **Update `mem://index.md`** — add a Core one-liner ("Perf CI uses layered `perf-thresholds.*.json` files; per-query rules keyed by label/match.") and a Memories reference line linking to the new file.
 
 ## Out of scope
-- Auto-committing the patch from CI (we only produce + attach it).
-- Changing threshold values.
-- Backend RPC changes — `query_id` is computed client-side in the runner.
+
+No code changes — memory only.
