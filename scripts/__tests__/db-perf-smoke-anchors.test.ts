@@ -33,13 +33,16 @@ function tocAnchors(src: string): string[] {
 }
 
 /** Extract every `#### Heading` literal we emit as a markdown heading. */
-function headingSlugs(src: string): string[] {
-  const slugs = new Set<string>();
-  // Matches `"#### Heading"` and `'#### Heading'` literals in lines.push() calls.
+function headingLiterals(src: string): string[] {
+  const out: string[] = [];
   const re = /["']####\s+([^"'\\]+)["']/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(src))) slugs.add(slugifyHeading(m[1]));
-  return Array.from(slugs);
+  while ((m = re.exec(src))) out.push(m[1].trim());
+  return out;
+}
+
+function headingSlugs(src: string): string[] {
+  return headingLiterals(src).map(slugifyHeading);
 }
 
 describe("db-perf-smoke PR comment anchors", () => {
