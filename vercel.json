@@ -1,45 +1,27 @@
 {
   "redirects": [
-    { "source": "/avatar-the-way-of-water-release-date-story-trailer", "destination": "/", "statusCode": 301 },
-    { "source": "/jack-ryan-season-3-trailer-release-date-cast", "destination": "/", "statusCode": 301 },
-    { "source": "/the-lord-of-the-rings-the-rings-of-power", "destination": "/", "statusCode": 301 },
-    { "source": "/creed-3-casting-date-of-release-and-more", "destination": "/", "statusCode": 301 },
-    { "source": "/enola-holmes-2-release-date-casting-plot-and-more", "destination": "/", "statusCode": 301 },
-    { "source": "/enola-holmes-2-release-date-casting-plot-and-more/", "destination": "/", "statusCode": 301 },
-    { "source": "/redmi-note-12-series-by-xiaomi-debuts-in-china", "destination": "/", "statusCode": 301 },
-    { "source": "/redmi-note-12-series-by-xiaomi-debuts-in-china/", "destination": "/", "statusCode": 301 },
-    { "source": "/episode-6-house-of-the-dragon-shows-brand-new", "destination": "/", "statusCode": 301 },
-    { "source": "/episode-6-house-of-the-dragon-shows-brand-new/", "destination": "/", "statusCode": 301 },
-    { "source": "/galaxy-m32-prime-edition-4g-smartphone", "destination": "/", "statusCode": 301 },
-    { "source": "/galaxy-m32-prime-edition-4g-smartphone/", "destination": "/", "statusCode": 301 }
+    { "source": "/the-lord-of-the-rings-the-rings-of-power", "destination": "/", "permanent": true },
+    { "source": "/the-lord-of-the-rings-the-rings-of-power/", "destination": "/", "permanent": true },
+    { "source": "/jack-ryan-season-3-trailer-release-date-cast", "destination": "/", "permanent": true },
+    { "source": "/jack-ryan-season-3-trailer-release-date-cast/", "destination": "/", "permanent": true },
+    { "source": "/creed-3-casting-date-of-release-and-more", "destination": "/", "permanent": true },
+    { "source": "/creed-3-casting-date-of-release-and-more/", "destination": "/", "permanent": true },
+    { "source": "/avatar-the-way-of-water-release-date-story-trailer", "destination": "/", "permanent": true },
+    { "source": "/avatar-the-way-of-water-release-date-story-trailer/", "destination": "/", "permanent": true },
+    { "source": "/enola-holmes-2-release-date-casting-plot-and-more", "destination": "/", "permanent": true },
+    { "source": "/enola-holmes-2-release-date-casting-plot-and-more/", "destination": "/", "permanent": true },
+    { "source": "/episode-6-house-of-the-dragon-shows-brand-new", "destination": "/", "permanent": true },
+    { "source": "/episode-6-house-of-the-dragon-shows-brand-new/", "destination": "/", "permanent": true },
+    { "source": "/redmi-note-12-series-by-xiaomi-debuts-in-china", "destination": "/", "permanent": true },
+    { "source": "/redmi-note-12-series-by-xiaomi-debuts-in-china/", "destination": "/", "permanent": true },
+    { "source": "/galaxy-m32-prime-edition-4g-smartphone", "destination": "/", "permanent": true },
+    { "source": "/galaxy-m32-prime-edition-4g-smartphone/", "destination": "/", "permanent": true },
+    { "source": "/vivo-t1-5g-reviews-and-specification", "destination": "/", "permanent": true },
+    { "source": "/vivo-t1-5g-reviews-and-specification/", "destination": "/", "permanent": true },
+    { "source": "/yamaha-earbuds-review", "destination": "/", "permanent": true },
+    { "source": "/yamaha-earbuds-review/", "destination": "/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/((?!assets/|.*\\..*).*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/(.*)\\.(js|css|woff2|woff|ttf|otf|webp|avif|jpg|jpeg|png|gif|svg|ico)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
-      ]
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
