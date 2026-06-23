@@ -70,8 +70,8 @@ export default function AllCategoriesPage() {
   return (
     <>
       <SeoHead
-        title="All Software Categories – Browse 50+ Business Tool Types"
-        description="Explore 50+ software categories on ReviewHunts. Find and compare CRM, project management, marketing automation, HR software, analytics, cybersecurity, AI tools, and more."
+        title="Software Categories – Browse Business Tools"
+        description="Explore 50+ software categories. Compare CRM, project management, marketing, HR, analytics, cybersecurity, and AI tools on ReviewHunts."
         keywords="software categories, SaaS categories, business software types, CRM software, project management tools, marketing automation, HR software, analytics tools, cybersecurity software, AI tools, ERP software, help desk software, e-commerce platforms, collaboration tools, accounting software"
         canonicalUrl={`${SITE_URL}/categories`}
         jsonLd={[categoriesJsonLd, breadcrumbJsonLd]}
