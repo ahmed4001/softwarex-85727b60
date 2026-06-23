@@ -172,7 +172,7 @@ describe("suggestion helpers", () => {
 
   it("deriveLabel produces a slug from a preview", () => {
     expect(deriveLabel("SELECT * FROM products WHERE slug = $1")).toBe(
-      "select-from-products-where-slug",
+      "select-from-products-where-slug-1",
     );
     expect(deriveLabel("")).toBe("query");
   });
