@@ -18,6 +18,10 @@ on:
         description: "Fail the build when a hot query has no matching threshold rule."
         type: boolean
         default: false
+      max_change_pct:
+        description: "Cap how much apply-suggestions may change mean_ms/max_ms per run (e.g. 25 = ±25%). Empty = no cap."
+        type: string
+        default: ""
   schedule:
     # Run hourly so latency regressions are caught even without code changes.
     - cron: "0 * * * *"
