@@ -298,7 +298,11 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     });
     const top = failures.slice(0, 10);
 
-    lines.push("", `**Top ${top.length} breaching hot queries** (of ${failures.length})`, "");
+    lines.push(
+      "",
+      `<details><summary><strong>Breaching hot queries — top ${top.length} of ${failures.length}</strong> (click to expand)</summary>`,
+      "",
+    );
     lines.push("| id | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |");
     lines.push("|---|---|---|---:|---:|---|---|---:|---|");
     top.forEach((q: any) => {
@@ -321,14 +325,17 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     lines.push("");
     lines.push(
       "Suggested values add 20% headroom (rounded up to 10 ms). The `id` column is a stable anchor — search for it inside `perf-smoke-report.json` in the artifact.",
+      "",
+      "</details>",
     );
   }
 
   // Coverage gaps section
   if (uncovered.length) {
+    const icon = coverageStrict ? "❌" : "⚠";
     lines.push(
       "",
-      `**${coverageStrict ? "❌" : "⚠"} Coverage gaps** — ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule`,
+      `<details${coverageStrict ? " open" : ""}><summary><strong>${icon} Coverage gaps — ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule</strong></summary>`,
       "",
     );
     lines.push("| id | preview |");
@@ -344,6 +351,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       coverageStrict
         ? "Set `PERF_COVERAGE_STRICT=0` to make this a warning, or add rules to `perf-thresholds.json` for each id above."
         : "Add explicit rules in `perf-thresholds.json` to silence these warnings, or set `PERF_COVERAGE_STRICT=1` to fail the build.",
+      "",
+      "</details>",
     );
   }
 
@@ -354,13 +363,13 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       : "";
     lines.push(
       "",
-      `**Suggested patch** (applied to \`perf-thresholds.json\` in this run — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote})`,
+      `<details><summary><strong>Suggested patch</strong> — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote}</summary>`,
+      "",
+      "Applied to `perf-thresholds.json` in this run. Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff below.",
       "",
       "```diff",
       suggestionsPatch,
       "```",
-      "",
-      "Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff above.",
     );
     if (mergeStats.clamped.length) {
       lines.push("", "| rule | field | previous | requested | applied |", "|---|---|---:|---:|---:|");
@@ -368,7 +377,9 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
         lines.push(`| ${c.label} | ${c.field} | ${c.previous} | ${c.requested} | **${c.applied}** |`);
       }
     }
+    lines.push("", "</details>");
   }
+
 
   lines.push(
     "",
