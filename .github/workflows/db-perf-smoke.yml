@@ -34,6 +34,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           PERF_REPORT_DIR: perf-smoke-report
+          PERF_ENV: ci
         run: bun run test:perf
 
       - name: Upload perf report artifact
