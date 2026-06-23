@@ -1,26 +1,33 @@
-## Context
+## Diagnosis
 
-I searched the project for `softwarex.lovable.app` — it does not appear anywhere in `src/`, `public/`, or `index.html`. The only match is inside an old, immutable database migration file, which has no runtime effect.
+`.github/workflows/db-perf-smoke.yml` passes `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from **GitHub Actions repository secrets** to `scripts/db-perf-smoke.ts`. When those secrets aren't configured on the GitHub repo, the script exits with code 2 after ~3 seconds, printing `Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY env vars`. This matches the "Failed in 3 seconds" symptom.
 
-Your canonical domain across `robots.txt`, all `sitemap*.xml` files, `SeoHead`, and `seo-canonical.ts` is already `https://reviewhunts.com`.
+These secrets are completely separate from Lovable Cloud secrets — Lovable can't set them for you; they have to be added in the GitHub repo settings.
 
-So there is nothing user-visible to remove. What I'll do is harden things so `softwarex.lovable.app` (or any other `*.lovable.app` host) can never sneak in as a canonical/og:url.
+## Fix — what you do (one-time, ~1 minute)
 
-## Changes
+1. Open your GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**.
+2. Add two secrets with these exact names and values (copy from your project's `.env` — same values the Lovable app uses):
+   - `VITE_SUPABASE_URL` → your Lovable Cloud project URL (looks like `https://<ref>.supabase.co`)
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` → your publishable (anon) key
+3. Re-run the failed `db-perf-smoke` workflow.
 
-1. **`src/lib/seo-canonical.ts`** — Hard-pin the canonical base to `https://reviewhunts.com`. Explicitly reject any host containing `lovable.app` (including `softwarex.lovable.app`) and fall back to the pinned domain.
+Both values are publishable / non-sensitive (the anon key is already shipped in your frontend bundle), so adding them as repo secrets is safe.
 
-2. **`src/components/SeoHead.tsx`** — Already strips preview/lovable.app hosts (line 26). Extend it to always rewrite the host to `reviewhunts.com` for emitted `<link rel="canonical">` and `og:url`, never leaving a Lovable preview URL in head tags even during local/preview rendering.
+## Fix — what I do in this project
 
-3. **`src/pages/admin/AdminSlugAuditPage.tsx`** (line 299) — This admin-only "open in preview" link uses the Lovable preview host on purpose (for staging QA). Leave it alone unless you want it removed too.
+To make this failure mode much more obvious next time, I'll harden two things:
 
-4. **Add a test** in `src/test/seo/` asserting no rendered route emits a canonical or og:url containing `lovable.app`. This prevents regressions.
+1. **`.github/workflows/db-perf-smoke.yml`** — add a pre-flight step that checks the secrets are present and fails with an actionable error pointing at the repo's Settings page (instead of relying on the script's generic exit 2).
+2. **`scripts/db-perf-smoke.ts`** — upgrade the existing `Missing VITE_SUPABASE_URL…` error message to:
+   - name each missing variable individually,
+   - explain that they come from GitHub Actions repo secrets,
+   - emit a GitHub workflow `::error::` annotation so the failure is clickable on the PR.
 
-## Out of scope
+No app code, no database schema, no edge function changes — purely CI ergonomics.
 
-- The migration file mentioning `softwarex` — migrations are immutable history and have no runtime impact.
-- Switching the canonical to any other domain (staying on `reviewhunts.com`).
+## Out of scope (ask if you want them)
 
-## Question
-
-Should I also remove the admin slug-audit preview link (item 3), or keep it for staging QA?
+- Rotating the publishable key.
+- Setting these as **organization-level** GitHub Actions secrets (useful if you have many repos).
+- Adding the same guard to the SEO workflows.
