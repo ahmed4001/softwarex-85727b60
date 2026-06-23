@@ -1,0 +1,29 @@
+{
+  "$schema": "./perf-thresholds.schema.json",
+  "_comment": "Per-environment thresholds for the db-perf-smoke runner. Edit values here; no code changes needed. Select an env with PERF_ENV=<key>. Falls back to 'default'.",
+
+  "default": {
+    "mean_ms": 200,
+    "max_ms": 800
+  },
+
+  "ci": {
+    "mean_ms": 250,
+    "max_ms": 1000
+  },
+
+  "staging": {
+    "mean_ms": 200,
+    "max_ms": 800
+  },
+
+  "production": {
+    "mean_ms": 150,
+    "max_ms": 600
+  },
+
+  "local": {
+    "mean_ms": 500,
+    "max_ms": 2000
+  }
+}
