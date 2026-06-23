@@ -5,6 +5,7 @@
  *
  * Usage:
  *   PERF_ENV=ci tsx scripts/lint-perf-thresholds.ts
+ *   PERF_ENV=ci tsx scripts/lint-perf-thresholds.ts --dry-run
  */
 import {
   loadThresholds,
@@ -14,10 +15,15 @@ import {
 
 const envKey = process.env.PERF_ENV || "default";
 const filePath = process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json";
+const dryRun =
+  process.argv.includes("--dry-run") || process.env.PERF_DRY_RUN === "1";
 
 try {
   const t = loadThresholds(filePath, envKey);
   console.log(`✅ perf-thresholds.json is valid (${t.thresholdsPath})`);
+  if (dryRun) {
+    console.log("ℹ dry-run: linted thresholds only, no EXPLAIN executed.");
+  }
   console.log("");
   console.log(`▶ Resolved PERF_ENV profile: ${t.envKey}`);
   console.log(`  mean_ms ≤ ${t.mean_ms}`);
