@@ -103,7 +103,7 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
           .split("\n")
           .map((l: string) => "      " + l)
           .join("\n");
-        console.error("    EXPLAIN (GENERIC_PLAN, BUFFERS):");
+        console.error(`    EXPLAIN (${q.explain_mode ?? "ANALYZE"}, BUFFERS):`);
         console.error(indented);
       }
     }
