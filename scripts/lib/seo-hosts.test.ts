@@ -369,5 +369,122 @@ describe("emitAnnotation", () => {
     expect(logged).toHaveLength(1);
     expect(logged[0]).toContain("::error file=dist/product/foo/index.html,line=3,title=SEO host mismatch");
     expect(logged[0]).toContain("%3A"); // encoded colon
+});
+
+describe("validateAllowlistConfig — $schema + metadata keys", () => {
+  it("accepts a top-level $schema reference (editor JSON Schema support)", () => {
+    expect(validateAllowlistConfig({
+      $schema: "./seo-host-allowlist.schema.json",
+      _default: ["cdn.example.com"],
+      "jsonld-hosts": [],
+    })).toEqual([]);
   });
+
+  it("still rejects unknown gate-like keys even when $schema is present", () => {
+    const errs = validateAllowlistConfig({
+      $schema: "./seo-host-allowlist.schema.json",
+      "social-urls": [], // typo
+    });
+    expect(errs.some((e) => /unknown gate key "social-urls"/.test(e))).toBe(true);
+  });
+});
+
+describe("snippetAt", () => {
+  it("returns a trimmed, single-line excerpt with ellipses", () => {
+    const text = `line one\n  <meta property="og:url" content="https://other.com/abc"/>\nline three`;
+    const s = snippetAt(text, "https://other.com/abc", 20);
+    expect(s).toContain("og:url");
+    expect(s).toContain("https://other.com/abc");
+    expect(s).not.toContain("\n");
+    expect(s.startsWith("…") || !s.startsWith(" ")).toBe(true);
+  });
+
+  it("escapes pipe characters so it renders in a markdown table cell", () => {
+    expect(snippetAt("a | b https://x.com c | d", "https://x.com")).toContain("\\|");
+  });
+
+  it("returns empty string when needle is absent", () => {
+    expect(snippetAt("hello", "nope")).toBe("");
+    expect(snippetAt("hello", "")).toBe("");
+  });
+});
+
+describe("matchingAllowlistEntry", () => {
+  it("returns the explicit entry that matched", () => {
+    expect(matchingAllowlistEntry("cdn.example.com", "site.com", ["cdn.example.com"])).toBe("cdn.example.com");
+  });
+  it("returns the wildcard entry that matched", () => {
+    expect(matchingAllowlistEntry("a.b.foo.com", "site.com", ["*.foo.com"])).toBe("*.foo.com");
+  });
+  it("returns null for the expected host (no allowlist credit)", () => {
+    expect(matchingAllowlistEntry("site.com", "site.com", ["site.com"])).toBe(null);
+  });
+  it("returns null when nothing matches", () => {
+    expect(matchingAllowlistEntry("nope.com", "site.com", ["*.foo.com"])).toBe(null);
+  });
+});
+
+describe("loadAllowlistEntries — origin tracking", () => {
+  let tmp: string;
+  beforeEach(() => { tmp = mkdtempSync(join(tmpdir(), "seo-origin-")); });
+  afterEach(() => rmSync(tmp, { recursive: true, force: true }));
+
+  it("tags each entry with where it came from, preserving order + dedupe", () => {
+    writeFileSync(join(tmp, "seo-host-allowlist.json"), JSON.stringify({
+      _default: ["g.example.com", "shared.example.com"],
+      "jsonld-hosts": ["j.example.com", "shared.example.com"],
+    }));
+    const entries = loadAllowlistEntries(
+      "jsonld-hosts",
+      { SEO_ALLOWED_HOSTS_JSONLD_HOSTS: "env-gate.example.com", SEO_ALLOWED_HOSTS: "env-global.example.com" },
+      tmp,
+    );
+    const map = Object.fromEntries(entries.map((e) => [e.entry, e.source]));
+    expect(map["j.example.com"]).toBe("file:gate");
+    expect(map["shared.example.com"]).toBe("file:gate"); // first-seen wins (gate beats _default)
+    expect(map["g.example.com"]).toBe("file:_default");
+    expect(map["env-gate.example.com"]).toBe("env:gate");
+    expect(map["env-global.example.com"]).toBe("env:global");
+  });
+});
+
+describe("finalizeGate — allowlist usage + snippet enrichment", () => {
+  let tmp: string;
+  beforeEach(() => {
+    tmp = mkdtempSync(join(tmpdir(), "seo-usage-"));
+    mkdirSync(join(tmp, "reports"));
+    writeFileSync(join(tmp, "seo-host-allowlist.json"), JSON.stringify({
+      "social-image-hosts": ["cdn.allowed.com", "*.unused-wildcard.com"],
+    }));
+  });
+  afterEach(() => rmSync(tmp, { recursive: true, force: true }));
+
+  it("records match counts, unused entries, and snippet on the report", () => {
+    const reportDir = join(tmp, "reports");
+    const html = `<html>\n<head>\n<meta property="og:image" content="https://cdn.allowed.com/x.png">\n</head>\n</html>`;
+    const cwd = process.cwd();
+    process.chdir(tmp);
+    try {
+      finalizeGate({
+        gate: "social-image-hosts",
+        siteUrl: "https://example.com",
+        expectedHost: "example.com",
+        violations: [
+          { file: "a.html", tag: "og:image", url: "https://cdn.allowed.com/x.png", reason: "host cdn.allowed.com != example.com" },
+        ],
+        sources: { "a.html": html },
+        env: { SEO_REPORT_DIR: reportDir },
+      });
+    } finally {
+      process.chdir(cwd);
+    }
+    const report = JSON.parse(readFileSync(join(reportDir, "social-image-hosts.json"), "utf8"));
+    expect(report.allowlist_match_counts["cdn.allowed.com"]).toBe(1);
+    expect(report.allowlist_unused).toContain("*.unused-wildcard.com");
+    expect(report.filtered_out[0].allowlistEntry).toBe("cdn.allowed.com");
+    expect(report.filtered_out[0].snippet).toContain("og:image");
+    expect(report.filtered_out[0].snippet).toContain("cdn.allowed.com");
+  });
+});
+
 });
