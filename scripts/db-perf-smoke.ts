@@ -22,7 +22,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  loadThresholds,
+  loadLayeredThresholds,
+  resolveThresholdsLayers,
   loadBaseThresholds,
   renderActiveThresholds,
   diffThresholds,
@@ -32,6 +33,9 @@ import {
   mergeSuggestions,
   suggestRule,
   unifiedDiff,
+  renderHtmlReport,
+  buildAnnotations,
+  formatAnnotation,
   ThresholdsValidationError,
   type SuggestedRule,
 } from "./lib/perf-thresholds";
@@ -48,12 +52,21 @@ if (!url || !anon) {
 
 const envKey = process.env.PERF_ENV || "default";
 const thresholdsFile = process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json";
+const extraLayers = (process.env.PERF_THRESHOLDS_FILES || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const layers = resolveThresholdsLayers(thresholdsFile, envKey, extraLayers);
 const coverageStrict = process.env.PERF_COVERAGE_STRICT === "1";
 const applySuggestions = process.env.PERF_APPLY_SUGGESTIONS === "1";
+const maxChangePct = process.env.PERF_MAX_CHANGE_PCT
+  ? Number(process.env.PERF_MAX_CHANGE_PCT)
+  : undefined;
+const emitAnnotations = process.env.PERF_ANNOTATIONS !== "0"; // on by default
 
 let thresholds;
 try {
-  thresholds = loadThresholds(thresholdsFile, envKey);
+  thresholds = loadLayeredThresholds(layers, envKey);
 } catch (e) {
   if (e instanceof ThresholdsValidationError) {
     console.error("━━━ perf-thresholds.json validation failed ━━━");
@@ -65,11 +78,14 @@ try {
   process.exit(2);
 }
 
+const presentLayers = layers.filter((p) => fs.existsSync(p));
 console.log(
   `▶ thresholds [${thresholds.envKey}] mean≤${thresholds.mean_ms}ms max≤${thresholds.max_ms}ms` +
     (thresholds.queries.length ? ` (+${thresholds.queries.length} per-query rules)` : "") +
-    ` (from ${thresholds.thresholdsPath})`,
+    ` (layers: ${presentLayers.join(" → ")})` +
+    (maxChangePct ? ` [max ±${maxChangePct}%/run]` : ""),
 );
+
 
 const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
