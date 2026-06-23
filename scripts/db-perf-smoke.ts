@@ -5,13 +5,21 @@
  *   - any required hot-table index is missing, or
  *   - any top hot query exceeds the mean/max execution-time thresholds.
  *
+ * Thresholds come from `perf-thresholds.json` (or the path in PERF_THRESHOLDS_FILE).
+ * Pick an environment block with `PERF_ENV=<key>` (defaults to `default`).
+ *
  * Usage:
- *   tsx scripts/db-perf-smoke.ts
+ *   PERF_ENV=ci tsx scripts/db-perf-smoke.ts
  *
  * Env:
  *   VITE_SUPABASE_URL              (required)
- *   VITE_SUPABASE_PUBLISHABLE_KEY  (required — used as Authorization for the function)
+ *   VITE_SUPABASE_PUBLISHABLE_KEY  (required — Authorization bearer)
+ *   PERF_ENV                       (optional — config key, default "default")
+ *   PERF_THRESHOLDS_FILE           (optional — path to JSON, default ./perf-thresholds.json)
  */
+
+import fs from "node:fs";
+import path from "node:path";
 
 const url = process.env.VITE_SUPABASE_URL;
 const anon =
@@ -19,10 +27,26 @@ const anon =
   process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!url || !anon) {
-  console.error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY env vars",
-  );
+  console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY env vars");
   process.exit(2);
+}
+
+const envKey = process.env.PERF_ENV || "default";
+const thresholdsPath = path.resolve(
+  process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json",
+);
+
+let mean_ms = 200;
+let max_ms = 800;
+try {
+  const cfg = JSON.parse(fs.readFileSync(thresholdsPath, "utf8"));
+  const block = cfg[envKey] ?? cfg.default;
+  if (!block) throw new Error(`No "${envKey}" or "default" block in ${thresholdsPath}`);
+  if (typeof block.mean_ms === "number") mean_ms = block.mean_ms;
+  if (typeof block.max_ms === "number") max_ms = block.max_ms;
+  console.log(`▶ thresholds [${envKey}] mean≤${mean_ms}ms max≤${max_ms}ms (from ${thresholdsPath})`);
+} catch (e) {
+  console.warn(`⚠ Could not load thresholds (${e}); using defaults mean≤${mean_ms} max≤${max_ms}`);
 }
 
 const endpoint = `${url}/functions/v1/db-perf-smoke`;
@@ -35,7 +59,10 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       apikey: anon,
       "Content-Type": "application/json",
     },
+    body: JSON.stringify({ mean_ms, max_ms }),
   });
+
+
 
   const body = await res.json().catch(() => ({}));
   const pretty = JSON.stringify(body, null, 2);
