@@ -119,7 +119,8 @@ export function loadLayeredThresholds(
         `Invalid JSON in ${abs}: ${(e as Error).message}`,
       );
     }
-    const result = ThresholdsFileSchema.safeParse(parsed);
+    const schema = idx === 0 ? ThresholdsFileSchema : PartialThresholdsFileSchema;
+    const result = schema.safeParse(parsed);
     if (!result.success) {
       const details = formatZodError(result.error);
       throw new ThresholdsValidationError(
