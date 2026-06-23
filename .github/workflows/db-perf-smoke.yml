@@ -48,6 +48,34 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Verify required GitHub Actions secrets are configured
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          missing=()
+          [ -z "$VITE_SUPABASE_URL" ] && missing+=("VITE_SUPABASE_URL")
+          [ -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ] && missing+=("VITE_SUPABASE_PUBLISHABLE_KEY")
+          if [ ${#missing[@]} -gt 0 ]; then
+            joined=$(IFS=', '; echo "${missing[*]}")
+            echo "::error title=db-perf-smoke: missing GitHub Actions secret::${joined} not set. Add as GitHub repo secrets (Settings → Secrets and variables → Actions → New repository secret), then re-run this workflow."
+            echo ""
+            echo "Missing required GitHub Actions repository secret(s): ${joined}"
+            echo ""
+            echo "Fix (one-time, ~1 minute):"
+            echo "  1. Open this repo on GitHub → Settings → Secrets and variables → Actions"
+            echo "  2. Click 'New repository secret' and add each of:"
+            for name in "${missing[@]}"; do
+              echo "       - ${name}"
+            done
+            echo "  3. Re-run the failed workflow."
+            echo ""
+            echo "Both values are publishable (the anon key already ships in the frontend bundle)."
+            exit 1
+          fi
+          echo "All required secrets are present."
+
       - name: Lint perf thresholds (resolve PERF_ENV profile)
         env:
           PERF_ENV: ci
