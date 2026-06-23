@@ -11,7 +11,9 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
 
+const GATE = "sitemap-hosts";
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const EXPECTED_HOST = new URL(SITE_URL).hostname.toLowerCase();
 
@@ -28,51 +30,42 @@ if (gen.status !== 0) {
 }
 
 const publicDir = resolve("public");
-const violations: { file: string; url: string; reason: string }[] = [];
+const violations: Violation[] = [];
 
-function checkUrl(file: string, url: string) {
+function checkUrl(file: string, tag: string, url: string) {
   const trimmed = url.trim();
   if (!trimmed || !/^https?:\/\//i.test(trimmed)) return;
   try {
     const host = new URL(trimmed).hostname.toLowerCase();
     if (host !== EXPECTED_HOST) {
-      violations.push({ file, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}` });
+      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}` });
     }
   } catch {
-    violations.push({ file, url: trimmed, reason: "unparseable URL" });
+    violations.push({ file, tag, url: trimmed, reason: "unparseable URL" });
   }
 }
 
-// 2. Walk every sitemap*.xml in public/ — extract <loc> values.
 const sitemapFiles = readdirSync(publicDir).filter((f) => /^sitemap.*\.xml$/i.test(f));
 for (const name of sitemapFiles) {
   const file = resolve(publicDir, name);
   const xml = readFileSync(file, "utf8");
-  for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
-    checkUrl(name, m[1]);
-  }
+  for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) checkUrl(name, "loc", m[1]);
 }
 
-// 3. Check robots.txt — Sitemap: directives must point at SITE_URL host.
 const robotsPath = resolve(publicDir, "robots.txt");
 if (existsSync(robotsPath)) {
   const robots = readFileSync(robotsPath, "utf8");
   for (const line of robots.split(/\r?\n/)) {
     const m = line.match(/^\s*Sitemap:\s*(\S+)/i);
-    if (m) checkUrl("robots.txt", m[1]);
+    if (m) checkUrl("robots.txt", "robots Sitemap:", m[1]);
   }
 }
 
 const scanned = sitemapFiles.length + (existsSync(robotsPath) ? 1 : 0);
-console.log(`[check-sitemap-hosts] scanned ${scanned} file(s)`);
+console.log(`[${GATE}] scanned ${scanned} file(s)`);
 
-if (violations.length > 0) {
-  console.error(`\n[check-sitemap-hosts] FAILED — ${violations.length} URL(s) with wrong host:\n`);
-  for (const v of violations.slice(0, 50)) {
-    console.error(`  ${v.file}: ${v.url}  (${v.reason})`);
-  }
-  if (violations.length > 50) console.error(`  …and ${violations.length - 50} more`);
-  process.exit(1);
-}
-
-console.log("[check-sitemap-hosts] OK — all sitemap + robots URLs match SITE_URL host");
+const { kept, filteredOut } = finalizeGate({
+  gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations,
+  workspacePrefix: "public/",
+});
+reportAndExit(GATE, kept, filteredOut, "all sitemap + robots URLs match SITE_URL host");

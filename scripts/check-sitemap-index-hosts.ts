@@ -13,6 +13,9 @@
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, basename } from "node:path";
+import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+
+const GATE = "sitemap-index-hosts";
 
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const EXPECTED_HOST = new URL(SITE_URL).hostname.toLowerCase();
@@ -88,13 +91,10 @@ if (indexCount === 0) {
   process.exit(0);
 }
 
-if (violations.length > 0) {
-  console.error(`\n[check-sitemap-index-hosts] FAILED — ${violations.length} violation(s):\n`);
-  for (const v of violations.slice(0, 50)) {
-    console.error(`  ${v.file} [${v.kind}]: ${v.url}  (${v.reason})`);
-  }
-  if (violations.length > 50) console.error(`  …and ${violations.length - 50} more`);
-  process.exit(1);
-}
-
-console.log("[check-sitemap-index-hosts] OK — sitemapindex + nested sitemaps all match SITE_URL host");
+// Adapt {file, kind, url, reason} → standard Violation shape (kind → tag).
+const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.kind, url: v.url, reason: v.reason }));
+const { kept, filteredOut } = finalizeGate({
+  gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
+  workspacePrefix: "public/",
+});
+reportAndExit(GATE, kept, filteredOut, "sitemapindex + nested sitemaps all match SITE_URL host");
