@@ -245,7 +245,7 @@ async function snapshot(
     if (!meta.d) report.corrections!.push("missing-description");
     if (meta.d.length > 160) report.corrections!.push(`desc-too-long(${meta.d.length})`);
     if (!meta.c) report.corrections!.push("missing-canonical");
-    else if (!meta.c.startsWith("https://reviewhunts.com")) {
+    else if (!meta.c.startsWith(SITE_URL)) {
       report.corrections!.push(`canonical-host(${meta.c})`);
     }
     if (meta.j === 0) report.corrections!.push("no-json-ld");
