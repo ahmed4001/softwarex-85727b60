@@ -7,20 +7,29 @@
  *   PERF_ENV=ci tsx scripts/lint-perf-thresholds.ts
  *   PERF_ENV=ci tsx scripts/lint-perf-thresholds.ts --dry-run
  */
+import fs from "node:fs";
 import {
-  loadThresholds,
+  loadLayeredThresholds,
+  resolveThresholdsLayers,
   renderActiveThresholds,
   ThresholdsValidationError,
 } from "./lib/perf-thresholds";
 
 const envKey = process.env.PERF_ENV || "default";
 const filePath = process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json";
+const extra = (process.env.PERF_THRESHOLDS_FILES || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const layers = resolveThresholdsLayers(filePath, envKey, extra);
 const dryRun =
   process.argv.includes("--dry-run") || process.env.PERF_DRY_RUN === "1";
 
 try {
-  const t = loadThresholds(filePath, envKey);
-  console.log(`✅ perf-thresholds.json is valid (${t.thresholdsPath})`);
+  const t = loadLayeredThresholds(layers, envKey);
+  const present = layers.filter((p) => fs.existsSync(p));
+  console.log(`✅ perf-thresholds is valid across ${present.length} layer(s):`);
+  for (const p of present) console.log(`   • ${p}`);
   if (dryRun) {
     console.log("ℹ dry-run: linted thresholds only, no EXPLAIN executed.");
   }
