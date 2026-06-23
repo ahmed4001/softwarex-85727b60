@@ -1,0 +1,218 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildPrComment — full-comment snapshots > matches snapshot: fail-breaches-only 1`] = `
+"### ❌ db-perf-smoke FAIL
+
+**Summary**
+- ❌ **1** breaching query (1 over max, 0 over mean) — of 1 hot queries scanned
+- ✅ **0** coverage gaps
+- ✅ **0** missing indexes
+- 📊 HTML report: \`artifacts/perf-smoke-report.html\`
+
+**Top breaches**
+- \`q-aaaaaa\` · **products-list** · mean 220ms (≤150) · max 880ms (≤600)
+
+**Jump to:** [🔥 Breaches](#breaches) · [⚙ Active thresholds](#active-thresholds)
+
+#### Active thresholds
+<details><summary>Resolved profile + per-query overrides</summary>
+
+**Active thresholds** (\`PERF_ENV=default\`): mean ≤ **100 ms**, max ≤ **500 ms**
+
+Per-query overrides:
+
+| label | match | mean (ms) | max (ms) |
+|---|---|---:|---:|
+| products-list | \`select \\* from products\` | 150 | 600 |
+
+</details>
+
+#### Breaches
+<details><summary>Top 1 of 1 breaching hot queries (click to expand)</summary>
+
+| id | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |
+|---|---|---|---:|---:|---|---|---:|---|
+| \`q-aaaaaa\` | products-list | ANALYZE | 220 | 880 | 150 → **270** | 600 → **1060** | 1234 | \`select * from products where active = $1\` |
+
+Suggested values add 20% headroom (rounded up to 10 ms). The \`id\` column is a stable anchor — search for it inside \`perf-smoke-report.json\` in the artifact.
+
+</details>
+
+Artifacts attached: \`perf-smoke-report.json\`, \`perf-smoke-report.html\` (visual diff), \`perf-smoke-resolved-profile.json\`."
+`;
+
+exports[`buildPrComment — full-comment snapshots > matches snapshot: fail-coverage-gaps-only 1`] = `
+"### ❌ db-perf-smoke FAIL
+
+**Summary**
+- ✅ **0** breaching queries
+- ❌ **1** coverage gap (strict mode)
+- ✅ **0** missing indexes
+- 📊 HTML report: \`artifacts/perf-smoke-report.html\`
+
+**Jump to:** [🛡 Coverage gaps](#coverage-gaps) · [⚙ Active thresholds](#active-thresholds)
+
+#### Active thresholds
+<details><summary>Resolved profile + per-query overrides</summary>
+
+**Active thresholds** (\`PERF_ENV=default\`): mean ≤ **100 ms**, max ≤ **500 ms**
+
+Per-query overrides:
+
+| label | match | mean (ms) | max (ms) |
+|---|---|---:|---:|
+| products-list | \`select \\* from products\` | 150 | 600 |
+
+</details>
+
+#### Coverage gaps
+<details open><summary>❌ 1 hot query has no matching threshold rule</summary>
+
+| id | preview |
+|---|---|
+| \`q-bf5706bbce\` | \`select count(*) from sessions\` |
+
+Set \`PERF_COVERAGE_STRICT=0\` to make this a warning, or add rules to \`perf-thresholds.json\` for each id above.
+
+</details>
+
+Artifacts attached: \`perf-smoke-report.json\`, \`perf-smoke-report.html\` (visual diff), \`perf-smoke-resolved-profile.json\`."
+`;
+
+exports[`buildPrComment — full-comment snapshots > matches snapshot: fail-everything-with-patch-and-clamp 1`] = `
+"### ❌ db-perf-smoke FAIL
+
+**Summary**
+- ❌ **1** breaching query (1 over max, 0 over mean) — of 2 hot queries scanned
+- ❌ **1** coverage gap (strict mode)
+- ❌ **1** missing index
+- 📊 HTML report: \`artifacts/perf-smoke-report.html\` — [download from the **perf-smoke-report** artifact ↗](https://github.com/acme/app/actions/runs/42#artifacts)
+
+**Top breaches**
+- \`q-aaaaaa\` · **products-list** · mean 220ms (≤150) · max 880ms (≤600)
+
+**Jump to:** [🩹 Suggested patch](#suggested-patch) · [🔥 Breaches](#breaches) · [🛡 Coverage gaps](#coverage-gaps) · [🧱 Missing indexes](#missing-indexes) · [⚙ Active thresholds](#active-thresholds)
+
+#### Active thresholds
+<details><summary>Resolved profile + per-query overrides</summary>
+
+**Active thresholds** (\`PERF_ENV=default\`): mean ≤ **100 ms**, max ≤ **500 ms**
+
+Per-query overrides:
+
+| label | match | mean (ms) | max (ms) |
+|---|---|---:|---:|
+| products-list | \`select \\* from products\` | 150 | 600 |
+
+</details>
+
+#### Missing indexes
+
+- \`public.reviews(product_id)\`
+
+#### Breaches
+<details><summary>Top 1 of 1 breaching hot queries (click to expand)</summary>
+
+| id | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |
+|---|---|---|---:|---:|---|---|---:|---|
+| [\`q-aaaaaa\`](https://github.com/acme/app/actions/runs/42#artifacts "Search perf-smoke-report.json for q-aaaaaa") | products-list | ANALYZE | 220 | 880 | 150 → **270** | 600 → **1060** | 1234 | \`select * from products where active = $1\` |
+
+Suggested values add 20% headroom (rounded up to 10 ms). The \`id\` column is a stable anchor — search for it inside \`perf-smoke-report.json\` in the artifact.
+
+</details>
+
+#### Coverage gaps
+<details open><summary>❌ 1 hot query has no matching threshold rule</summary>
+
+| id | preview |
+|---|---|
+| \`q-bf5706bbce\` | \`select count(*) from sessions\` |
+
+Set \`PERF_COVERAGE_STRICT=0\` to make this a warning, or add rules to \`perf-thresholds.json\` for each id above.
+
+</details>
+
+#### Suggested patch
+<details><summary>1 added, 1 replaced — ⚠ 1 value clamped to ±20% / run</summary>
+
+Applied to \`perf-thresholds.json\` in this run. Download \`perf-thresholds.diff.patch\` from the run artifacts and commit it, or copy the diff below.
+
+\`\`\`diff
+--- a/perf-thresholds.json
++++ b/perf-thresholds.json
+@@
+-  "mean_ms": 150
++  "mean_ms": 270
+
+\`\`\`
+
+| rule | field | previous | requested | applied |
+|---|---|---:|---:|---:|
+| products-list | max_ms | 600 | 1060 | **720** |
+
+</details>
+
+Artifacts attached: \`perf-smoke-report.json\`, \`perf-smoke-report.html\` (visual diff), \`perf-smoke-resolved-profile.json\`.
+
+Full \`EXPLAIN (ANALYZE, BUFFERS)\` plans are in the **\`perf-smoke-report\`** artifact attached to this run.
+
+[View full CI logs ↗](https://github.com/acme/app/actions/runs/42)"
+`;
+
+exports[`buildPrComment — full-comment snapshots > matches snapshot: fail-missing-indexes-only 1`] = `
+"### ❌ db-perf-smoke FAIL
+
+**Summary**
+- ✅ **0** breaching queries
+- ✅ **0** coverage gaps
+- ❌ **1** missing index
+- 📊 HTML report: \`artifacts/perf-smoke-report.html\`
+
+**Jump to:** [🧱 Missing indexes](#missing-indexes) · [⚙ Active thresholds](#active-thresholds)
+
+#### Active thresholds
+<details><summary>Resolved profile + per-query overrides</summary>
+
+**Active thresholds** (\`PERF_ENV=default\`): mean ≤ **100 ms**, max ≤ **500 ms**
+
+Per-query overrides:
+
+| label | match | mean (ms) | max (ms) |
+|---|---|---:|---:|
+| products-list | \`select \\* from products\` | 150 | 600 |
+
+</details>
+
+#### Missing indexes
+
+- \`public.reviews(product_id)\`
+
+Artifacts attached: \`perf-smoke-report.json\`, \`perf-smoke-report.html\` (visual diff), \`perf-smoke-resolved-profile.json\`."
+`;
+
+exports[`buildPrComment — full-comment snapshots > matches snapshot: pass-minimal 1`] = `
+"### ✅ db-perf-smoke PASS
+
+**Summary**
+- ✅ **0** breaching queries
+- ✅ **0** coverage gaps
+- ✅ **0** missing indexes
+- 📊 HTML report: \`artifacts/perf-smoke-report.html\`
+
+**Jump to:** [⚙ Active thresholds](#active-thresholds)
+
+#### Active thresholds
+<details><summary>Resolved profile + per-query overrides</summary>
+
+**Active thresholds** (\`PERF_ENV=default\`): mean ≤ **100 ms**, max ≤ **500 ms**
+
+Per-query overrides:
+
+| label | match | mean (ms) | max (ms) |
+|---|---|---:|---:|
+| products-list | \`select \\* from products\` | 150 | 600 |
+
+</details>
+
+Artifacts attached: \`perf-smoke-report.json\`, \`perf-smoke-report.html\` (visual diff), \`perf-smoke-resolved-profile.json\`."
+`;
