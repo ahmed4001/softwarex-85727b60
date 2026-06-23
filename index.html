@@ -2,6 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Canonical host enforcement. Lovable static hosting can't issue real
+      // HTTP 301s, so we redirect non-canonical hosts (e.g. softwarex.lovable.app,
+      // id-preview--*.lovable.app) to reviewhunts.com client-side BEFORE the app
+      // mounts. Preserves path, query, and hash. Skipped for localhost/dev.
+      (function () {
+        try {
+          var h = location.hostname;
+          var isLocal = h === "localhost" || h === "127.0.0.1" || h.endsWith(".local");
+          var isCanonical = h === "reviewhunts.com" || h === "www.reviewhunts.com";
+          if (!isLocal && !isCanonical) {
+            location.replace("https://reviewhunts.com" + location.pathname + location.search + location.hash);
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
