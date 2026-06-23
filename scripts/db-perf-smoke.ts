@@ -68,8 +68,6 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   const pretty = JSON.stringify(body, null, 2);
 
   // Persist full report for CI artifact upload / PR-comment step.
-  const fs = await import("node:fs");
-  const path = await import("node:path");
   const outDir = process.env.PERF_REPORT_DIR || ".";
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "perf-smoke-report.json"), pretty);
