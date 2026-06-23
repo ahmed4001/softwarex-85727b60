@@ -1,5 +1,6 @@
 {
-  "_comment": "Hosts here are accepted by SEO gates even when they don't match SITE_URL. Per-gate keys (e.g. 'social-image-hosts'). '_default' applies to every gate. Wildcards like '*.example.com' supported. Env vars SEO_ALLOWED_HOSTS_<GATE_UPPER_SNAKE> and SEO_ALLOWED_HOSTS extend this at runtime.",
+  "$schema": "./seo-host-allowlist.schema.json",
+  "_comment": "Hosts here are accepted by SEO gates even when they don't match SITE_URL. Per-gate keys (e.g. 'social-image-hosts'). '_default' applies to every gate. Wildcards like '*.example.com' supported. Env vars SEO_ALLOWED_HOSTS_<GATE_UPPER_SNAKE> and SEO_ALLOWED_HOSTS extend this at runtime. See seo-host-allowlist.schema.json for the editor-friendly JSON Schema.",
   "_default": [],
   "sitemap-hosts": [],
   "sitemap-index-hosts": [],
