@@ -7,12 +7,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    let mean_ms: number | undefined;
+    let max_ms: number | undefined;
+    if (req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      if (typeof body?.mean_ms === "number") mean_ms = body.mean_ms;
+      if (typeof body?.max_ms === "number") max_ms = body.max_ms;
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data, error } = await supabase.rpc("db_perf_smoke");
+    const { data, error } = await supabase.rpc("db_perf_smoke", {
+      _mean_ms: mean_ms ?? 200,
+      _max_ms: max_ms ?? 800,
+    });
+
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
