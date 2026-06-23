@@ -302,9 +302,12 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
   // Ready-to-commit patch (only when applied)
   if (suggestionsPatch && mergeStats) {
+    const clampNote = mergeStats.clamped.length
+      ? ` — ⚠ ${mergeStats.clamped.length} value${mergeStats.clamped.length === 1 ? "" : "s"} clamped to ±${maxChangePct}% / run`
+      : "";
     lines.push(
       "",
-      `**Suggested patch** (applied to \`perf-thresholds.json\` in this run — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced)`,
+      `**Suggested patch** (applied to \`perf-thresholds.json\` in this run — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote})`,
       "",
       "```diff",
       suggestionsPatch,
@@ -312,7 +315,18 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       "",
       "Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff above.",
     );
+    if (mergeStats.clamped.length) {
+      lines.push("", "| rule | field | previous | requested | applied |", "|---|---|---:|---:|---:|");
+      for (const c of mergeStats.clamped) {
+        lines.push(`| ${c.label} | ${c.field} | ${c.previous} | ${c.requested} | **${c.applied}** |`);
+      }
+    }
   }
+
+  lines.push(
+    "",
+    "Artifacts attached: `perf-smoke-report.json`, `perf-smoke-report.html` (visual diff), `perf-smoke-resolved-profile.json`.",
+  );
 
   if (runUrl) {
     lines.push(
