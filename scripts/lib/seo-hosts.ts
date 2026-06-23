@@ -78,16 +78,109 @@ export function isAllowedHost(host: string, expectedHost: string, allowlist: Rea
 
 const ALLOWLIST_FILE = "seo-host-allowlist.json";
 
-export type AllowlistFile = Record<string, string[]>;
+export type AllowlistFile = Record<string, unknown>;
+
+/**
+ * Canonical list of gate names. Any non-underscore key in the allowlist
+ * JSON must be one of these — `validateAllowlistConfig` fails fast on
+ * typos like `socialurl-hosts`.
+ */
+export const KNOWN_GATES = [
+  "sitemap-hosts",
+  "sitemap-index-hosts",
+  "manifest-hosts",
+  "prerender-canonicals",
+  "jsonld-hosts",
+  "social-url-hosts",
+  "social-image-hosts",
+  "hreflang-hosts",
+] as const;
+export type GateName = (typeof KNOWN_GATES)[number];
+
+export class AllowlistConfigError extends Error {
+  constructor(public errors: string[]) {
+    super(`Invalid seo-host-allowlist.json:\n  - ${errors.join("\n  - ")}`);
+    this.name = "AllowlistConfigError";
+  }
+}
+
+/**
+ * Host patterns allowed in the allowlist:
+ *   - bare hostname:        "cdn.example.com"
+ *   - wildcard subdomain:   "*.example.com"  (matches one or more labels)
+ *
+ * Bare `*`, leading/trailing dots, double dots, schemes, and paths are rejected.
+ */
+const HOST_PATTERN_RE =
+  /^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+
+/**
+ * Validate the parsed allowlist JSON. Returns a list of human-readable
+ * errors (empty = valid). Pure — does not touch disk.
+ */
+export function validateAllowlistConfig(
+  parsed: unknown,
+  knownGates: readonly string[] = KNOWN_GATES,
+): string[] {
+  const errors: string[] = [];
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return ["root must be a JSON object"];
+  }
+  const known = new Set(knownGates);
+  for (const [key, raw] of Object.entries(parsed as Record<string, unknown>)) {
+    // Underscore-prefixed metadata keys (e.g. "_comment") are free-form,
+    // EXCEPT "_default" which must follow the host-list schema.
+    if (key.startsWith("_") && key !== "_default") continue;
+    if (key !== "_default" && !known.has(key)) {
+      errors.push(`unknown gate key "${key}" (known gates: ${[...known].sort().join(", ")})`);
+      continue;
+    }
+    if (!Array.isArray(raw)) {
+      errors.push(`key "${key}" must be an array of host strings`);
+      continue;
+    }
+    raw.forEach((entry, i) => {
+      if (typeof entry !== "string" || entry.trim() === "") {
+        errors.push(`${key}[${i}]: must be a non-empty string`);
+        return;
+      }
+      const t = entry.trim();
+      if (/^\*\.?$/.test(t)) {
+        errors.push(`${key}[${i}]: "${entry}" — bare "*" wildcard not allowed`);
+        return;
+      }
+      if (t.includes("*") && !/^\*\./.test(t)) {
+        errors.push(`${key}[${i}]: "${entry}" — wildcards must be of the form "*.host" (single leading "*.")`);
+        return;
+      }
+      if (t.indexOf("*", 1) >= 0) {
+        errors.push(`${key}[${i}]: "${entry}" — only one leading wildcard label allowed`);
+        return;
+      }
+      if (/^https?:\/\//i.test(t) || t.includes("/") || t.includes(":")) {
+        errors.push(`${key}[${i}]: "${entry}" — must be a bare hostname, not a URL`);
+        return;
+      }
+      if (!HOST_PATTERN_RE.test(t)) {
+        errors.push(`${key}[${i}]: "${entry}" — invalid hostname pattern`);
+      }
+    });
+  }
+  return errors;
+}
 
 export function readAllowlistFile(rootDir = process.cwd()): AllowlistFile {
   const p = resolve(rootDir, ALLOWLIST_FILE);
   if (!existsSync(p)) return {};
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(readFileSync(p, "utf8"));
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as AllowlistFile;
-  } catch { /* fall through */ }
-  return {};
+    parsed = JSON.parse(readFileSync(p, "utf8"));
+  } catch (e) {
+    throw new AllowlistConfigError([`${ALLOWLIST_FILE}: invalid JSON — ${(e as Error).message}`]);
+  }
+  const errors = validateAllowlistConfig(parsed);
+  if (errors.length) throw new AllowlistConfigError(errors);
+  return parsed as AllowlistFile;
 }
 
 /**
@@ -98,16 +191,32 @@ export function readAllowlistFile(rootDir = process.cwd()): AllowlistFile {
  *   - the env var SEO_ALLOWED_HOSTS (comma-separated, applies globally)
  *
  * Returns lowercased Set. Wildcard entries like "*.example.com" supported.
+ * Throws AllowlistConfigError if the file is invalid.
  */
 export function loadAllowlist(gate: string, env: NodeJS.ProcessEnv = process.env, rootDir = process.cwd()): Set<string> {
   const file = readAllowlistFile(rootDir);
   const out = new Set<string>();
-  for (const h of file[gate] ?? []) out.add(h.toLowerCase());
-  for (const h of file["_default"] ?? []) out.add(h.toLowerCase());
+  const asList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+  for (const h of asList(file[gate])) out.add(h.toLowerCase());
+  for (const h of asList(file["_default"])) out.add(h.toLowerCase());
   const envGate = `SEO_ALLOWED_HOSTS_${gate.replace(/-/g, "_").toUpperCase()}`;
   for (const h of (env[envGate] ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)) out.add(h);
   for (const h of (env.SEO_ALLOWED_HOSTS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)) out.add(h);
   return out;
+}
+
+/**
+ * Return the 1-indexed line number where `needle` first appears in `text`,
+ * or 1 when the needle is empty / not found. Used by gates to annotate
+ * violations on the real source line instead of a hard-coded line=1.
+ */
+export function lineOf(text: string, needle: string, fromIndex = 0): number {
+  if (!needle || !text) return 1;
+  const idx = text.indexOf(needle, fromIndex);
+  if (idx < 0) return 1;
+  let line = 1;
+  for (let i = 0; i < idx; i++) if (text.charCodeAt(i) === 10) line++;
+  return line;
 }
 
 // ---------- HTML extractors ----------
