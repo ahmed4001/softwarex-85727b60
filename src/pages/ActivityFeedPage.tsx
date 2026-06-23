@@ -95,7 +95,7 @@ export default function ActivityFeedPage() {
 
   return (
     <>
-      <SeoHead title="Activity Feed" description="See the latest activity on ReviewHunts" robots="noindex, nofollow" />
+      <SeoHead title="Activity Feed" description="See the latest reviews, ratings, and product activity from the ReviewHunts community." robots="noindex, nofollow" />
       <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
