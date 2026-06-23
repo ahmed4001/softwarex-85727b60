@@ -79,6 +79,7 @@ function sampleHtmlFiles(sectionDir: string): string[] {
   return Array.from(new Set([...head, ...tail])).map((n) => join(sectionDir, n, "index.html"));
 }
 
+const sources: Record<string, string> = {};
 for (const section of SECTIONS) {
   const sectionDir = join(distDir, section);
   const files = sampleHtmlFiles(sectionDir);
@@ -91,10 +92,11 @@ for (const section of SECTIONS) {
     scanned++;
     const html = readFileSync(file, "utf8");
     const rel = file.replace(distDir + "/", "");
+    sources[rel] = html;
     for (const tag of html.match(linkRe) ?? []) {
       const hl = tag.match(hreflangAttrRe);
       const hf = tag.match(hrefAttrRe);
-      if (!hl) continue; // rel=alternate without hreflang (e.g. RSS) — not our concern
+      if (!hl) continue;
       hreflangsFound++;
       const tagIdx = html.indexOf(tag);
       if (!hf) {
@@ -114,5 +116,6 @@ const normalized: Violation[] = violations.map((v) => ({
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
   workspacePrefix: "dist/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "all hreflang alternates match SITE_URL host");

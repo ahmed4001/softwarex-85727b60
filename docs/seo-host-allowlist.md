@@ -8,6 +8,24 @@ unless the host is explicitly allowed.
 `seo-host-allowlist.json` (repo root) is the source of truth. Env vars
 `SEO_ALLOWED_HOSTS` and `SEO_ALLOWED_HOSTS_<GATE>` extend it at runtime.
 
+The file ships with a companion **JSON Schema** at
+[`seo-host-allowlist.schema.json`](../seo-host-allowlist.schema.json) — the
+top-level `"$schema": "./seo-host-allowlist.schema.json"` line wires up
+autocompletion and inline error highlighting in any JSON-Schema-aware
+editor (VS Code, JetBrains, neovim/`coc-json`, …) so typos surface as
+you type, not in CI.
+
+A dedicated CI job — **`seo-host-allowlist-validate`** — runs the
+project's strict validator (and the JSON Schema, via Ajv) **before** any
+SEO host gate executes. Failures appear as `::error` annotations
+pinned to the offending line of `seo-host-allowlist.json` on the PR.
+
+Run it locally with:
+
+```bash
+bun run validate:seo-host-allowlist
+```
+
 ---
 
 ## File format
@@ -130,4 +148,12 @@ SEO_REUSE_REPORTS=1 SEO_REPORT_DIR=./seo-host-report \
 ```
 
 The aggregated report (`seo-host-report/report-<label>.md`) is also the
-artifact uploaded by the GitHub workflow.
+artifact uploaded by the GitHub workflow. It includes:
+
+- **Per-violation snippets** — the actual `<meta>`/`<loc>`/JSON
+  fragment around the offending host, so root-causing a failure does
+  not require opening the file.
+- **Allowlist usage tables** — every configured entry is split into
+  *“matched at least once”* (with hit count + which gates) and
+  *“unused — consider removing”*. Use this to keep the allowlist tight
+  over time and to spot entries that quietly became dead code.

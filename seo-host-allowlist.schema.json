@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://reviewhunts.com/schemas/seo-host-allowlist.schema.json",
+  "title": "SEO host allowlist",
+  "description": "Off-SITE_URL hosts that the SEO host CI gates are allowed to accept. Per-gate keys (e.g. 'social-image-hosts'); '_default' applies to every gate; '$'- and '_'-prefixed keys other than '_default' are free-form metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^\\$[A-Za-z][A-Za-z0-9_-]*$": {},
+    "^_[A-Za-z][A-Za-z0-9_-]*$": {}
+  },
+  "properties": {
+    "$schema": { "type": "string", "description": "Reference to this JSON Schema, picked up by editors." },
+    "_comment": { "description": "Free-form note. Ignored by the loader." },
+    "_default": { "$ref": "#/$defs/hostList", "description": "Hosts allowed for every gate." },
+    "sitemap-hosts":        { "$ref": "#/$defs/hostList" },
+    "sitemap-index-hosts":  { "$ref": "#/$defs/hostList" },
+    "manifest-hosts":       { "$ref": "#/$defs/hostList" },
+    "prerender-canonicals": { "$ref": "#/$defs/hostList" },
+    "jsonld-hosts":         { "$ref": "#/$defs/hostList" },
+    "social-url-hosts":     { "$ref": "#/$defs/hostList" },
+    "social-image-hosts":   { "$ref": "#/$defs/hostList" },
+    "hreflang-hosts":       { "$ref": "#/$defs/hostList" }
+  },
+  "$defs": {
+    "hostList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/hostPattern" }
+    },
+    "hostPattern": {
+      "type": "string",
+      "description": "Bare hostname (cdn.example.com) or single-leading-wildcard subdomain (*.example.com). Schemes, paths, ports, and bare/embedded wildcards are rejected.",
+      "minLength": 3,
+      "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$",
+      "not": {
+        "anyOf": [
+          { "pattern": "^https?://" },
+          { "pattern": "[/:]" },
+          { "pattern": "\\*[^.]" },
+          { "pattern": ".\\*" }
+        ]
+      }
+    }
+  }
+}

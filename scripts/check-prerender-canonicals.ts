@@ -78,6 +78,7 @@ function sampleHtmlFiles(sectionDir: string): string[] {
   return picked.map((name) => join(sectionDir, name, "index.html"));
 }
 
+const sources: Record<string, string> = {};
 for (const section of SECTIONS) {
   const sectionDir = join(distDir, section);
   const files = sampleHtmlFiles(sectionDir);
@@ -86,6 +87,7 @@ for (const section of SECTIONS) {
     scanned++;
     const html = readFileSync(file, "utf8");
     const rel = file.replace(distDir + "/", "");
+    sources[rel] = html;
     const canonicals = extract(html, /<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/gi);
     const ogUrls = extract(html, /<meta[^>]+property=["']og:url["'][^>]*content=["']([^"']+)["']/gi);
     if (canonicals.length === 0) {
@@ -101,5 +103,6 @@ console.log(`[${GATE}] scanned ${scanned} file(s) across ${SECTIONS.length} sect
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations,
   workspacePrefix: "dist/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "all sampled canonicals + og:url tags match SITE_URL host");

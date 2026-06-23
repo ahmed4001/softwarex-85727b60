@@ -107,6 +107,7 @@ function sampleHtmlFiles(sectionDir: string): string[] {
 
 const LD_RE = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 
+const sources: Record<string, string> = {};
 for (const section of SECTIONS) {
   const sectionDir = join(distDir, section);
   const files = sampleHtmlFiles(sectionDir);
@@ -115,6 +116,7 @@ for (const section of SECTIONS) {
     scanned++;
     const rel = file.replace(distDir + "/", "");
     const html = readFileSync(file, "utf8");
+    sources[rel] = html;
     let blockIdx = 0;
     for (const m of html.matchAll(LD_RE)) {
       blocksParsed++;
@@ -148,5 +150,6 @@ const normalized: Violation[] = violations.map((v) => ({
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
   workspacePrefix: "dist/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "all JSON-LD @id / url / mainEntityOfPage hosts match SITE_URL");

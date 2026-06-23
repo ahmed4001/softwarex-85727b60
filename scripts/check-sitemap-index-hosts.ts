@@ -38,11 +38,13 @@ function hostOk(url: string): { ok: boolean; reason?: string } {
 const xmlFiles = readdirSync(publicDir).filter((f) => /^sitemap.*\.xml$/i.test(f));
 let indexCount = 0;
 let nestedChecked = 0;
+const sources: Record<string, string> = {};
 
 for (const name of xmlFiles) {
   const xml = readFileSync(resolve(publicDir, name), "utf8");
   if (!/<sitemapindex\b/i.test(xml)) continue;
   indexCount++;
+  sources[name] = xml;
 
   // Match <sitemap>…<loc>URL</loc>…</sitemap> blocks specifically (skip <url><loc>).
   const blockRe = /<sitemap\b[\s\S]*?<\/sitemap>/gi;
@@ -77,6 +79,7 @@ for (const name of xmlFiles) {
     }
     nestedChecked++;
     const nestedXml = readFileSync(nestedPath, "utf8");
+    sources[nestedName] = nestedXml;
     for (const lm of nestedXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
       const nestedUrl = lm[1];
       const c = hostOk(nestedUrl);
@@ -99,5 +102,6 @@ const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.ki
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
   workspacePrefix: "public/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "sitemapindex + nested sitemaps all match SITE_URL host");

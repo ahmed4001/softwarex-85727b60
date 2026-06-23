@@ -6,6 +6,23 @@ on:
     branches: [main]
 
 jobs:
+  # ---------------------------------------------------------------
+  # Fail fast on a malformed seo-host-allowlist.json BEFORE any of
+  # the per-gate jobs run — they all share-load that file and would
+  # otherwise each fail with the same opaque AllowlistConfigError.
+  # Errors are surfaced as ::error annotations pinned to the right
+  # line of seo-host-allowlist.json on the PR.
+  # ---------------------------------------------------------------
+  seo-host-allowlist-validate:
+    name: Validate SEO host allowlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Validate seo-host-allowlist.json (schema + project rules)
+        run: bun run validate:seo-host-allowlist
+
   seo-regression-tests:
     runs-on: ubuntu-latest
     steps:
@@ -25,6 +42,7 @@ jobs:
 
   sitemap-host-check:
     name: Sitemap + robots host check
+    needs: seo-host-allowlist-validate
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -81,6 +99,7 @@ jobs:
 
   prerender-canonical-check:
     name: Prerender canonical host check
+    needs: seo-host-allowlist-validate
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
