@@ -3,7 +3,15 @@
     { "source": "/avatar-the-way-of-water-release-date-story-trailer", "destination": "/", "statusCode": 301 },
     { "source": "/jack-ryan-season-3-trailer-release-date-cast", "destination": "/", "statusCode": 301 },
     { "source": "/the-lord-of-the-rings-the-rings-of-power", "destination": "/", "statusCode": 301 },
-    { "source": "/creed-3-casting-date-of-release-and-more", "destination": "/", "statusCode": 301 }
+    { "source": "/creed-3-casting-date-of-release-and-more", "destination": "/", "statusCode": 301 },
+    { "source": "/enola-holmes-2-release-date-casting-plot-and-more", "destination": "/", "statusCode": 301 },
+    { "source": "/enola-holmes-2-release-date-casting-plot-and-more/", "destination": "/", "statusCode": 301 },
+    { "source": "/redmi-note-12-series-by-xiaomi-debuts-in-china", "destination": "/", "statusCode": 301 },
+    { "source": "/redmi-note-12-series-by-xiaomi-debuts-in-china/", "destination": "/", "statusCode": 301 },
+    { "source": "/episode-6-house-of-the-dragon-shows-brand-new", "destination": "/", "statusCode": 301 },
+    { "source": "/episode-6-house-of-the-dragon-shows-brand-new/", "destination": "/", "statusCode": 301 },
+    { "source": "/galaxy-m32-prime-edition-4g-smartphone", "destination": "/", "statusCode": 301 },
+    { "source": "/galaxy-m32-prime-edition-4g-smartphone/", "destination": "/", "statusCode": 301 }
   ],
   "rewrites": [
     { "source": "/((?!assets/|.*\\..*).*)", "destination": "/index.html" }
