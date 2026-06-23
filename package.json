@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:seo": "vitest run src/test/seo",
+    "test:perf": "tsx scripts/db-perf-smoke.ts",
     "test:seo:staging": "SEO_BASE_URL=https://id-preview--example.lovable.app vitest run src/test/seo/routes-seo.test.tsx",
     "lhci": "lhci autorun --config=./lighthouserc.json",
     "test:e2e": "playwright test",

@@ -4562,6 +4562,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      db_perf_smoke: { Args: never; Returns: Json }
       get_best_brevo_account: { Args: never; Returns: string }
       has_role: {
         Args: {
