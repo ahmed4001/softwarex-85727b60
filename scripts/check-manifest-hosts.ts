@@ -60,11 +60,14 @@ function checkAbsoluteUrl(file: string, field: string, value: unknown) {
   }
 }
 
+const sources: Record<string, string> = {};
+
 for (const path of found) {
   const rel = path.replace(resolve(".") + "/", "");
   let manifest: any;
   const raw = readFileSync(path, "utf8");
   currentSource = raw;
+  sources[rel] = raw;
   try {
     manifest = JSON.parse(raw);
   } catch (e) {
@@ -96,6 +99,7 @@ const indexPath = resolve("index.html");
 if (existsSync(indexPath)) {
   const html = readFileSync(indexPath, "utf8");
   currentSource = html;
+  sources["index.html"] = html;
   const m = html.match(/<link[^>]+rel=["']manifest["'][^>]*href=["']([^"']+)["']/i);
   if (m) {
     const href = m[1];
@@ -121,6 +125,7 @@ console.log(`[${GATE}] scanned ${found.length} manifest file(s)`);
 const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.field, url: v.url, reason: v.reason, line: v.line }));
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
+  sources,
   // v.file is already workspace-relative ("public/manifest.json", "index.html").
 });
 reportAndExit(GATE, kept, filteredOut, "manifest URL fields match SITE_URL host");
