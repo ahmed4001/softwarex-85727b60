@@ -53,8 +53,9 @@ export function expectedHostFromSiteUrl(siteUrl: string): string {
 
 export function hostOf(url: string, base?: string): string | null {
   try {
-    const abs = /^https?:\/\//i.test(url) ? url : new URL(url, (base ?? "https://placeholder.invalid").replace(/\/+$/, "") + "/").toString();
-    return new URL(abs).hostname.toLowerCase();
+    if (/^https?:\/\//i.test(url)) return new URL(url).hostname.toLowerCase();
+    if (base) return new URL(url, base.replace(/\/+$/, "") + "/").hostname.toLowerCase();
+    return null;
   } catch {
     return null;
   }
