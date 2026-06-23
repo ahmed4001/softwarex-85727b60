@@ -41,6 +41,40 @@ import {
 } from "./lib/perf-thresholds";
 import { buildPrComment } from "./lib/perf-pr-comment";
 
+function loadLocalEnvFallback(keys: string[], file = ".env") {
+  if (!fs.existsSync(file)) return;
+
+  const wanted = new Set(keys);
+  const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match) continue;
+
+    const [, key, rawValue] = match;
+    if (!wanted.has(key) || process.env[key]) continue;
+
+    let value = rawValue.trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
+loadLocalEnvFallback([
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_PUBLISHABLE_KEY",
+  "VITE_SUPABASE_ANON_KEY",
+]);
+
 const url = process.env.VITE_SUPABASE_URL;
 const anon =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
@@ -55,9 +89,10 @@ if (!url || !anon) {
     [
       `Missing required env var(s): ${missing.join(", ")}.`,
       "",
-      "These come from GitHub Actions repository secrets of the same name.",
+      "These normally come from GitHub Actions repository secrets of the same name,",
+      "or from the generated .env file when it is available in CI.",
       "Fix: open the repo on GitHub → Settings → Secrets and variables → Actions →",
-      "  New repository secret, and add:",
+      "  New repository secret, and add the missing value(s):",
       "    • VITE_SUPABASE_URL              (your Lovable Cloud project URL)",
       "    • VITE_SUPABASE_PUBLISHABLE_KEY  (your publishable / anon key)",
       "Both values are publishable (the anon key already ships in the frontend bundle).",
