@@ -146,7 +146,7 @@ export default function WriteReviewPage() {
   if (!user) {
     return (
       <div className="container py-20 text-center">
-        <SeoHead title="Write a Review" description="Sign in to write a review." />
+        <SeoHead title="Write a Review" description="Sign in to share your honest software review and help others choose the right tools on ReviewHunts." />
         <p className="text-muted-foreground mb-4">You need to sign in to write a review.</p>
         <Link to="/login"><Button>Sign In</Button></Link>
       </div>
@@ -158,7 +158,7 @@ export default function WriteReviewPage() {
 
   return (
     <>
-      <SeoHead title={`Review ${product.name}`} description={`Write a review for ${product.name}`} />
+      <SeoHead title={`Review ${product.name}`} description={`Share your honest review of ${product.name} and help others pick the right software on ReviewHunts.`} />
       <div className="container max-w-2xl py-8">
         <Link to={`/product/${slug}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back to {product.name}

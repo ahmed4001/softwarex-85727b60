@@ -397,7 +397,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 relative">
             <div className="flex items-start gap-4 lg:block">
               <div className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-border/30 shadow-lg">
-                {product.logo_url ? <img src={product.logo_url} alt={product.name} className="h-full w-full object-cover" /> : <span className="text-3xl sm:text-4xl font-display font-bold gradient-text">{product.name.charAt(0)}</span>}
+                {product.logo_url ? <img src={product.logo_url} alt={`${product.name} logo`} className="h-full w-full object-cover" /> : <span className="text-3xl sm:text-4xl font-display font-bold gradient-text">{product.name.charAt(0)}</span>}
               </div>
               <div className="flex-1 lg:hidden min-w-0">
                 <p className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight" aria-hidden="true">{product.name}</p>
@@ -679,7 +679,7 @@ export default function ProductDetailPage() {
                   <Link key={a.id} to={`/product/${a.alternative?.slug}`} className="glass-card p-5 hover:border-primary/30 transition-all group">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {a.alternative?.logo_url ? <img src={a.alternative.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>}
+                        {a.alternative?.logo_url ? <img src={a.alternative.logo_url} alt={`${a.alternative?.name ?? "Alternative"} logo`} className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">{a.alternative?.name}</h3>

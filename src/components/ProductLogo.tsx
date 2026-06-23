@@ -25,7 +25,7 @@ export function ProductLogo({ name, logoUrl, size = "md", className }: ProductLo
     <div className={cn("rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0", s.container, className)}>
       <img
         src={logoUrl || avatarUrl(name, s.avatarSize)}
-        alt={name}
+        alt={`${name} logo`}
         className="h-full w-full object-cover"
         loading="lazy"
         onError={(e) => {

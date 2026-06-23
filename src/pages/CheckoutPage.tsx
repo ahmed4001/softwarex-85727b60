@@ -290,7 +290,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <SeoHead title={`Checkout — ${plan.name} Plan`} description="Complete your subscription on ReviewHunts." robots="noindex, nofollow" />
+      <SeoHead title={`Checkout — ${plan.name} Plan`} description="Securely complete your ReviewHunts subscription checkout and unlock premium features." robots="noindex, nofollow" />
       <div className="py-6 relative">
         <div className="absolute inset-0 mesh-gradient opacity-20" />
         <div className="container max-w-2xl relative">
