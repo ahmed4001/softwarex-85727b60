@@ -158,7 +158,7 @@ export default function WriteReviewPage() {
 
   return (
     <>
-      <SeoHead title={`Review ${product.name}`} description={`Write a review for ${product.name}`} />
+      <SeoHead title={`Review ${product.name}`} description={`Share your honest review of ${product.name} and help others pick the right software on ReviewHunts.`} />
       <div className="container max-w-2xl py-8">
         <Link to={`/product/${slug}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back to {product.name}
