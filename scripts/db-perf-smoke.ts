@@ -230,7 +230,12 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     : 0;
   const missingIdxCount = Array.isArray(body?.missing_indexes) ? body.missing_indexes.length : 0;
   const hotCount = Array.isArray(body?.hot_queries) ? body.hot_queries.length : 0;
-  const htmlArtifactPath = "perf-smoke-report/perf-smoke-report.html";
+  const htmlArtifactPath = `${outDir.replace(/^\.\/?/, "")}/perf-smoke-report.html`;
+
+  const runUrl =
+    process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
+      ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+      : null;
 
   lines.push(`### ${passed ? "✅" : "❌"} db-perf-smoke ${passed ? "PASS" : "FAIL"}`);
   lines.push("");
@@ -238,7 +243,9 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   lines.push("**Summary**");
   lines.push(
     `- ${breachCount === 0 ? "✅" : "❌"} **${breachCount}** breaching quer${breachCount === 1 ? "y" : "ies"}` +
-      (breachCount ? ` (${overMaxCount} over max, ${breachCount - overMaxCount} over mean) — of ${hotCount} hot queries scanned` : ""),
+      (breachCount
+        ? ` (${overMaxCount} over max, ${breachCount - overMaxCount} over mean) — of ${hotCount} hot queries scanned`
+        : ""),
   );
   lines.push(
     `- ${uncovered.length === 0 ? "✅" : coverageStrict ? "❌" : "⚠"} **${uncovered.length}** coverage gap${uncovered.length === 1 ? "" : "s"}` +
@@ -249,8 +256,25 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   );
   lines.push(
     `- 📊 HTML report: \`${htmlArtifactPath}\`` +
-      (runUrlEarly() ? ` — [download from the **perf-smoke-report** artifact ↗](${runUrlEarly()}#artifacts)` : ""),
+      (runUrl ? ` — [download from the **perf-smoke-report** artifact ↗](${runUrl}#artifacts)` : ""),
   );
+
+  // Top breaching queries (compact) — gives reviewers a one-line peek without
+  // scrolling into the full table further down.
+  if (breachCount) {
+    const top3 = [...body.threshold_failures]
+      .sort((a: any, b: any) => Number(b.mean_ms) - Number(a.mean_ms))
+      .slice(0, 3);
+    lines.push("", "**Top breaches**");
+    for (const q of top3) {
+      const label = q.matched_rule?.label ?? q.matched_rule?.match ?? "(env default)";
+      lines.push(
+        `- \`${q.query_id}\` · **${label}** · mean ${q.mean_ms}ms (≤${q.applied_mean_ms ?? thresholds.mean_ms}) · max ${q.max_ms}ms (≤${q.applied_max_ms ?? thresholds.max_ms})`,
+      );
+    }
+    if (breachCount > 3) lines.push(`- … +${breachCount - 3} more (see table below)`);
+  }
+
   lines.push("");
   lines.push(renderActiveThresholds(thresholds));
 
@@ -258,15 +282,12 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   const diff = diffThresholds(baseT, thresholds);
   if (diff) lines.push("", diff);
 
-  if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
+  if (missingIdxCount) {
     lines.push("", "**Missing indexes**");
     for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
   }
 
-  const runUrl =
-    process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
-      ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-      : null;
+
 
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
     const failures = [...body.threshold_failures].sort((a: any, b: any) => {
