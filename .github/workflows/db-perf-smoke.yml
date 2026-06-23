@@ -10,6 +10,14 @@ on:
         description: "Only lint perf-thresholds.json and print the resolved profile (skip EXPLAIN ANALYZE)."
         type: boolean
         default: false
+      apply_suggestions:
+        description: "Apply suggested mean_ms/max_ms updates back into perf-thresholds.json and attach a ready-to-commit diff."
+        type: boolean
+        default: false
+      coverage_strict:
+        description: "Fail the build when a hot query has no matching threshold rule."
+        type: boolean
+        default: false
   schedule:
     # Run hourly so latency regressions are caught even without code changes.
     - cron: "0 * * * *"
@@ -50,6 +58,8 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           PERF_REPORT_DIR: perf-smoke-report
           PERF_ENV: ci
+          PERF_APPLY_SUGGESTIONS: ${{ (github.event_name == 'workflow_dispatch' && inputs.apply_suggestions) && '1' || '0' }}
+          PERF_COVERAGE_STRICT: ${{ (github.event_name == 'workflow_dispatch' && inputs.coverage_strict) && '1' || '0' }}
         run: bun run test:perf
 
       - name: Upload perf report artifact
@@ -57,7 +67,19 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: perf-smoke-report
-          path: perf-smoke-report/
+          path: |
+            perf-smoke-report/perf-smoke-report.json
+            perf-smoke-report/perf-smoke-summary.md
+            perf-smoke-report/perf-smoke-resolved-profile.json
+            perf-smoke-report/perf-thresholds.diff.patch
+          if-no-files-found: warn
+
+      - name: Upload resolved profile artifact
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-smoke-resolved-profile
+          path: perf-smoke-report/perf-smoke-resolved-profile.json
           if-no-files-found: warn
 
       - name: Comment on PR with breaching queries

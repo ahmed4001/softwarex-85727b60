@@ -1,60 +1,43 @@
 ## Goals
 
-1. **Threshold-suggestion script** — read `perf-smoke-report.json` (richer than the markdown), output suggested `mean_ms`/`max_ms` overrides for breaching queries.
-2. **Enhanced PR comment** — top breaching queries with before/after threshold numbers and links to the JSON report artifact (anchored by index).
-3. **CI dry-run option** — flag in linter to also act as the "perf dry run" (resolve + lint + print profile, no EXPLAIN).
-4. **Unit tests** for the loader + linter covering missing keys, wrong types, override precedence.
-5. **README section** documenting the file format and per-query matching rules.
+1. **Coverage check** — fail CI when a query in `perf-smoke-report.json` has neither a matching per-query rule nor falls under an explicit env override.
+2. **Apply-suggestions option** — let the suggestion script (and a CI step on `workflow_dispatch`) write suggestions back into `perf-thresholds.json` and surface a ready-to-commit diff in the PR comment.
+3. **Stable anchors** — emit deterministic `query_id` for each entry in `perf-smoke-report.json`; PR comment links use anchors instead of line numbers.
+4. **Resolved-profile artifact** — write the fully resolved `PERF_ENV` profile (env defaults + merged per-query overrides) and upload as a CI artifact.
 
 ## Changes
 
-### 1. `scripts/suggest-perf-thresholds.ts` (new)
-- Reads `perf-smoke-report.json` (path via `PERF_REPORT_FILE`, default `perf-smoke-report/perf-smoke-report.json`).
-- For each entry in `threshold_failures`, compute suggested values:
-  - `mean_ms` = `ceil(observed_mean * 1.2 / 10) * 10` (20% headroom, rounded up to 10ms)
-  - `max_ms` = `ceil(observed_max * 1.2 / 10) * 10`
-  - Use the existing `matched_rule.label`/`matched_rule.match` when present; otherwise derive a slug from `query_preview` (first 6 tokens) and use the preview as `match`.
-- Print a JSON snippet ready to paste into the chosen env block's `queries` array, plus a unified-diff-style preview against the current `perf-thresholds.json` (`PERF_ENV`).
-- Optional `--write` flag to merge in place (rules keyed by `label`; existing same-labeled rules are replaced).
-- Add script entry: `"suggest:perf-thresholds": "tsx scripts/suggest-perf-thresholds.ts"`.
+### 1. Stable query IDs — `scripts/lib/perf-thresholds.ts`
+Add `queryId(input)` → short stable hash:
+- If `matched_rule.label` exists, use `rule-<slug(label)>`.
+- Else if `matched_rule.match` exists, use `match-<sha1(match).slice(0,10)>`.
+- Else `q-<sha1(normalize(query_preview)).slice(0,10)>` where `normalize` lowercases and collapses whitespace.
 
-### 2. PR comment enhancements in `scripts/db-perf-smoke.ts`
-- Already has a breaching-queries table; extend it:
-  - Sort by `(over_max desc, mean_ms desc)` and slice top 10.
-  - Add **before → after** columns: `applied_mean_ms → suggested mean`, `applied_max_ms → suggested max` (using same 20% headroom formula).
-  - Each row's first column is `[#N](artifact-url#L<lineNo>)` linking to the line number of that entry in `perf-smoke-report.json` (we compute line offsets when writing the JSON: re-serialize and scan for `"query_preview"` occurrences in order).
-  - Artifact URL: GitHub doesn't deep-link inside artifacts, so the link points to the workflow run artifacts page (`…/actions/runs/<id>#artifacts`) with the JSON line number appended as a fragment hint, plus a one-liner explaining how to open the file.
-- Add a "Top breaching queries" heading separate from the detail table when there are >10.
+### 2. Runner — `scripts/db-perf-smoke.ts`
+- After receiving the response, enrich each `threshold_failures[i]` and each `hot_queries[i]` with a `query_id` before writing `perf-smoke-report.json` (so the artifact carries the stable ID).
+- Use those IDs in the PR comment table's first column. Links point to the run page `#artifacts` plus a `?q=<id>` query hint (and a tooltip explaining the ID is searchable inside `perf-smoke-report.json`).
+- Always also write `perf-smoke-resolved-profile.json` containing: `{ envKey, mean_ms, max_ms, queries }` (merged from file + any rule that actually matched a row, so reviewers see what was applied).
+- Coverage check: compute uncovered = hot queries with no matching rule. Default behavior is **warn only**; when `PERF_COVERAGE_STRICT=1`, exit non-zero and list them in the PR comment under a **Coverage gaps** section.
+- Apply-suggestions: when `PERF_APPLY_SUGGESTIONS=1`, after computing suggestions, call shared `mergeSuggestions(thresholdsPath, envKey, suggestions)` from the suggest lib, write the file, generate `perf-thresholds.diff.patch` next to the report (via `git diff --no-index`), and embed a fenced diff block in the PR comment as **Suggested patch (ready to commit)**.
 
-### 3. CI dry-run in linter — `scripts/lint-perf-thresholds.ts`
-- Accept `--dry-run` flag (also via `PERF_DRY_RUN=1`). Behavior is identical (lint + print profile) but the success message explicitly states "dry-run: no EXPLAIN executed". Exit code unchanged.
-- Workflow `.github/workflows/db-perf-smoke.yml`: add a `workflow_dispatch` input `dry_run` (boolean). When true, run only the linter step and skip the smoke + comment + fail steps via `if: ${{ !inputs.dry_run }}`.
+### 3. Suggestion script — `scripts/suggest-perf-thresholds.ts`
+- Extract the merge logic into `scripts/lib/perf-thresholds.ts` as `mergeSuggestions(filePath, envKey, suggestions): { before: string, after: string }` so the runner can reuse it.
+- Keep the existing `--write` CLI flag delegating to the new helper. Print the unified diff using the helper output.
 
-### 4. Unit tests — `scripts/lib/__tests__/perf-thresholds.test.ts` and `scripts/__tests__/lint-perf-thresholds.test.ts`
-Use Vitest (already in the project — confirm).
-- **Loader tests**:
-  - valid file → resolves env block, falls back to `default` when env key missing.
-  - missing `mean_ms` / wrong type → `ThresholdsValidationError` with path in details.
-  - invalid JSON → throws with path in message.
-  - per-query rule without `mean_ms` AND `max_ms` → fails.
-  - precedence: env-level `queries` returned; rule with both `mean_ms` and `max_ms` preserved.
-  - `diffThresholds`: added/removed/changed rules, env-level scalar changes.
-  - `renderActiveThresholds`: includes env name, formats query table.
-- **Linter tests** (spawn `tsx scripts/lint-perf-thresholds.ts` via `node:child_process`, point `PERF_THRESHOLDS_FILE` at temp fixtures):
-  - exits 0 on valid file with expected stdout markers.
-  - exits 1 on missing keys (stderr contains the field path).
-  - exits 1 on wrong types.
-  - `--dry-run` exits 0 and stdout mentions dry-run.
+### 4. Workflow — `.github/workflows/db-perf-smoke.yml`
+- Add `workflow_dispatch` inputs:
+  - `apply_suggestions` (boolean, default false) — sets `PERF_APPLY_SUGGESTIONS=1` for the run.
+  - `coverage_strict` (boolean, default false) — sets `PERF_COVERAGE_STRICT=1`.
+- Both env vars default to `0` on push/pull_request/schedule unless set.
+- Upload `perf-smoke-resolved-profile.json` and `perf-thresholds.diff.patch` (if present) alongside the existing report artifact.
 
-### 5. README section — append to top-level `README.md`
-New `## Database performance smoke test` section documenting:
-- File location and JSON shape (with annotated example).
-- Required keys per env block (`mean_ms`, `max_ms`); optional `queries[]`.
-- Per-query rule shape (`match`, `mean_ms?`, `max_ms?`, `label?`) and matching semantics: case-insensitive substring against the normalized `pg_stat_statements` query text, first match wins, env defaults apply when nothing matches.
-- How to select an env via `PERF_ENV`, where the runner posts (the edge function), how to override the path via `PERF_THRESHOLDS_FILE`.
-- Scripts table: `test:perf`, `lint:perf-thresholds` (with `--dry-run`), `suggest:perf-thresholds`.
+### 5. Unit tests — `scripts/lib/__tests__/perf-thresholds.test.ts`
+Add cases for:
+- `queryId` determinism + label/match/preview precedence.
+- `mergeSuggestions` adds new rules, replaces by label, leaves other env blocks untouched, fails when env block missing.
+- `findUncovered(hotQueries, rules, envKey)` returns the right set when no rule matches.
 
 ## Out of scope
-- Changing existing threshold values for any env.
-- Reworking EXPLAIN capture or the RPC.
-- Auto-committing suggested values from CI (the suggest script's `--write` is local-only).
+- Auto-committing the patch from CI (we only produce + attach it).
+- Changing threshold values.
+- Backend RPC changes — `query_id` is computed client-side in the runner.

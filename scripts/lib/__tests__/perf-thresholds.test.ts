@@ -9,6 +9,10 @@ import {
   bumpThreshold,
   deriveLabel,
   suggestRule,
+  queryId,
+  findUncovered,
+  mergeSuggestions,
+  unifiedDiff,
   ThresholdsValidationError,
 } from "../perf-thresholds";
 
@@ -197,3 +201,108 @@ describe("suggestion helpers", () => {
     expect(r.match).toMatch(/select \* from reviews/);
   });
 });
+
+describe("queryId", () => {
+  it("uses rule label when present", () => {
+    expect(queryId({ matched_rule: { label: "Product By Slug" } })).toBe("rule-product-by-slug");
+  });
+
+  it("uses match hash when label missing", () => {
+    const a = queryId({ matched_rule: { match: "from products where slug =" } });
+    const b = queryId({ matched_rule: { match: "FROM PRODUCTS WHERE SLUG =" } });
+    expect(a).toMatch(/^match-[a-f0-9]{10}$/);
+    expect(a).toBe(b); // case-insensitive
+  });
+
+  it("hashes normalized preview when nothing matches", () => {
+    const a = queryId({ query_preview: "select 1  from   x" });
+    const b = queryId({ query_preview: "SELECT 1 FROM X" });
+    expect(a).toMatch(/^q-[a-f0-9]{10}$/);
+    expect(a).toBe(b);
+  });
+
+  it("is deterministic across calls", () => {
+    const args = { query_preview: "select a from b" };
+    expect(queryId(args)).toBe(queryId(args));
+  });
+});
+
+describe("findUncovered", () => {
+  it("returns queries with no matching rule", () => {
+    const rules = [{ match: "from products" } as any, { match: "from reviews" } as any];
+    const hot = [
+      { query_preview: "select * from products where slug = $1" },
+      { query_preview: "select * from orders where id = $1" },
+      { query_preview: "SELECT * FROM REVIEWS WHERE product_id = $1" },
+    ];
+    const out = findUncovered(hot, rules);
+    expect(out).toHaveLength(1);
+    expect(out[0].query_preview).toMatch(/orders/);
+  });
+
+  it("returns all when there are no rules", () => {
+    expect(findUncovered([{ query_preview: "x" }], [])).toHaveLength(1);
+  });
+});
+
+describe("mergeSuggestions", () => {
+  function fixture() {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "merge-"));
+    const p = path.join(dir, "perf-thresholds.json");
+    fs.writeFileSync(
+      p,
+      JSON.stringify({
+        default: { mean_ms: 200, max_ms: 800 },
+        ci: {
+          mean_ms: 250,
+          max_ms: 1000,
+          queries: [{ label: "existing", match: "x", mean_ms: 10, max_ms: 20 }],
+        },
+        production: { mean_ms: 150, max_ms: 600 },
+      }),
+    );
+    return p;
+  }
+
+  it("adds new rules and replaces by label", () => {
+    const p = fixture();
+    const merge = mergeSuggestions(p, "ci", [
+      { label: "existing", match: "x", mean_ms: 99, max_ms: 199 },
+      { label: "fresh", match: "y", mean_ms: 5, max_ms: 6 },
+    ]);
+    expect(merge.added.map((r) => r.label)).toEqual(["fresh"]);
+    expect(merge.replaced.map((r) => r.label)).toEqual(["existing"]);
+    expect(merge.mergedCount).toBe(2);
+  });
+
+  it("leaves other env blocks untouched when writing", () => {
+    const p = fixture();
+    mergeSuggestions(
+      p,
+      "ci",
+      [{ label: "fresh", match: "y", mean_ms: 5, max_ms: 6 }],
+      { write: true },
+    );
+    const raw = JSON.parse(fs.readFileSync(p, "utf8"));
+    expect(raw.production).toEqual({ mean_ms: 150, max_ms: 600 });
+    expect(raw.ci.queries).toHaveLength(2);
+  });
+
+  it("throws when env block is missing", () => {
+    const p = fixture();
+    expect(() =>
+      mergeSuggestions(p, "nope", [{ label: "a", match: "a", mean_ms: 1, max_ms: 2 }]),
+    ).toThrow(/missing/);
+  });
+});
+
+describe("unifiedDiff", () => {
+  it("renders +/- lines around a change", () => {
+    const d = unifiedDiff("a\nb\nc\n", "a\nB\nc\n", "f.txt");
+    expect(d).toMatch(/--- a\/f\.txt/);
+    expect(d).toMatch(/\+\+\+ b\/f\.txt/);
+    expect(d).toMatch(/-b/);
+    expect(d).toMatch(/\+B/);
+  });
+});
+

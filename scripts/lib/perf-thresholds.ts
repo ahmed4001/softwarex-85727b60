@@ -7,6 +7,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export const QueryRuleSchema = z
@@ -246,3 +247,132 @@ export function suggestRule(input: {
     max_ms: bumpThreshold(input.max_ms),
   };
 }
+
+// ------------------ Stable query IDs ------------------
+
+function sha1Short(input: string, len = 10): string {
+  return createHash("sha1").update(input).digest("hex").slice(0, len);
+}
+
+function slug(s: string): string {
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "x"
+  );
+}
+
+/**
+ * Deterministic anchor id for a hot-query entry. Stable across runs as long
+ * as the matched rule or normalized query text doesn't change — line numbers
+ * in the report are NOT used.
+ */
+export function queryId(input: {
+  matched_rule?: { label?: string; match?: string } | null;
+  query_preview?: string;
+  query?: string;
+}): string {
+  const r = input.matched_rule ?? undefined;
+  if (r?.label) return `rule-${slug(r.label)}`;
+  if (r?.match) return `match-${sha1Short(r.match.toLowerCase())}`;
+  const source = (input.query ?? input.query_preview ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  return `q-${sha1Short(source)}`;
+}
+
+// ------------------ Coverage + merge ------------------
+
+/**
+ * Return the subset of hot queries that aren't matched by any rule in the
+ * env block. Matching mirrors the RPC: case-insensitive substring, first
+ * match wins.
+ */
+export function findUncovered<T extends { query_preview?: string; query?: string }>(
+  hotQueries: T[],
+  rules: QueryRule[],
+): T[] {
+  const lcRules = rules.map((r) => r.match.toLowerCase());
+  return hotQueries.filter((q) => {
+    const text = (q.query ?? q.query_preview ?? "").toLowerCase();
+    return !lcRules.some((m) => text.includes(m));
+  });
+}
+
+export interface MergeResult {
+  before: string;
+  after: string;
+  added: SuggestedRule[];
+  replaced: SuggestedRule[];
+  mergedCount: number;
+}
+
+/**
+ * Merge `suggestions` into the env block's `queries` array (keyed by label,
+ * falling back to match). Writes the file when `write=true` and returns the
+ * before/after JSON text so callers can build a diff.
+ */
+export function mergeSuggestions(
+  filePath: string,
+  envKey: string,
+  suggestions: SuggestedRule[],
+  opts: { write?: boolean } = {},
+): MergeResult {
+  const abs = path.resolve(filePath);
+  const beforeText = fs.readFileSync(abs, "utf8");
+  const raw = JSON.parse(beforeText);
+  if (!raw[envKey] || typeof raw[envKey] !== "object") {
+    throw new Error(`Cannot merge: env block "${envKey}" missing in ${abs}`);
+  }
+  const actualEnv = envKey;
+  const existing: QueryRule[] = Array.isArray(raw[actualEnv].queries)
+    ? raw[actualEnv].queries
+    : [];
+  const keyOf = (q: { label?: string; match: string }) => q.label ?? q.match;
+  const map = new Map<string, QueryRule | SuggestedRule>();
+  for (const q of existing) map.set(keyOf(q), q);
+  const added: SuggestedRule[] = [];
+  const replaced: SuggestedRule[] = [];
+  for (const s of suggestions) {
+    if (map.has(keyOf(s))) replaced.push(s);
+    else added.push(s);
+    map.set(keyOf(s), s);
+  }
+  const mergedArray = Array.from(map.values());
+  raw[actualEnv].queries = mergedArray;
+  const afterText = JSON.stringify(raw, null, 2) + "\n";
+  if (opts.write) fs.writeFileSync(abs, afterText);
+  return {
+    before: beforeText.endsWith("\n") ? beforeText : beforeText + "\n",
+    after: afterText,
+    added,
+    replaced,
+    mergedCount: mergedArray.length,
+  };
+}
+
+/** Tiny unified-diff renderer (line-by-line) for the PR comment block. */
+export function unifiedDiff(before: string, after: string, label = "perf-thresholds.json"): string {
+  const a = before.split("\n");
+  const b = after.split("\n");
+  const out: string[] = [`--- a/${label}`, `+++ b/${label}`];
+  let i = 0;
+  let j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) {
+      out.push(` ${a[i]}`);
+      i++;
+      j++;
+    } else if (j < b.length && (i >= a.length || !a.includes(b[j], i))) {
+      out.push(`+${b[j]}`);
+      j++;
+    } else if (i < a.length) {
+      out.push(`-${a[i]}`);
+      i++;
+    }
+  }
+  return out.join("\n");
+}
+
