@@ -39,17 +39,43 @@ jobs:
       - name: Regenerate sitemap and verify hosts (${{ matrix.label }})
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
         run: bun run check:sitemap-hosts
       - name: Verify sitemapindex + nested sitemap hosts (${{ matrix.label }})
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
         run: bun run check:sitemap-index-hosts
       - name: Verify PWA manifest URL fields (${{ matrix.label }})
         if: always()
         env:
           SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
         run: bun run check:manifest-hosts
+      - name: Consolidated host-gate report (reuse mode, ${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          REPORT_LABEL: ${{ matrix.label }}
+          SEO_REPORT_DIR: seo-host-report
+          SEO_REUSE_REPORTS: "1"
+        continue-on-error: true
+        run: bun run report:seo-host-gates
+      - name: Upload SEO host-gate report (${{ matrix.label }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-host-gate-report-sitemap-${{ matrix.label }}
+          path: seo-host-report/**
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Append report to step summary
+        if: always()
+        run: |
+          if [ -f "seo-host-report/report-${{ matrix.label }}.md" ]; then
+            cat "seo-host-report/report-${{ matrix.label }}.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   prerender-canonical-check:
     name: Prerender canonical host check
