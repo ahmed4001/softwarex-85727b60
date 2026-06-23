@@ -13,7 +13,7 @@
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, basename } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "sitemap-index-hosts";
 
@@ -23,7 +23,7 @@ const EXPECTED_HOST = new URL(SITE_URL).hostname.toLowerCase();
 console.log(`[check-sitemap-index-hosts] SITE_URL=${SITE_URL} expected host=${EXPECTED_HOST}`);
 
 const publicDir = resolve("public");
-const violations: { file: string; kind: string; url: string; reason: string }[] = [];
+const violations: { file: string; kind: string; url: string; reason: string; line?: number }[] = [];
 
 function hostOk(url: string): { ok: boolean; reason?: string } {
   try {
@@ -47,15 +47,17 @@ for (const name of xmlFiles) {
   // Match <sitemap>…<loc>URL</loc>…</sitemap> blocks specifically (skip <url><loc>).
   const blockRe = /<sitemap\b[\s\S]*?<\/sitemap>/gi;
   for (const block of xml.match(blockRe) ?? []) {
+    const blockLine = lineOf(xml, block);
     const m = block.match(/<loc>\s*([^<\s]+)\s*<\/loc>/i);
     if (!m) {
-      violations.push({ file: name, kind: "sitemapindex entry", url: "(missing)", reason: "<sitemap> block without <loc>" });
+      violations.push({ file: name, kind: "sitemapindex entry", url: "(missing)", reason: "<sitemap> block without <loc>", line: blockLine });
       continue;
     }
     const url = m[1];
+    const urlLine = lineOf(xml, url, xml.indexOf(block));
     const check = hostOk(url);
     if (!check.ok) {
-      violations.push({ file: name, kind: "sitemapindex entry", url, reason: check.reason! });
+      violations.push({ file: name, kind: "sitemapindex entry", url, reason: check.reason!, line: urlLine });
       continue;
     }
 
@@ -69,6 +71,7 @@ for (const name of xmlFiles) {
         kind: "sitemapindex entry",
         url,
         reason: `referenced nested sitemap ${nestedName} not found in public/`,
+        line: urlLine,
       });
       continue;
     }
@@ -78,7 +81,7 @@ for (const name of xmlFiles) {
       const nestedUrl = lm[1];
       const c = hostOk(nestedUrl);
       if (!c.ok) {
-        violations.push({ file: nestedName, kind: "nested <loc>", url: nestedUrl, reason: c.reason! });
+        violations.push({ file: nestedName, kind: "nested <loc>", url: nestedUrl, reason: c.reason!, line: lineOf(nestedXml, nestedUrl, lm.index ?? 0) });
       }
     }
   }
@@ -92,7 +95,7 @@ if (indexCount === 0) {
 }
 
 // Adapt {file, kind, url, reason} → standard Violation shape (kind → tag).
-const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.kind, url: v.url, reason: v.reason }));
+const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.kind, url: v.url, reason: v.reason, line: v.line }));
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
   workspacePrefix: "public/",

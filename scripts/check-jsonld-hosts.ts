@@ -17,7 +17,7 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "jsonld-hosts";
 
@@ -42,7 +42,7 @@ if (!existsSync(distDir)) {
   process.exit(2);
 }
 
-type Violation = { file: string; pointer: string; field: string; url: string; reason: string };
+type Violation = { file: string; pointer: string; field: string; url: string; reason: string; line?: number };
 const violations: Violation[] = [];
 let scanned = 0;
 let blocksParsed = 0;
@@ -57,37 +57,38 @@ function urlHostOrNull(value: string): string | null {
   }
 }
 
-function checkValue(file: string, pointer: string, field: string, value: unknown) {
+function checkValue(file: string, pointer: string, field: string, value: unknown, source: string, fromIndex: number) {
   if (typeof value !== "string" || !value) return;
   // Ignore non-URL strings (@id can be a CURIE / opaque token).
   if (!/^https?:\/\//i.test(value) && !value.startsWith("/")) return;
+  const line = lineOf(source, value, fromIndex);
   const host = urlHostOrNull(value);
   if (host == null) {
-    violations.push({ file, pointer, field, url: value, reason: "unparseable URL" });
+    violations.push({ file, pointer, field, url: value, reason: "unparseable URL", line });
     return;
   }
   if (host !== EXPECTED_HOST && SAME_HOST_REQUIRED.has(field)) {
-    violations.push({ file, pointer, field, url: value, reason: `host ${host} != ${EXPECTED_HOST}` });
+    violations.push({ file, pointer, field, url: value, reason: `host ${host} != ${EXPECTED_HOST}`, line });
   }
 }
 
-function walk(file: string, node: unknown, pointer: string) {
+function walk(file: string, node: unknown, pointer: string, source: string, fromIndex: number) {
   if (Array.isArray(node)) {
-    node.forEach((child, i) => walk(file, child, `${pointer}/${i}`));
+    node.forEach((child, i) => walk(file, child, `${pointer}/${i}`, source, fromIndex));
     return;
   }
   if (node && typeof node === "object") {
     for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
       const childPtr = `${pointer}/${k}`;
       if (FIELDS.has(k)) {
-        if (Array.isArray(v)) v.forEach((item, i) => checkValue(file, `${childPtr}/${i}`, k, item));
-        else if (typeof v === "string") checkValue(file, childPtr, k, v);
+        if (Array.isArray(v)) v.forEach((item, i) => checkValue(file, `${childPtr}/${i}`, k, item, source, fromIndex));
+        else if (typeof v === "string") checkValue(file, childPtr, k, v, source, fromIndex);
         else if (v && typeof v === "object" && "@id" in (v as any) && typeof (v as any)["@id"] === "string") {
           // e.g. mainEntityOfPage: { "@id": "https://..." }
-          checkValue(file, `${childPtr}/@id`, k, (v as any)["@id"]);
+          checkValue(file, `${childPtr}/@id`, k, (v as any)["@id"], source, fromIndex);
         }
       }
-      walk(file, v, childPtr);
+      walk(file, v, childPtr, source, fromIndex);
     }
   }
 }
@@ -118,16 +119,17 @@ for (const section of SECTIONS) {
     for (const m of html.matchAll(LD_RE)) {
       blocksParsed++;
       const raw = m[1].trim();
+      const blockOffset = m.index ?? 0;
       let parsed: unknown;
       try {
         parsed = JSON.parse(raw);
       } catch {
         blocksInvalid++;
-        violations.push({ file: rel, pointer: `/script[${blockIdx}]`, field: "(parse)", url: "", reason: "JSON.parse failed" });
+        violations.push({ file: rel, pointer: `/script[${blockIdx}]`, field: "(parse)", url: "", reason: "JSON.parse failed", line: lineOf(html, raw.slice(0, 60) || "<script", blockOffset) });
         blockIdx++;
         continue;
       }
-      walk(rel, parsed, `/script[${blockIdx}]`);
+      walk(rel, parsed, `/script[${blockIdx}]`, html, blockOffset);
       blockIdx++;
     }
   }
@@ -141,6 +143,7 @@ const normalized: Violation[] = violations.map((v) => ({
   tag: `${v.field} ${v.pointer}`,
   url: v.url || "(no value)",
   reason: v.reason,
+  line: v.line,
 }));
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,

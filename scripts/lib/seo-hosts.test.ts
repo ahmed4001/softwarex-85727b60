@@ -15,6 +15,10 @@ import {
   hostOf,
   isAllowedHost,
   loadAllowlist,
+  validateAllowlistConfig,
+  AllowlistConfigError,
+  KNOWN_GATES,
+  lineOf,
   extractMetaContent,
   extractCanonicalHrefs,
   extractHreflangLinks,
@@ -94,6 +98,93 @@ describe("loadAllowlist", () => {
 
   it("returns empty set when file missing and no env", () => {
     expect(loadAllowlist("anything", {}, tmp).size).toBe(0);
+  });
+
+  it("throws AllowlistConfigError on invalid JSON", () => {
+    writeFileSync(join(tmp, "seo-host-allowlist.json"), "{not json");
+    expect(() => loadAllowlist("jsonld-hosts", {}, tmp)).toThrow(AllowlistConfigError);
+  });
+
+  it("throws AllowlistConfigError on unknown gate key", () => {
+    writeFileSync(join(tmp, "seo-host-allowlist.json"), JSON.stringify({
+      "socialurl-hosts": ["cdn.example.com"], // typo
+    }));
+    expect(() => loadAllowlist("jsonld-hosts", {}, tmp)).toThrow(/unknown gate key/);
+  });
+
+  it("throws AllowlistConfigError on invalid wildcard pattern", () => {
+    writeFileSync(join(tmp, "seo-host-allowlist.json"), JSON.stringify({
+      "jsonld-hosts": ["*"], // bare wildcard
+    }));
+    expect(() => loadAllowlist("jsonld-hosts", {}, tmp)).toThrow(/bare "\*" wildcard/);
+  });
+});
+
+describe("validateAllowlistConfig", () => {
+  it("returns no errors for the canonical empty config", () => {
+    const obj = Object.fromEntries(KNOWN_GATES.map((g) => [g, []]));
+    obj._default = [];
+    expect(validateAllowlistConfig(obj)).toEqual([]);
+  });
+
+  it("rejects array root, primitive root, null", () => {
+    expect(validateAllowlistConfig([])).toHaveLength(1);
+    expect(validateAllowlistConfig("nope")).toHaveLength(1);
+    expect(validateAllowlistConfig(null)).toHaveLength(1);
+  });
+
+  it("ignores underscore metadata keys other than _default", () => {
+    expect(validateAllowlistConfig({ _comment: "free-form", _notes: ["anything"] })).toEqual([]);
+  });
+
+  it("flags unknown gate keys with the list of known gates", () => {
+    const errs = validateAllowlistConfig({ "social-urls": [] }); // missing -hosts suffix
+    expect(errs.some((e) => /unknown gate key "social-urls"/.test(e))).toBe(true);
+    expect(errs.some((e) => /known gates/.test(e))).toBe(true);
+  });
+
+  it("flags non-array values", () => {
+    const errs = validateAllowlistConfig({ "jsonld-hosts": "cdn.example.com" });
+    expect(errs[0]).toMatch(/must be an array/);
+  });
+
+  it("accepts valid hostnames + single leading wildcards", () => {
+    expect(validateAllowlistConfig({
+      _default: ["cdn.example.com", "*.example.com", "img-cdn.sub.example.co.uk"],
+    })).toEqual([]);
+  });
+
+  it("rejects bare wildcard, double-star, mid-string star, urls, ports, paths", () => {
+    const errs = validateAllowlistConfig({
+      "jsonld-hosts": ["*", "**.example.com", "cdn.*.example.com", "https://cdn.example.com", "cdn.example.com/path", "cdn.example.com:443"],
+    });
+    // At least one error per bad entry.
+    expect(errs.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("rejects empty and non-string entries", () => {
+    const errs = validateAllowlistConfig({ "jsonld-hosts": ["", 42 as any, "  "] });
+    expect(errs.length).toBe(3);
+  });
+});
+
+describe("lineOf", () => {
+  it("returns 1-indexed line of first match", () => {
+    const text = "alpha\nbeta\ngamma\ndelta";
+    expect(lineOf(text, "alpha")).toBe(1);
+    expect(lineOf(text, "beta")).toBe(2);
+    expect(lineOf(text, "gamma")).toBe(3);
+    expect(lineOf(text, "delta")).toBe(4);
+  });
+  it("respects fromIndex when the needle repeats", () => {
+    const text = "x\nfoo\ny\nfoo\nz";
+    expect(lineOf(text, "foo")).toBe(2);
+    expect(lineOf(text, "foo", 5)).toBe(4);
+  });
+  it("returns 1 when needle missing or empty", () => {
+    expect(lineOf("abc", "")).toBe(1);
+    expect(lineOf("abc", "zzz")).toBe(1);
+    expect(lineOf("", "anything")).toBe(1);
   });
 });
 

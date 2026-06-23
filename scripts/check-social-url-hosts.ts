@@ -16,7 +16,7 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "social-url-hosts";
 
@@ -34,7 +34,7 @@ if (!existsSync(distDir)) {
   process.exit(2);
 }
 
-type Violation = { file: string; tag: string; url: string; reason: string };
+type Violation = { file: string; tag: string; url: string; reason: string; line?: number };
 const violations: Violation[] = [];
 let scanned = 0;
 
@@ -49,7 +49,7 @@ function extractMeta(html: string, attr: "property" | "name", value: string): st
   return out;
 }
 
-function checkUrl(file: string, tag: string, url: string) {
+function checkUrl(file: string, tag: string, url: string, source: string) {
   const trimmed = url.trim();
   if (!trimmed) {
     violations.push({ file, tag, url: "(empty)", reason: "empty content attribute" });
@@ -59,13 +59,14 @@ function checkUrl(file: string, tag: string, url: string) {
   if (!/^https?:\/\//i.test(trimmed)) {
     try { absolute = new URL(trimmed, SITE_URL + "/").toString(); } catch { /* fall through */ }
   }
+  const line = lineOf(source, url);
   try {
     const host = new URL(absolute).hostname.toLowerCase();
     if (host !== EXPECTED_HOST) {
-      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}` });
+      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}`, line });
     }
   } catch {
-    violations.push({ file, tag, url: trimmed, reason: "unparseable URL" });
+    violations.push({ file, tag, url: trimmed, reason: "unparseable URL", line });
   }
 }
 
@@ -97,8 +98,8 @@ for (const section of SECTIONS) {
     const rel = file.replace(distDir + "/", "");
     const ogUrls = extractMeta(html, "property", "og:url");
     const twUrls = extractMeta(html, "name", "twitter:url");
-    for (const url of ogUrls) checkUrl(rel, "og:url", url);
-    for (const url of twUrls) checkUrl(rel, "twitter:url", url);
+    for (const url of ogUrls) checkUrl(rel, "og:url", url, html);
+    for (const url of twUrls) checkUrl(rel, "twitter:url", url, html);
   }
 }
 

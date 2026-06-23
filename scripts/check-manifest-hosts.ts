@@ -20,7 +20,7 @@
  */
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "manifest-hosts";
 
@@ -38,8 +38,9 @@ if (found.length === 0) {
   process.exit(0);
 }
 
-type Violation = { file: string; field: string; url: string; reason: string };
+type Violation = { file: string; field: string; url: string; reason: string; line?: number };
 const violations: Violation[] = [];
+let currentSource = "";
 
 function checkAbsoluteUrl(file: string, field: string, value: unknown) {
   if (typeof value !== "string" || value.trim() === "") return;
@@ -48,23 +49,26 @@ function checkAbsoluteUrl(file: string, field: string, value: unknown) {
   // origin — so anything not starting with a scheme is implicitly
   // same-origin and OK. Only absolute URLs need a host check.
   if (!/^https?:\/\//i.test(v)) return;
+  const line = currentSource ? lineOf(currentSource, value) : 1;
   try {
     const host = new URL(v).hostname.toLowerCase();
     if (host !== EXPECTED_HOST) {
-      violations.push({ file, field, url: v, reason: `host ${host} != ${EXPECTED_HOST}` });
+      violations.push({ file, field, url: v, reason: `host ${host} != ${EXPECTED_HOST}`, line });
     }
   } catch {
-    violations.push({ file, field, url: v, reason: "unparseable URL" });
+    violations.push({ file, field, url: v, reason: "unparseable URL", line });
   }
 }
 
 for (const path of found) {
   const rel = path.replace(resolve(".") + "/", "");
   let manifest: any;
+  const raw = readFileSync(path, "utf8");
+  currentSource = raw;
   try {
-    manifest = JSON.parse(readFileSync(path, "utf8"));
+    manifest = JSON.parse(raw);
   } catch (e) {
-    violations.push({ file: rel, field: "(file)", url: "(parse)", reason: `invalid JSON: ${(e as Error).message}` });
+    violations.push({ file: rel, field: "(file)", url: "(parse)", reason: `invalid JSON: ${(e as Error).message}`, line: 1 });
     continue;
   }
 
@@ -91,6 +95,7 @@ for (const path of found) {
 const indexPath = resolve("index.html");
 if (existsSync(indexPath)) {
   const html = readFileSync(indexPath, "utf8");
+  currentSource = html;
   const m = html.match(/<link[^>]+rel=["']manifest["'][^>]*href=["']([^"']+)["']/i);
   if (m) {
     const href = m[1];
@@ -104,6 +109,7 @@ if (existsSync(indexPath)) {
           field: "link[rel=manifest] href",
           url: href,
           reason: `referenced ${localName} not found in public/`,
+          line: lineOf(html, href),
         });
       }
     }
@@ -112,7 +118,7 @@ if (existsSync(indexPath)) {
 
 console.log(`[${GATE}] scanned ${found.length} manifest file(s)`);
 
-const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.field, url: v.url, reason: v.reason }));
+const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.field, url: v.url, reason: v.reason, line: v.line }));
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
   // v.file is already workspace-relative ("public/manifest.json", "index.html").

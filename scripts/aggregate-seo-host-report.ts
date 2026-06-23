@@ -23,15 +23,14 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
-import type { GateReport, Violation } from "./lib/seo-hosts";
+import { KNOWN_GATES, type GateReport, type Violation } from "./lib/seo-hosts";
 
 const SITE_URL = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com";
 const LABEL = process.env.REPORT_LABEL || "default";
 const REPORT_DIR = resolve(process.env.SEO_REPORT_DIR || "seo-host-report");
 const REUSE = process.env.SEO_REUSE_REPORTS === "1" || process.env.SEO_REUSE_REPORTS === "true";
-mkdirSync(REPORT_DIR, { recursive: true });
 
-const GATES: { name: string; script: string }[] = [
+const ALL_GATES: { name: string; script: string }[] = [
   { name: "sitemap-hosts",        script: "scripts/check-sitemap-hosts.ts" },
   { name: "sitemap-index-hosts",  script: "scripts/check-sitemap-index-hosts.ts" },
   { name: "manifest-hosts",       script: "scripts/check-manifest-hosts.ts" },
@@ -41,6 +40,50 @@ const GATES: { name: string; script: string }[] = [
   { name: "social-image-hosts",   script: "scripts/check-social-image-hosts.ts" },
   { name: "hreflang-hosts",       script: "scripts/check-hreflang-hosts.ts" },
 ];
+
+// ----- CLI parsing -----
+//   --gate <name>      Run/aggregate just one gate and exit with its status.
+//                      Equivalent env var: SEO_ONLY_GATE=<name>
+//   --list-gates       Print the known gate names and exit.
+//   --help / -h        Print usage and exit.
+const argv = process.argv.slice(2);
+function takeFlag(name: string): string | undefined {
+  const i = argv.indexOf(name);
+  if (i >= 0 && argv[i + 1] && !argv[i + 1].startsWith("--")) return argv[i + 1];
+  return undefined;
+}
+if (argv.includes("--help") || argv.includes("-h")) {
+  console.log(`Usage: tsx scripts/aggregate-seo-host-report.ts [--gate <name>] [--list-gates]
+
+Modes:
+  default   Run/aggregate all SEO host gates.
+  --gate    Run/aggregate just one gate (great for local debugging).
+            Equivalent env var: SEO_ONLY_GATE=<name>.
+
+Other env:
+  SEO_REUSE_REPORTS=1   Reuse per-gate <gate>.json under SEO_REPORT_DIR.
+  SEO_REPORT_DIR=<dir>  Where per-gate + aggregated reports are written.
+  SITE_URL=<url>        Expected host base for all gates.
+  REPORT_LABEL=<label>  Filename suffix for the aggregated report.
+
+Known gates:
+  ${KNOWN_GATES.join("\n  ")}
+`);
+  process.exit(0);
+}
+if (argv.includes("--list-gates")) {
+  for (const g of ALL_GATES) console.log(g.name);
+  process.exit(0);
+}
+const onlyGate = takeFlag("--gate") || process.env.SEO_ONLY_GATE || null;
+const GATES = onlyGate ? ALL_GATES.filter((g) => g.name === onlyGate) : ALL_GATES;
+if (onlyGate && GATES.length === 0) {
+  console.error(`[aggregate-seo-host-report] unknown gate "${onlyGate}". Known gates:\n  ${ALL_GATES.map((g) => g.name).join("\n  ")}`);
+  process.exit(2);
+}
+
+mkdirSync(REPORT_DIR, { recursive: true });
+if (onlyGate) console.log(`[aggregate-seo-host-report] single-gate mode → ${onlyGate}`);
 
 type LoadedGate = {
   gate: string;
