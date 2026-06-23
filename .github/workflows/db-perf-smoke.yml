@@ -18,6 +18,10 @@ on:
         description: "Fail the build when a hot query has no matching threshold rule."
         type: boolean
         default: false
+      max_change_pct:
+        description: "Cap how much apply-suggestions may change mean_ms/max_ms per run (e.g. 25 = ±25%). Empty = no cap."
+        type: string
+        default: ""
   schedule:
     # Run hourly so latency regressions are caught even without code changes.
     - cron: "0 * * * *"
@@ -60,6 +64,8 @@ jobs:
           PERF_ENV: ci
           PERF_APPLY_SUGGESTIONS: ${{ (github.event_name == 'workflow_dispatch' && inputs.apply_suggestions) && '1' || '0' }}
           PERF_COVERAGE_STRICT: ${{ (github.event_name == 'workflow_dispatch' && inputs.coverage_strict) && '1' || '0' }}
+          PERF_MAX_CHANGE_PCT: ${{ (github.event_name == 'workflow_dispatch' && inputs.max_change_pct) || '' }}
+          PERF_ANNOTATIONS: "1"
         run: bun run test:perf
 
       - name: Upload perf report artifact
@@ -69,6 +75,7 @@ jobs:
           name: perf-smoke-report
           path: |
             perf-smoke-report/perf-smoke-report.json
+            perf-smoke-report/perf-smoke-report.html
             perf-smoke-report/perf-smoke-summary.md
             perf-smoke-report/perf-smoke-resolved-profile.json
             perf-smoke-report/perf-thresholds.diff.patch

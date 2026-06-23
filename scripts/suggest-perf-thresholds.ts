@@ -32,6 +32,12 @@ const thresholdsPath = path.resolve(
 );
 const envKey = process.env.PERF_ENV || "default";
 const write = process.argv.includes("--write");
+const pctArg = process.argv.find((a) => a.startsWith("--max-change-pct="));
+const maxChangePct = pctArg
+  ? Number(pctArg.split("=")[1])
+  : process.env.PERF_MAX_CHANGE_PCT
+    ? Number(process.env.PERF_MAX_CHANGE_PCT)
+    : undefined;
 
 if (!fs.existsSync(reportPath)) {
   console.error(`❌ Report not found: ${reportPath}`);
@@ -63,9 +69,16 @@ const suggestions: SuggestedRule[] = failures.map((f) =>
 console.log(`▶ Suggestions for PERF_ENV=${current.envKey} (${suggestions.length} queries):\n`);
 console.log(JSON.stringify({ queries: suggestions }, null, 2));
 
-const merge = mergeSuggestions(thresholdsPath, current.envKey, suggestions, { write });
+const merge = mergeSuggestions(thresholdsPath, current.envKey, suggestions, { write, maxChangePct });
 console.log("\n--- unified diff ---");
 console.log(unifiedDiff(merge.before, merge.after, "perf-thresholds.json"));
+
+if (merge.clamped.length) {
+  console.log(`\n⚠ Clamped ${merge.clamped.length} value(s) to ±${maxChangePct}% per run:`);
+  for (const c of merge.clamped) {
+    console.log(`   • ${c.label}.${c.field}: ${c.previous} → requested ${c.requested}, applied ${c.applied}`);
+  }
+}
 
 if (write) {
   console.log(
@@ -73,5 +86,5 @@ if (write) {
       `(${merge.added.length} added, ${merge.replaced.length} replaced)`,
   );
 } else {
-  console.log("\n(Pass --write to merge into perf-thresholds.json)");
+  console.log(`\n(Pass --write to merge into perf-thresholds.json${maxChangePct ? `; current cap ±${maxChangePct}%` : ""})`);
 }

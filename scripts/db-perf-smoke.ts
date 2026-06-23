@@ -22,7 +22,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  loadThresholds,
+  loadLayeredThresholds,
+  resolveThresholdsLayers,
   loadBaseThresholds,
   renderActiveThresholds,
   diffThresholds,
@@ -32,6 +33,9 @@ import {
   mergeSuggestions,
   suggestRule,
   unifiedDiff,
+  renderHtmlReport,
+  buildAnnotations,
+  formatAnnotation,
   ThresholdsValidationError,
   type SuggestedRule,
 } from "./lib/perf-thresholds";
@@ -48,12 +52,21 @@ if (!url || !anon) {
 
 const envKey = process.env.PERF_ENV || "default";
 const thresholdsFile = process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json";
+const extraLayers = (process.env.PERF_THRESHOLDS_FILES || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const layers = resolveThresholdsLayers(thresholdsFile, envKey, extraLayers);
 const coverageStrict = process.env.PERF_COVERAGE_STRICT === "1";
 const applySuggestions = process.env.PERF_APPLY_SUGGESTIONS === "1";
+const maxChangePct = process.env.PERF_MAX_CHANGE_PCT
+  ? Number(process.env.PERF_MAX_CHANGE_PCT)
+  : undefined;
+const emitAnnotations = process.env.PERF_ANNOTATIONS !== "0"; // on by default
 
 let thresholds;
 try {
-  thresholds = loadThresholds(thresholdsFile, envKey);
+  thresholds = loadLayeredThresholds(layers, envKey);
 } catch (e) {
   if (e instanceof ThresholdsValidationError) {
     console.error("━━━ perf-thresholds.json validation failed ━━━");
@@ -65,11 +78,14 @@ try {
   process.exit(2);
 }
 
+const presentLayers = layers.filter((p) => fs.existsSync(p));
 console.log(
   `▶ thresholds [${thresholds.envKey}] mean≤${thresholds.mean_ms}ms max≤${thresholds.max_ms}ms` +
     (thresholds.queries.length ? ` (+${thresholds.queries.length} per-query rules)` : "") +
-    ` (from ${thresholds.thresholdsPath})`,
+    ` (layers: ${presentLayers.join(" → ")})` +
+    (maxChangePct ? ` [max ±${maxChangePct}%/run]` : ""),
 );
+
 
 const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
@@ -134,9 +150,10 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
   // Optionally compute + apply suggestions, producing a patch file.
   let suggestionsPatch: string | null = null;
-  let mergeStats: { added: SuggestedRule[]; replaced: SuggestedRule[] } | null = null;
-  if (applySuggestions && Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
-    const suggestions: SuggestedRule[] = body.threshold_failures.map((f: any) =>
+  let mergeStats: { added: SuggestedRule[]; replaced: SuggestedRule[]; clamped: any[] } | null = null;
+  let computedSuggestions: SuggestedRule[] = [];
+  if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
+    computedSuggestions = body.threshold_failures.map((f: any) =>
       suggestRule({
         matched_rule: f.matched_rule && f.matched_rule !== null ? f.matched_rule : undefined,
         query_preview: String(f.query_preview ?? ""),
@@ -144,16 +161,65 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
         max_ms: Number(f.max_ms),
       }),
     );
+  }
+  if (applySuggestions && computedSuggestions.length) {
     try {
-      const merge = mergeSuggestions(thresholdsFile, thresholds.envKey, suggestions, { write: true });
-      mergeStats = { added: merge.added, replaced: merge.replaced };
+      const merge = mergeSuggestions(thresholdsFile, thresholds.envKey, computedSuggestions, {
+        write: true,
+        maxChangePct,
+      });
+      mergeStats = { added: merge.added, replaced: merge.replaced, clamped: merge.clamped };
       suggestionsPatch = unifiedDiff(merge.before, merge.after, "perf-thresholds.json");
       fs.writeFileSync(path.join(outDir, "perf-thresholds.diff.patch"), suggestionsPatch + "\n");
-      console.log(`▶ Applied ${merge.added.length} new + ${merge.replaced.length} replaced rules into ${thresholds.envKey}`);
+      console.log(
+        `▶ Applied ${merge.added.length} new + ${merge.replaced.length} replaced rules into ${thresholds.envKey}` +
+          (merge.clamped.length ? ` (${merge.clamped.length} value${merge.clamped.length === 1 ? "" : "s"} clamped by ±${maxChangePct}%)` : ""),
+      );
     } catch (e) {
       console.warn(`⚠ Could not apply suggestions: ${(e as Error).message}`);
     }
   }
+
+  // HTML visualisation artifact.
+  try {
+    const html = renderHtmlReport({
+      resolved: thresholds,
+      layers: presentLayers,
+      hotQueries: body?.hot_queries ?? [],
+      failures: body?.threshold_failures ?? [],
+      suggestions: computedSuggestions,
+      uncovered,
+    });
+    fs.writeFileSync(path.join(outDir, "perf-smoke-report.html"), html);
+  } catch (e) {
+    console.warn(`⚠ Could not render HTML report: ${(e as Error).message}`);
+  }
+
+  // Emit GitHub check annotations pointing at the failing rule in
+  // perf-thresholds.json and the entry in perf-smoke-report.json.
+  if (emitAnnotations && process.env.GITHUB_ACTIONS === "true" && Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
+    const annotations = buildAnnotations({
+      thresholdsPath: path.resolve(thresholdsFile),
+      reportPath: path.resolve(path.join(outDir, "perf-smoke-report.json")),
+      failures: body.threshold_failures,
+    });
+    for (const a of annotations) console.log(formatAnnotation(a, "error"));
+    if (coverageStrict && uncovered.length) {
+      // Annotate uncovered hot queries against the report file too.
+      const uncoveredAnn = buildAnnotations({
+        thresholdsPath: path.resolve(thresholdsFile),
+        reportPath: path.resolve(path.join(outDir, "perf-smoke-report.json")),
+        failures: uncovered.map((q: any) => ({
+          query_id: queryId(q),
+          mean_ms: q.mean_ms,
+          max_ms: q.max_ms,
+          query_preview: q.query_preview,
+        })),
+      });
+      for (const a of uncoveredAnn) console.log(formatAnnotation({ ...a, message: `Hot query has no matching threshold rule — ${a.message}` }, "warning"));
+    }
+  }
+
 
   // Markdown summary used by the PR-comment step.
   const lines: string[] = [];
@@ -236,9 +302,12 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
   // Ready-to-commit patch (only when applied)
   if (suggestionsPatch && mergeStats) {
+    const clampNote = mergeStats.clamped.length
+      ? ` — ⚠ ${mergeStats.clamped.length} value${mergeStats.clamped.length === 1 ? "" : "s"} clamped to ±${maxChangePct}% / run`
+      : "";
     lines.push(
       "",
-      `**Suggested patch** (applied to \`perf-thresholds.json\` in this run — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced)`,
+      `**Suggested patch** (applied to \`perf-thresholds.json\` in this run — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote})`,
       "",
       "```diff",
       suggestionsPatch,
@@ -246,7 +315,18 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       "",
       "Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff above.",
     );
+    if (mergeStats.clamped.length) {
+      lines.push("", "| rule | field | previous | requested | applied |", "|---|---|---:|---:|---:|");
+      for (const c of mergeStats.clamped) {
+        lines.push(`| ${c.label} | ${c.field} | ${c.previous} | ${c.requested} | **${c.applied}** |`);
+      }
+    }
   }
+
+  lines.push(
+    "",
+    "Artifacts attached: `perf-smoke-report.json`, `perf-smoke-report.html` (visual diff), `perf-smoke-resolved-profile.json`.",
+  );
 
   if (runUrl) {
     lines.push(
