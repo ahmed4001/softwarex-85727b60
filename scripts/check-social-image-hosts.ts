@@ -99,6 +99,7 @@ function sampleHtmlFiles(sectionDir: string): string[] {
   return Array.from(new Set([...head, ...tail])).map((n) => join(sectionDir, n, "index.html"));
 }
 
+const sources: Record<string, string> = {};
 for (const section of SECTIONS) {
   const sectionDir = join(distDir, section);
   const files = sampleHtmlFiles(sectionDir);
@@ -111,6 +112,7 @@ for (const section of SECTIONS) {
     scanned++;
     const html = readFileSync(file, "utf8");
     const rel = file.replace(distDir + "/", "");
+    sources[rel] = html;
     for (const prop of OG_PROPS) {
       for (const url of extractMeta(html, "property", prop)) checkImageUrl(rel, prop, url, html);
     }
@@ -125,5 +127,6 @@ console.log(`[${GATE}] scanned ${scanned} file(s) across ${SECTIONS.length} sect
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations,
   workspacePrefix: "dist/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "all og:image + twitter:image tags match allowed hosts");
