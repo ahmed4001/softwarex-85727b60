@@ -32,6 +32,12 @@ const thresholdsPath = path.resolve(
 );
 const envKey = process.env.PERF_ENV || "default";
 const write = process.argv.includes("--write");
+const pctArg = process.argv.find((a) => a.startsWith("--max-change-pct="));
+const maxChangePct = pctArg
+  ? Number(pctArg.split("=")[1])
+  : process.env.PERF_MAX_CHANGE_PCT
+    ? Number(process.env.PERF_MAX_CHANGE_PCT)
+    : undefined;
 
 if (!fs.existsSync(reportPath)) {
   console.error(`❌ Report not found: ${reportPath}`);
