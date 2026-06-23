@@ -89,8 +89,8 @@ jobs:
           path: perf-smoke-report/perf-smoke-resolved-profile.json
           if-no-files-found: warn
 
-      - name: Comment on PR with breaching queries
-        if: github.event_name == 'pull_request' && steps.smoke.outcome == 'failure'
+      - name: Comment on PR with perf summary
+        if: github.event_name == 'pull_request' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: db-perf-smoke
