@@ -47,7 +47,35 @@ const anon =
   process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!url || !anon) {
-  console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY env vars");
+  const missing: string[] = [];
+  if (!url) missing.push("VITE_SUPABASE_URL");
+  if (!anon) missing.push("VITE_SUPABASE_PUBLISHABLE_KEY");
+
+  console.error(
+    [
+      `Missing required env var(s): ${missing.join(", ")}.`,
+      "",
+      "These come from GitHub Actions repository secrets of the same name.",
+      "Fix: open the repo on GitHub → Settings → Secrets and variables → Actions →",
+      "  New repository secret, and add:",
+      "    • VITE_SUPABASE_URL              (your Lovable Cloud project URL)",
+      "    • VITE_SUPABASE_PUBLISHABLE_KEY  (your publishable / anon key)",
+      "Both values are publishable (the anon key already ships in the frontend bundle).",
+      "Then re-run the failed workflow.",
+    ].join("\n"),
+  );
+
+  // GitHub Actions annotation — shows up as a clickable error on the PR.
+  if (process.env.GITHUB_ACTIONS === "true") {
+    const title = "db-perf-smoke: missing GitHub Actions secret";
+    const msg =
+      `${missing.join(", ")} not set. Add as GitHub repo secrets ` +
+      `(Settings → Secrets and variables → Actions), then re-run.`;
+    console.error(
+      `::error file=.github/workflows/db-perf-smoke.yml,title=${title}::${msg}`,
+    );
+  }
+
   process.exit(2);
 }
 
