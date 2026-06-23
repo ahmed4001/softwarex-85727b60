@@ -99,6 +99,7 @@ jobs:
 
   prerender-canonical-check:
     name: Prerender canonical host check
+    needs: seo-host-allowlist-validate
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
