@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:seo": "vitest run src/test/seo",
     "check:sitemap-hosts": "tsx scripts/check-sitemap-hosts.ts",
+    "check:prerender-canonicals": "tsx scripts/check-prerender-canonicals.ts",
     "test:perf": "tsx scripts/db-perf-smoke.ts",
     "lint:perf-thresholds": "tsx scripts/lint-perf-thresholds.ts",
     "suggest:perf-thresholds": "tsx scripts/suggest-perf-thresholds.ts",
