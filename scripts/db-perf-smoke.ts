@@ -3,23 +3,29 @@
  *
  * Invokes the `db-perf-smoke` edge function and exits non-zero when:
  *   - any required hot-table index is missing, or
- *   - any top hot query exceeds the mean/max execution-time thresholds.
+ *   - any top hot query exceeds the mean/max execution-time thresholds
+ *     (using per-query overrides when configured).
  *
- * Thresholds come from `perf-thresholds.json` (or the path in PERF_THRESHOLDS_FILE).
- * Pick an environment block with `PERF_ENV=<key>` (defaults to `default`).
- *
- * Usage:
- *   PERF_ENV=ci tsx scripts/db-perf-smoke.ts
+ * Thresholds come from `perf-thresholds.json` (or PERF_THRESHOLDS_FILE),
+ * validated via zod. Pick an env with `PERF_ENV=<key>`.
  *
  * Env:
  *   VITE_SUPABASE_URL              (required)
  *   VITE_SUPABASE_PUBLISHABLE_KEY  (required — Authorization bearer)
  *   PERF_ENV                       (optional — config key, default "default")
- *   PERF_THRESHOLDS_FILE           (optional — path to JSON, default ./perf-thresholds.json)
+ *   PERF_THRESHOLDS_FILE           (optional — default ./perf-thresholds.json)
+ *   PERF_REPORT_DIR                (optional — artifact dir, default ".")
  */
 
 import fs from "node:fs";
 import path from "node:path";
+import {
+  loadThresholds,
+  loadBaseThresholds,
+  renderActiveThresholds,
+  diffThresholds,
+  ThresholdsValidationError,
+} from "./lib/perf-thresholds";
 
 const url = process.env.VITE_SUPABASE_URL;
 const anon =
@@ -32,22 +38,27 @@ if (!url || !anon) {
 }
 
 const envKey = process.env.PERF_ENV || "default";
-const thresholdsPath = path.resolve(
-  process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json",
-);
+const thresholdsFile = process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json";
 
-let mean_ms = 200;
-let max_ms = 800;
+let thresholds;
 try {
-  const cfg = JSON.parse(fs.readFileSync(thresholdsPath, "utf8"));
-  const block = cfg[envKey] ?? cfg.default;
-  if (!block) throw new Error(`No "${envKey}" or "default" block in ${thresholdsPath}`);
-  if (typeof block.mean_ms === "number") mean_ms = block.mean_ms;
-  if (typeof block.max_ms === "number") max_ms = block.max_ms;
-  console.log(`▶ thresholds [${envKey}] mean≤${mean_ms}ms max≤${max_ms}ms (from ${thresholdsPath})`);
+  thresholds = loadThresholds(thresholdsFile, envKey);
 } catch (e) {
-  console.warn(`⚠ Could not load thresholds (${e}); using defaults mean≤${mean_ms} max≤${max_ms}`);
+  if (e instanceof ThresholdsValidationError) {
+    console.error("━━━ perf-thresholds.json validation failed ━━━");
+    console.error(e.message);
+    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  } else {
+    console.error("Unexpected error loading thresholds:", e);
+  }
+  process.exit(2);
 }
+
+console.log(
+  `▶ thresholds [${thresholds.envKey}] mean≤${thresholds.mean_ms}ms max≤${thresholds.max_ms}ms` +
+    (thresholds.queries.length ? ` (+${thresholds.queries.length} per-query rules)` : "") +
+    ` (from ${thresholds.thresholdsPath})`,
+);
 
 const endpoint = `${url}/functions/v1/db-perf-smoke`;
 
@@ -59,15 +70,16 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       apikey: anon,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ mean_ms, max_ms }),
+    body: JSON.stringify({
+      mean_ms: thresholds.mean_ms,
+      max_ms: thresholds.max_ms,
+      queries: thresholds.queries,
+    }),
   });
-
-
 
   const body = await res.json().catch(() => ({}));
   const pretty = JSON.stringify(body, null, 2);
 
-  // Persist full report for CI artifact upload / PR-comment step.
   const outDir = process.env.PERF_REPORT_DIR || ".";
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "perf-smoke-report.json"), pretty);
@@ -77,21 +89,31 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   const passed = res.status === 200 && body?.pass;
   lines.push(`### ${passed ? "✅" : "❌"} db-perf-smoke ${passed ? "PASS" : "FAIL"}`);
   lines.push("");
-  lines.push(
-    `Thresholds: mean ≤ **${body?.thresholds?.mean_ms ?? "?"} ms**, max ≤ **${body?.thresholds?.max_ms ?? "?"} ms**`,
-  );
+  lines.push(renderActiveThresholds(thresholds));
+
+  const baseT = loadBaseThresholds(thresholds.envKey);
+  const diff = diffThresholds(baseT, thresholds);
+  if (diff) {
+    lines.push("", diff);
+  }
+
   if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
     lines.push("", "**Missing indexes**");
     for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
   }
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
     lines.push("", "**Breaching hot queries**", "");
-    lines.push("| mode | mean (ms) | max (ms) | calls | query |");
-    lines.push("|---|---:|---:|---:|---|");
+    lines.push("| rule | mode | mean (ms) | max (ms) | applied mean | applied max | calls | query |");
+    lines.push("|---|---|---:|---:|---:|---:|---:|---|");
     for (const q of body.threshold_failures) {
       const preview = String(q.query_preview ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
       const mode = String(q.explain_mode ?? "ANALYZE").split(" ")[0];
-      lines.push(`| ${mode} | ${q.mean_ms} | ${q.max_ms} | ${q.calls} | \`${preview}\` |`);
+      const ruleLabel = q.matched_rule && q.matched_rule !== null
+        ? (q.matched_rule.label ?? q.matched_rule.match ?? "match")
+        : "(env default)";
+      lines.push(
+        `| ${ruleLabel} | ${mode} | ${q.mean_ms} | ${q.max_ms} | ${q.applied_mean_ms ?? thresholds.mean_ms} | ${q.applied_max_ms ?? thresholds.max_ms} | ${q.calls} | \`${preview}\` |`,
+      );
     }
     lines.push("");
     lines.push(
@@ -110,18 +132,18 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     process.exit(0);
   }
 
-
   console.error(`❌ db-perf-smoke FAIL (HTTP ${res.status})`);
   if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
     console.error("Missing indexes:", body.missing_indexes);
   }
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
-    console.error(
-      `Queries over thresholds (mean>${body?.thresholds?.mean_ms}ms or max>${body?.thresholds?.max_ms}ms):`,
-    );
+    console.error("Breaching queries:");
     for (const q of body.threshold_failures) {
+      const ruleLabel = q.matched_rule && q.matched_rule !== null
+        ? (q.matched_rule.label ?? q.matched_rule.match)
+        : "(env default)";
       console.error(
-        `\n  • mean=${q.mean_ms}ms max=${q.max_ms}ms calls=${q.calls}\n    ${q.query_preview}`,
+        `\n  • [${ruleLabel}] mean=${q.mean_ms}ms (≤${q.applied_mean_ms}) max=${q.max_ms}ms (≤${q.applied_max_ms}) calls=${q.calls}\n    ${q.query_preview}`,
       );
       if (q.explain) {
         const indented = String(q.explain)

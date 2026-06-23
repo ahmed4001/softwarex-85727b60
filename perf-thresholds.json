@@ -1,29 +1,47 @@
 {
   "$schema": "./perf-thresholds.schema.json",
-  "_comment": "Per-environment thresholds for the db-perf-smoke runner. Edit values here; no code changes needed. Select an env with PERF_ENV=<key>. Falls back to 'default'.",
+  "_comment": "Per-environment thresholds for the db-perf-smoke runner. Edit values here; no code changes needed. Select an env with PERF_ENV=<key>. Falls back to 'default'. Each env block may include a `queries` array of per-query overrides matched by case-insensitive substring against the normalized SQL text (first match wins).",
 
   "default": {
     "mean_ms": 200,
-    "max_ms": 800
+    "max_ms": 800,
+    "queries": []
   },
 
   "ci": {
     "mean_ms": 250,
-    "max_ms": 1000
+    "max_ms": 1000,
+    "queries": []
   },
 
   "staging": {
     "mean_ms": 200,
-    "max_ms": 800
+    "max_ms": 800,
+    "queries": []
   },
 
   "production": {
     "mean_ms": 150,
-    "max_ms": 600
+    "max_ms": 600,
+    "queries": [
+      {
+        "label": "product-by-slug",
+        "match": "from products where slug =",
+        "mean_ms": 50,
+        "max_ms": 150
+      },
+      {
+        "label": "reviews-by-product",
+        "match": "from reviews where product_id",
+        "mean_ms": 120,
+        "max_ms": 400
+      }
+    ]
   },
 
   "local": {
     "mean_ms": 500,
-    "max_ms": 2000
+    "max_ms": 2000,
+    "queries": []
   }
 }
