@@ -415,7 +415,15 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       `[View full CI logs ↗](${runUrl})`,
     );
   }
-  fs.writeFileSync(path.join(outDir, "perf-smoke-summary.md"), lines.join("\n"));
+  // Patch the TOC retroactively to include the Suggested-patch anchor when present.
+  let summary = lines.join("\n");
+  if (suggestionsPatch && mergeStats) {
+    summary = summary.replace(
+      "**Jump to:** ",
+      "**Jump to:** [🩹 Suggested patch](#suggested-patch) · ",
+    );
+  }
+  fs.writeFileSync(path.join(outDir, "perf-smoke-summary.md"), summary);
 
   if (passed) {
     console.log("✅ db-perf-smoke PASS");
