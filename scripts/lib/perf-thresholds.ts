@@ -27,6 +27,13 @@ export const EnvBlockSchema = z.object({
   queries: z.array(QueryRuleSchema).optional().default([]),
 });
 
+/** Override-layer blocks may omit scalar fields (they inherit from earlier layers). */
+export const PartialEnvBlockSchema = z.object({
+  mean_ms: z.number().positive().optional(),
+  max_ms: z.number().positive().optional(),
+  queries: z.array(QueryRuleSchema).optional().default([]),
+});
+
 export const ThresholdsFileSchema = z
   .object({
     $schema: z.string().optional(),
@@ -34,6 +41,14 @@ export const ThresholdsFileSchema = z
     default: EnvBlockSchema,
   })
   .catchall(z.union([EnvBlockSchema, z.string(), z.undefined()]));
+
+/** Schema for override layers: no required `default` block, partial env blocks allowed. */
+export const PartialThresholdsFileSchema = z
+  .object({
+    $schema: z.string().optional(),
+    _comment: z.string().optional(),
+  })
+  .catchall(z.union([PartialEnvBlockSchema, z.string(), z.undefined()]));
 
 export type QueryRule = z.infer<typeof QueryRuleSchema>;
 export type EnvBlock = z.infer<typeof EnvBlockSchema>;
