@@ -2,9 +2,9 @@
  * Automated database performance smoke test.
  *
  * Invokes the `db-perf-smoke` edge function and exits non-zero when:
- *   - any required hot-table index is missing, or
- *   - any top hot query exceeds the mean/max execution-time thresholds
- *     (using per-query overrides when configured).
+ *   - any required hot-table index is missing,
+ *   - any top hot query exceeds the mean/max execution-time thresholds, or
+ *   - PERF_COVERAGE_STRICT=1 and a hot query has no matching threshold rule.
  *
  * Thresholds come from `perf-thresholds.json` (or PERF_THRESHOLDS_FILE),
  * validated via zod. Pick an env with `PERF_ENV=<key>`.
@@ -15,6 +15,8 @@
  *   PERF_ENV                       (optional — config key, default "default")
  *   PERF_THRESHOLDS_FILE           (optional — default ./perf-thresholds.json)
  *   PERF_REPORT_DIR                (optional — artifact dir, default ".")
+ *   PERF_COVERAGE_STRICT           (optional — "1" to fail on uncovered queries)
+ *   PERF_APPLY_SUGGESTIONS         (optional — "1" to write suggestions back)
  */
 
 import fs from "node:fs";
@@ -25,7 +27,13 @@ import {
   renderActiveThresholds,
   diffThresholds,
   bumpThreshold,
+  queryId,
+  findUncovered,
+  mergeSuggestions,
+  suggestRule,
+  unifiedDiff,
   ThresholdsValidationError,
+  type SuggestedRule,
 } from "./lib/perf-thresholds";
 
 const url = process.env.VITE_SUPABASE_URL;
@@ -40,6 +48,8 @@ if (!url || !anon) {
 
 const envKey = process.env.PERF_ENV || "default";
 const thresholdsFile = process.env.PERF_THRESHOLDS_FILE || "perf-thresholds.json";
+const coverageStrict = process.env.PERF_COVERAGE_STRICT === "1";
+const applySuggestions = process.env.PERF_APPLY_SUGGESTIONS === "1";
 
 let thresholds;
 try {
@@ -79,29 +89,93 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   });
 
   const body = await res.json().catch(() => ({}));
-  const pretty = JSON.stringify(body, null, 2);
 
+  // Enrich entries with stable query_id BEFORE serializing so the artifact
+  // carries the anchors the PR comment links to.
+  if (Array.isArray(body?.hot_queries)) {
+    body.hot_queries = body.hot_queries.map((q: any) => ({ query_id: queryId(q), ...q }));
+  }
+  if (Array.isArray(body?.threshold_failures)) {
+    body.threshold_failures = body.threshold_failures.map((q: any) => ({
+      query_id: queryId(q),
+      ...q,
+    }));
+  }
+
+  const pretty = JSON.stringify(body, null, 2);
   const outDir = process.env.PERF_REPORT_DIR || ".";
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "perf-smoke-report.json"), pretty);
 
+  // Always write the resolved profile artifact: env defaults + rules that
+  // actually fired (so reviewers see exactly what was applied).
+  const firedRules = new Map<string, any>();
+  for (const r of thresholds.queries) firedRules.set(r.label ?? r.match, r);
+  for (const f of body?.threshold_failures ?? []) {
+    if (f.matched_rule) {
+      const k = f.matched_rule.label ?? f.matched_rule.match;
+      if (k) firedRules.set(k, f.matched_rule);
+    }
+  }
+  const resolvedProfile = {
+    envKey: thresholds.envKey,
+    mean_ms: thresholds.mean_ms,
+    max_ms: thresholds.max_ms,
+    queries: Array.from(firedRules.values()),
+    resolved_at: new Date().toISOString(),
+  };
+  fs.writeFileSync(
+    path.join(outDir, "perf-smoke-resolved-profile.json"),
+    JSON.stringify(resolvedProfile, null, 2),
+  );
+
+  // Coverage check
+  const uncovered = findUncovered(body?.hot_queries ?? [], thresholds.queries);
+
+  // Optionally compute + apply suggestions, producing a patch file.
+  let suggestionsPatch: string | null = null;
+  let mergeStats: { added: SuggestedRule[]; replaced: SuggestedRule[] } | null = null;
+  if (applySuggestions && Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
+    const suggestions: SuggestedRule[] = body.threshold_failures.map((f: any) =>
+      suggestRule({
+        matched_rule: f.matched_rule && f.matched_rule !== null ? f.matched_rule : undefined,
+        query_preview: String(f.query_preview ?? ""),
+        mean_ms: Number(f.mean_ms),
+        max_ms: Number(f.max_ms),
+      }),
+    );
+    try {
+      const merge = mergeSuggestions(thresholdsFile, thresholds.envKey, suggestions, { write: true });
+      mergeStats = { added: merge.added, replaced: merge.replaced };
+      suggestionsPatch = unifiedDiff(merge.before, merge.after, "perf-thresholds.json");
+      fs.writeFileSync(path.join(outDir, "perf-thresholds.diff.patch"), suggestionsPatch + "\n");
+      console.log(`▶ Applied ${merge.added.length} new + ${merge.replaced.length} replaced rules into ${thresholds.envKey}`);
+    } catch (e) {
+      console.warn(`⚠ Could not apply suggestions: ${(e as Error).message}`);
+    }
+  }
+
   // Markdown summary used by the PR-comment step.
   const lines: string[] = [];
-  const passed = res.status === 200 && body?.pass;
+  const passed = res.status === 200 && body?.pass && !(coverageStrict && uncovered.length);
   lines.push(`### ${passed ? "✅" : "❌"} db-perf-smoke ${passed ? "PASS" : "FAIL"}`);
   lines.push("");
   lines.push(renderActiveThresholds(thresholds));
 
   const baseT = loadBaseThresholds(thresholds.envKey);
   const diff = diffThresholds(baseT, thresholds);
-  if (diff) {
-    lines.push("", diff);
-  }
+  if (diff) lines.push("", diff);
 
   if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
     lines.push("", "**Missing indexes**");
     for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
   }
+
+  const runUrl =
+    process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
+      ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+      : null;
+
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
     const failures = [...body.threshold_failures].sort((a: any, b: any) => {
       const am = a.over_max ? 1 : 0;
@@ -111,30 +185,10 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     });
     const top = failures.slice(0, 10);
 
-    // Compute line numbers of each failure inside the pretty-printed report
-    // so reviewers can jump to the right block when they open the artifact.
-    const reportLines = pretty.split("\n");
-    const failureLines: number[] = [];
-    let cursor = 0;
-    for (let i = 0; i < failures.length; i++) {
-      for (let li = cursor; li < reportLines.length; li++) {
-        if (reportLines[li].includes('"query_preview"')) {
-          failureLines.push(li + 1);
-          cursor = li + 1;
-          break;
-        }
-      }
-    }
-
-    const runUrl =
-      process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
-        ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-        : null;
-
     lines.push("", `**Top ${top.length} breaching hot queries** (of ${failures.length})`, "");
-    lines.push("| # | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |");
+    lines.push("| id | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |");
     lines.push("|---|---|---|---:|---:|---|---|---:|---|");
-    top.forEach((q: any, idx: number) => {
+    top.forEach((q: any) => {
       const preview = String(q.query_preview ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
       const mode = String(q.explain_mode ?? "ANALYZE").split(" ")[0];
       const ruleLabel = q.matched_rule && q.matched_rule !== null
@@ -144,26 +198,63 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       const beforeMax = q.applied_max_ms ?? thresholds.max_ms;
       const afterMean = bumpThreshold(Number(q.mean_ms));
       const afterMax = bumpThreshold(Number(q.max_ms));
-      const line = failureLines[idx];
-      const idCell = runUrl && line
-        ? `[#${idx + 1}](${runUrl}#artifacts "perf-smoke-report.json line ${line}")`
-        : `#${idx + 1}`;
+      const idCell = runUrl
+        ? `[\`${q.query_id}\`](${runUrl}#artifacts "Search perf-smoke-report.json for ${q.query_id}")`
+        : `\`${q.query_id}\``;
       lines.push(
         `| ${idCell} | ${ruleLabel} | ${mode} | ${q.mean_ms} | ${q.max_ms} | ${beforeMean} → **${afterMean}** | ${beforeMax} → **${afterMax}** | ${q.calls} | \`${preview}\` |`,
       );
     });
     lines.push("");
     lines.push(
-      "Suggested values add 20% headroom (rounded up to 10 ms). Run `PERF_ENV=<env> bun run suggest:perf-thresholds` locally to merge them into `perf-thresholds.json`.",
-    );
-    lines.push("");
-    lines.push(
-      "Full `EXPLAIN (ANALYZE, BUFFERS)` plans (with GENERIC_PLAN fallback for parameterized queries) are in the **`perf-smoke-report`** artifact. Download it from the run page and open `perf-smoke-report.json` — each row above lists the line number of its entry.",
+      "Suggested values add 20% headroom (rounded up to 10 ms). The `id` column is a stable anchor — search for it inside `perf-smoke-report.json` in the artifact.",
     );
   }
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
-    const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-    lines.push("", `[View full CI logs ↗](${runUrl})`);
+
+  // Coverage gaps section
+  if (uncovered.length) {
+    lines.push(
+      "",
+      `**${coverageStrict ? "❌" : "⚠"} Coverage gaps** — ${uncovered.length} hot quer${uncovered.length === 1 ? "y has" : "ies have"} no matching threshold rule`,
+      "",
+    );
+    lines.push("| id | preview |");
+    lines.push("|---|---|");
+    for (const q of uncovered.slice(0, 15)) {
+      const id = queryId(q as any);
+      const preview = String((q as any).query_preview ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+      lines.push(`| \`${id}\` | \`${preview}\` |`);
+    }
+    if (uncovered.length > 15) lines.push(`| … | (+${uncovered.length - 15} more in the artifact) |`);
+    lines.push(
+      "",
+      coverageStrict
+        ? "Set `PERF_COVERAGE_STRICT=0` to make this a warning, or add rules to `perf-thresholds.json` for each id above."
+        : "Add explicit rules in `perf-thresholds.json` to silence these warnings, or set `PERF_COVERAGE_STRICT=1` to fail the build.",
+    );
+  }
+
+  // Ready-to-commit patch (only when applied)
+  if (suggestionsPatch && mergeStats) {
+    lines.push(
+      "",
+      `**Suggested patch** (applied to \`perf-thresholds.json\` in this run — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced)`,
+      "",
+      "```diff",
+      suggestionsPatch,
+      "```",
+      "",
+      "Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff above.",
+    );
+  }
+
+  if (runUrl) {
+    lines.push(
+      "",
+      `Full \`EXPLAIN (ANALYZE, BUFFERS)\` plans are in the **\`perf-smoke-report\`** artifact attached to this run.`,
+      "",
+      `[View full CI logs ↗](${runUrl})`,
+    );
   }
   fs.writeFileSync(path.join(outDir, "perf-smoke-summary.md"), lines.join("\n"));
 
@@ -177,6 +268,10 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   if (Array.isArray(body?.missing_indexes) && body.missing_indexes.length) {
     console.error("Missing indexes:", body.missing_indexes);
   }
+  if (coverageStrict && uncovered.length) {
+    console.error(`Coverage gaps (${uncovered.length}):`);
+    for (const q of uncovered) console.error(`  • ${queryId(q as any)}  ${(q as any).query_preview}`);
+  }
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
     console.error("Breaching queries:");
     for (const q of body.threshold_failures) {
@@ -184,13 +279,10 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
         ? (q.matched_rule.label ?? q.matched_rule.match)
         : "(env default)";
       console.error(
-        `\n  • [${ruleLabel}] mean=${q.mean_ms}ms (≤${q.applied_mean_ms}) max=${q.max_ms}ms (≤${q.applied_max_ms}) calls=${q.calls}\n    ${q.query_preview}`,
+        `\n  • [${q.query_id}] [${ruleLabel}] mean=${q.mean_ms}ms (≤${q.applied_mean_ms}) max=${q.max_ms}ms (≤${q.applied_max_ms}) calls=${q.calls}\n    ${q.query_preview}`,
       );
       if (q.explain) {
-        const indented = String(q.explain)
-          .split("\n")
-          .map((l: string) => "      " + l)
-          .join("\n");
+        const indented = String(q.explain).split("\n").map((l: string) => "      " + l).join("\n");
         console.error(`    EXPLAIN (${q.explain_mode ?? "ANALYZE"}, BUFFERS):`);
         console.error(indented);
       }
