@@ -24,6 +24,7 @@ import {
   loadBaseThresholds,
   renderActiveThresholds,
   diffThresholds,
+  bumpThreshold,
   ThresholdsValidationError,
 } from "./lib/perf-thresholds";
 
@@ -102,22 +103,62 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
   }
   if (Array.isArray(body?.threshold_failures) && body.threshold_failures.length) {
-    lines.push("", "**Breaching hot queries**", "");
-    lines.push("| rule | mode | mean (ms) | max (ms) | applied mean | applied max | calls | query |");
-    lines.push("|---|---|---:|---:|---:|---:|---:|---|");
-    for (const q of body.threshold_failures) {
+    const failures = [...body.threshold_failures].sort((a: any, b: any) => {
+      const am = a.over_max ? 1 : 0;
+      const bm = b.over_max ? 1 : 0;
+      if (am !== bm) return bm - am;
+      return Number(b.mean_ms) - Number(a.mean_ms);
+    });
+    const top = failures.slice(0, 10);
+
+    // Compute line numbers of each failure inside the pretty-printed report
+    // so reviewers can jump to the right block when they open the artifact.
+    const reportLines = pretty.split("\n");
+    const failureLines: number[] = [];
+    let cursor = 0;
+    for (let i = 0; i < failures.length; i++) {
+      for (let li = cursor; li < reportLines.length; li++) {
+        if (reportLines[li].includes('"query_preview"')) {
+          failureLines.push(li + 1);
+          cursor = li + 1;
+          break;
+        }
+      }
+    }
+
+    const runUrl =
+      process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
+        ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+        : null;
+
+    lines.push("", `**Top ${top.length} breaching hot queries** (of ${failures.length})`, "");
+    lines.push("| # | rule | mode | mean (ms) | max (ms) | mean: before → after | max: before → after | calls | query |");
+    lines.push("|---|---|---|---:|---:|---|---|---:|---|");
+    top.forEach((q: any, idx: number) => {
       const preview = String(q.query_preview ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
       const mode = String(q.explain_mode ?? "ANALYZE").split(" ")[0];
       const ruleLabel = q.matched_rule && q.matched_rule !== null
         ? (q.matched_rule.label ?? q.matched_rule.match ?? "match")
         : "(env default)";
+      const beforeMean = q.applied_mean_ms ?? thresholds.mean_ms;
+      const beforeMax = q.applied_max_ms ?? thresholds.max_ms;
+      const afterMean = bumpThreshold(Number(q.mean_ms));
+      const afterMax = bumpThreshold(Number(q.max_ms));
+      const line = failureLines[idx];
+      const idCell = runUrl && line
+        ? `[#${idx + 1}](${runUrl}#artifacts "perf-smoke-report.json line ${line}")`
+        : `#${idx + 1}`;
       lines.push(
-        `| ${ruleLabel} | ${mode} | ${q.mean_ms} | ${q.max_ms} | ${q.applied_mean_ms ?? thresholds.mean_ms} | ${q.applied_max_ms ?? thresholds.max_ms} | ${q.calls} | \`${preview}\` |`,
+        `| ${idCell} | ${ruleLabel} | ${mode} | ${q.mean_ms} | ${q.max_ms} | ${beforeMean} → **${afterMean}** | ${beforeMax} → **${afterMax}** | ${q.calls} | \`${preview}\` |`,
       );
-    }
+    });
     lines.push("");
     lines.push(
-      "Full `EXPLAIN (ANALYZE, BUFFERS)` plans (with GENERIC_PLAN fallback for parameterized queries) are in the **`perf-smoke-report`** artifact attached to this run.",
+      "Suggested values add 20% headroom (rounded up to 10 ms). Run `PERF_ENV=<env> bun run suggest:perf-thresholds` locally to merge them into `perf-thresholds.json`.",
+    );
+    lines.push("");
+    lines.push(
+      "Full `EXPLAIN (ANALYZE, BUFFERS)` plans (with GENERIC_PLAN fallback for parameterized queries) are in the **`perf-smoke-report`** artifact. Download it from the run page and open `perf-smoke-report.json` — each row above lists the line number of its entry.",
     );
   }
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
