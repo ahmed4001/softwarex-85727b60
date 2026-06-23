@@ -224,7 +224,33 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   // Markdown summary used by the PR-comment step.
   const lines: string[] = [];
   const passed = res.status === 200 && body?.pass && !(coverageStrict && uncovered.length);
+  const breachCount = Array.isArray(body?.threshold_failures) ? body.threshold_failures.length : 0;
+  const overMaxCount = Array.isArray(body?.threshold_failures)
+    ? body.threshold_failures.filter((q: any) => q.over_max).length
+    : 0;
+  const missingIdxCount = Array.isArray(body?.missing_indexes) ? body.missing_indexes.length : 0;
+  const hotCount = Array.isArray(body?.hot_queries) ? body.hot_queries.length : 0;
+  const htmlArtifactPath = "perf-smoke-report/perf-smoke-report.html";
+
   lines.push(`### ${passed ? "✅" : "❌"} db-perf-smoke ${passed ? "PASS" : "FAIL"}`);
+  lines.push("");
+  // Concise TL;DR — one line per signal so reviewers can triage at a glance.
+  lines.push("**Summary**");
+  lines.push(
+    `- ${breachCount === 0 ? "✅" : "❌"} **${breachCount}** breaching quer${breachCount === 1 ? "y" : "ies"}` +
+      (breachCount ? ` (${overMaxCount} over max, ${breachCount - overMaxCount} over mean) — of ${hotCount} hot queries scanned` : ""),
+  );
+  lines.push(
+    `- ${uncovered.length === 0 ? "✅" : coverageStrict ? "❌" : "⚠"} **${uncovered.length}** coverage gap${uncovered.length === 1 ? "" : "s"}` +
+      (coverageStrict ? " (strict mode)" : ""),
+  );
+  lines.push(
+    `- ${missingIdxCount === 0 ? "✅" : "❌"} **${missingIdxCount}** missing index${missingIdxCount === 1 ? "" : "es"}`,
+  );
+  lines.push(
+    `- 📊 HTML report: \`${htmlArtifactPath}\`` +
+      (runUrlEarly() ? ` — [download from the **perf-smoke-report** artifact ↗](${runUrlEarly()}#artifacts)` : ""),
+  );
   lines.push("");
   lines.push(renderActiveThresholds(thresholds));
 
