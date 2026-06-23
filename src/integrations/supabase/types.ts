@@ -4562,10 +4562,12 @@ export type Database = {
         }
         Returns: undefined
       }
-      db_perf_smoke: {
-        Args: { _max_ms?: number; _mean_ms?: number }
-        Returns: Json
-      }
+      db_perf_smoke:
+        | { Args: { _max_ms?: number; _mean_ms?: number }; Returns: Json }
+        | {
+            Args: { _max_ms?: number; _mean_ms?: number; _queries?: Json }
+            Returns: Json
+          }
       get_best_brevo_account: { Args: never; Returns: string }
       has_role: {
         Args: {
