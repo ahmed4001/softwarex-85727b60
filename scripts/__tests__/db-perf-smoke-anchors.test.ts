@@ -117,4 +117,56 @@ describe("db-perf-smoke PR comment anchors", () => {
     }
     expect(seen.size).toBeGreaterThan(0);
   });
+
+  describe("slugifyHeading normalization rules", () => {
+    it("lowercases ASCII letters", () => {
+      expect(slugifyHeading("Breaches")).toBe("breaches");
+      expect(slugifyHeading("ACTIVE THRESHOLDS")).toBe("active-thresholds");
+      expect(slugifyHeading("MixedCase Heading")).toBe("mixedcase-heading");
+    });
+
+    it("collapses runs of whitespace into a single dash", () => {
+      expect(slugifyHeading("coverage   gaps")).toBe("coverage-gaps");
+      expect(slugifyHeading("a\tb\nc")).toBe("a-b-c");
+      expect(slugifyHeading("one two three")).toBe("one-two-three");
+    });
+
+    it("strips punctuation and symbols but keeps hyphens", () => {
+      expect(slugifyHeading("Suggested patch!")).toBe("suggested-patch");
+      expect(slugifyHeading("Foo: bar, baz.")).toBe("foo-bar-baz");
+      expect(slugifyHeading("a/b\\c?d#e")).toBe("abcde");
+      expect(slugifyHeading("pre-existing-dash")).toBe("pre-existing-dash");
+      expect(slugifyHeading("(parens) [brackets]")).toBe("parens-brackets");
+    });
+
+    it("drops leading/trailing whitespace before joining", () => {
+      expect(slugifyHeading("   padded   ")).toBe("padded");
+      expect(slugifyHeading("\n\tBreaches\t\n")).toBe("breaches");
+    });
+
+    it("strips emoji and non-ASCII glyphs we render in headings", () => {
+      // The runner emits e.g. `#### 🩹 Suggested patch` — anchor must drop the emoji.
+      expect(slugifyHeading("🩹 Suggested patch")).toBe("suggested-patch");
+      expect(slugifyHeading("⚠️ Breaches")).toBe("breaches");
+      expect(slugifyHeading("Café")).toBe("caf");
+    });
+
+    it("preserves digits alongside letters", () => {
+      expect(slugifyHeading("Top 10 queries")).toBe("top-10-queries");
+      expect(slugifyHeading("p95 latency")).toBe("p95-latency");
+    });
+
+    it("matches every documented section heading to its expected slug", () => {
+      const cases: Array<[string, string]> = [
+        ["Breaches", "breaches"],
+        ["Coverage gaps", "coverage-gaps"],
+        ["Missing indexes", "missing-indexes"],
+        ["Active thresholds", "active-thresholds"],
+        ["Suggested patch", "suggested-patch"],
+      ];
+      for (const [heading, expected] of cases) {
+        expect(slugifyHeading(heading)).toBe(expected);
+      }
+    });
+  });
 });
