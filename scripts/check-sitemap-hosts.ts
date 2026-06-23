@@ -46,16 +46,19 @@ function checkUrl(file: string, tag: string, url: string, source: string, fromIn
   }
 }
 
+const sources: Record<string, string> = {};
 const sitemapFiles = readdirSync(publicDir).filter((f) => /^sitemap.*\.xml$/i.test(f));
 for (const name of sitemapFiles) {
   const file = resolve(publicDir, name);
   const xml = readFileSync(file, "utf8");
+  sources[name] = xml;
   for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) checkUrl(name, "loc", m[1], xml, m.index ?? 0);
 }
 
 const robotsPath = resolve(publicDir, "robots.txt");
 if (existsSync(robotsPath)) {
   const robots = readFileSync(robotsPath, "utf8");
+  sources["robots.txt"] = robots;
   for (const line of robots.split(/\r?\n/)) {
     const m = line.match(/^\s*Sitemap:\s*(\S+)/i);
     if (m) checkUrl("robots.txt", "robots Sitemap:", m[1], robots);
@@ -68,5 +71,6 @@ console.log(`[${GATE}] scanned ${scanned} file(s)`);
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations,
   workspacePrefix: "public/",
+  sources,
 });
 reportAndExit(GATE, kept, filteredOut, "all sitemap + robots URLs match SITE_URL host");
