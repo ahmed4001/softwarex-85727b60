@@ -41,6 +41,44 @@ jobs:
           SITE_URL: ${{ matrix.site_url }}
         run: bun run check:sitemap-hosts
 
+  prerender-canonical-check:
+    name: Prerender canonical host check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: production
+            site_url: https://reviewhunts.com
+          - label: staging
+            site_url: https://id-preview--8f8ab8bf-14f5-4085-9849-266b90f727c8.lovable.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Build (vite + prerender) with SITE_URL=${{ matrix.site_url }}
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          VITE_SITE_URL: ${{ matrix.site_url }}
+        run: bun run build
+      - name: Verify prerendered canonicals (${{ matrix.label }})
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          PRERENDER_CHECK_SAMPLE: "25"
+          PRERENDER_CHECK_DIRS: "product,category"
+        run: bun run check:prerender-canonicals
+      - name: Upload failing HTML samples
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prerender-canonical-failures-${{ matrix.label }}
+          path: |
+            dist/product/**/index.html
+            dist/category/**/index.html
+          if-no-files-found: ignore
+          retention-days: 7
+
+
   lighthouse-ci:
     runs-on: ubuntu-latest
     needs: seo-regression-tests
