@@ -67,6 +67,13 @@ jobs:
           PRERENDER_CHECK_SAMPLE: "25"
           PRERENDER_CHECK_DIRS: "product,category"
         run: bun run check:prerender-canonicals
+      - name: Verify prerendered JSON-LD @id / url hosts (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          JSONLD_CHECK_SAMPLE: "25"
+          JSONLD_CHECK_DIRS: "product,category,compare,blog,guides"
+        run: bun run check:jsonld-hosts
       - name: Upload failing HTML samples
         if: failure()
         uses: actions/upload-artifact@v4
