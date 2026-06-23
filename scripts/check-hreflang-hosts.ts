@@ -16,7 +16,7 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "hreflang-hosts";
 
@@ -34,7 +34,7 @@ if (!existsSync(distDir)) {
   process.exit(2);
 }
 
-type Violation = { file: string; hreflang: string; url: string; reason: string };
+type Violation = { file: string; hreflang: string; url: string; reason: string; line?: number };
 const violations: Violation[] = [];
 let scanned = 0;
 let hreflangsFound = 0;
@@ -45,23 +45,24 @@ const linkRe = /<link\b[^>]*\brel=["']alternate["'][^>]*>/gi;
 const hreflangAttrRe = /\bhreflang=["']([^"']+)["']/i;
 const hrefAttrRe = /\bhref=["']([^"']+)["']/i;
 
-function checkUrl(file: string, hreflang: string, url: string) {
+function checkUrl(file: string, hreflang: string, url: string, source: string, fromIndex: number) {
   const trimmed = url.trim();
+  const line = lineOf(source, url, fromIndex);
   if (!trimmed) {
-    violations.push({ file, hreflang, url: "(empty)", reason: "empty href" });
+    violations.push({ file, hreflang, url: "(empty)", reason: "empty href", line });
     return;
   }
   if (!/^https?:\/\//i.test(trimmed)) {
-    violations.push({ file, hreflang, url: trimmed, reason: "hreflang href must be absolute (https://…)" });
+    violations.push({ file, hreflang, url: trimmed, reason: "hreflang href must be absolute (https://…)", line });
     return;
   }
   try {
     const host = new URL(trimmed).hostname.toLowerCase();
     if (host !== EXPECTED_HOST) {
-      violations.push({ file, hreflang, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}` });
+      violations.push({ file, hreflang, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}`, line });
     }
   } catch {
-    violations.push({ file, hreflang, url: trimmed, reason: "unparseable URL" });
+    violations.push({ file, hreflang, url: trimmed, reason: "unparseable URL", line });
   }
 }
 
@@ -95,11 +96,12 @@ for (const section of SECTIONS) {
       const hf = tag.match(hrefAttrRe);
       if (!hl) continue; // rel=alternate without hreflang (e.g. RSS) — not our concern
       hreflangsFound++;
+      const tagIdx = html.indexOf(tag);
       if (!hf) {
-        violations.push({ file: rel, hreflang: hl[1], url: "(missing)", reason: "alternate link without href" });
+        violations.push({ file: rel, hreflang: hl[1], url: "(missing)", reason: "alternate link without href", line: lineOf(html, tag) });
         continue;
       }
-      checkUrl(rel, hl[1], hf[1]);
+      checkUrl(rel, hl[1], hf[1], html, Math.max(0, tagIdx));
     }
   }
 }
@@ -107,7 +109,7 @@ for (const section of SECTIONS) {
 console.log(`[${GATE}] scanned ${scanned} file(s), found ${hreflangsFound} hreflang link(s)`);
 
 const normalized: Violation[] = violations.map((v) => ({
-  file: v.file, tag: `hreflang=${v.hreflang}`, url: v.url, reason: v.reason,
+  file: v.file, tag: `hreflang=${v.hreflang}`, url: v.url, reason: v.reason, line: v.line,
 }));
 const { kept, filteredOut } = finalizeGate({
   gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,

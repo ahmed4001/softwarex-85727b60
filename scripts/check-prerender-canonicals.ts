@@ -15,7 +15,7 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "prerender-canonicals";
 
@@ -33,7 +33,7 @@ if (!existsSync(distDir)) {
   process.exit(2);
 }
 
-type Violation = { file: string; tag: string; url: string; reason: string };
+type Violation = { file: string; tag: string; url: string; reason: string; line?: number };
 const violations: Violation[] = [];
 let scanned = 0;
 
@@ -43,7 +43,7 @@ function extract(html: string, re: RegExp): string[] {
   return out;
 }
 
-function checkUrl(file: string, tag: string, url: string) {
+function checkUrl(file: string, tag: string, url: string, source: string) {
   const trimmed = url.trim();
   if (!trimmed) return;
   let absolute = trimmed;
@@ -52,13 +52,14 @@ function checkUrl(file: string, tag: string, url: string) {
     // path is treated as matching, but anything else still fails clearly.
     try { absolute = new URL(trimmed, SITE_URL + "/").toString(); } catch { /* fall through */ }
   }
+  const line = lineOf(source, url);
   try {
     const host = new URL(absolute).hostname.toLowerCase();
     if (host !== EXPECTED_HOST) {
-      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}` });
+      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}`, line });
     }
   } catch {
-    violations.push({ file, tag, url: trimmed, reason: "unparseable URL" });
+    violations.push({ file, tag, url: trimmed, reason: "unparseable URL", line });
   }
 }
 
@@ -90,8 +91,8 @@ for (const section of SECTIONS) {
     if (canonicals.length === 0) {
       violations.push({ file: rel, tag: "canonical", url: "(missing)", reason: "no <link rel=canonical> in HTML" });
     }
-    for (const url of canonicals) checkUrl(rel, "canonical", url);
-    for (const url of ogUrls) checkUrl(rel, "og:url", url);
+    for (const url of canonicals) checkUrl(rel, "canonical", url, html);
+    for (const url of ogUrls) checkUrl(rel, "og:url", url, html);
   }
 }
 

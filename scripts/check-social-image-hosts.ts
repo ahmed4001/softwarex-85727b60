@@ -20,7 +20,7 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "social-image-hosts";
 
@@ -49,7 +49,7 @@ if (!existsSync(distDir)) {
 const OG_PROPS = ["og:image", "og:image:url", "og:image:secure_url"];
 const TW_NAMES = ["twitter:image", "twitter:image:src"];
 
-type Violation = { file: string; tag: string; url: string; reason: string };
+type Violation = { file: string; tag: string; url: string; reason: string; line?: number };
 const violations: Violation[] = [];
 let scanned = 0;
 
@@ -63,26 +63,26 @@ function extractMeta(html: string, attr: "property" | "name", value: string): st
   return out;
 }
 
-function checkImageUrl(file: string, tag: string, url: string) {
+function checkImageUrl(file: string, tag: string, url: string, source: string) {
   const trimmed = url.trim();
   if (!trimmed) {
     violations.push({ file, tag, url: "(empty)", reason: "empty content attribute" });
     return;
   }
-  let absolute = trimmed;
+  const line = lineOf(source, url);
   if (!/^https?:\/\//i.test(trimmed)) {
     // OG/Twitter image specs require ABSOLUTE URLs — relative paths
     // are silently rejected by most crawlers. Flag them.
-    violations.push({ file, tag, url: trimmed, reason: "image URL must be absolute (https://…)" });
+    violations.push({ file, tag, url: trimmed, reason: "image URL must be absolute (https://…)", line });
     return;
   }
   try {
-    const host = new URL(absolute).hostname.toLowerCase();
+    const host = new URL(trimmed).hostname.toLowerCase();
     if (!ALLOWED_IMAGE_HOSTS.has(host)) {
-      violations.push({ file, tag, url: trimmed, reason: `host ${host} not in allowed set (${[...ALLOWED_IMAGE_HOSTS].join(", ")})` });
+      violations.push({ file, tag, url: trimmed, reason: `host ${host} not in allowed set (${[...ALLOWED_IMAGE_HOSTS].join(", ")})`, line });
     }
   } catch {
-    violations.push({ file, tag, url: trimmed, reason: "unparseable URL" });
+    violations.push({ file, tag, url: trimmed, reason: "unparseable URL", line });
   }
 }
 
@@ -112,10 +112,10 @@ for (const section of SECTIONS) {
     const html = readFileSync(file, "utf8");
     const rel = file.replace(distDir + "/", "");
     for (const prop of OG_PROPS) {
-      for (const url of extractMeta(html, "property", prop)) checkImageUrl(rel, prop, url);
+      for (const url of extractMeta(html, "property", prop)) checkImageUrl(rel, prop, url, html);
     }
     for (const nm of TW_NAMES) {
-      for (const url of extractMeta(html, "name", nm)) checkImageUrl(rel, nm, url);
+      for (const url of extractMeta(html, "name", nm)) checkImageUrl(rel, nm, url, html);
     }
   }
 }

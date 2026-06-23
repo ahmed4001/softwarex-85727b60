@@ -11,7 +11,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+import { finalizeGate, reportAndExit, lineOf, type Violation } from "./lib/seo-hosts";
 
 const GATE = "sitemap-hosts";
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
@@ -32,16 +32,17 @@ if (gen.status !== 0) {
 const publicDir = resolve("public");
 const violations: Violation[] = [];
 
-function checkUrl(file: string, tag: string, url: string) {
+function checkUrl(file: string, tag: string, url: string, source: string, fromIndex = 0) {
   const trimmed = url.trim();
   if (!trimmed || !/^https?:\/\//i.test(trimmed)) return;
+  const line = lineOf(source, url, fromIndex);
   try {
     const host = new URL(trimmed).hostname.toLowerCase();
     if (host !== EXPECTED_HOST) {
-      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}` });
+      violations.push({ file, tag, url: trimmed, reason: `host ${host} != ${EXPECTED_HOST}`, line });
     }
   } catch {
-    violations.push({ file, tag, url: trimmed, reason: "unparseable URL" });
+    violations.push({ file, tag, url: trimmed, reason: "unparseable URL", line });
   }
 }
 
@@ -49,7 +50,7 @@ const sitemapFiles = readdirSync(publicDir).filter((f) => /^sitemap.*\.xml$/i.te
 for (const name of sitemapFiles) {
   const file = resolve(publicDir, name);
   const xml = readFileSync(file, "utf8");
-  for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) checkUrl(name, "loc", m[1]);
+  for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) checkUrl(name, "loc", m[1], xml, m.index ?? 0);
 }
 
 const robotsPath = resolve(publicDir, "robots.txt");
@@ -57,7 +58,7 @@ if (existsSync(robotsPath)) {
   const robots = readFileSync(robotsPath, "utf8");
   for (const line of robots.split(/\r?\n/)) {
     const m = line.match(/^\s*Sitemap:\s*(\S+)/i);
-    if (m) checkUrl("robots.txt", "robots Sitemap:", m[1]);
+    if (m) checkUrl("robots.txt", "robots Sitemap:", m[1], robots);
   }
 }
 
