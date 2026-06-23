@@ -154,7 +154,7 @@ export default function SubmitProductPage() {
 
   return (
     <>
-      <SeoHead title="Submit Your Product" description="List your software on ReviewHunts and reach thousands of potential customers." />
+      <SeoHead title="Submit Your Product" description="List your software on ReviewHunts and reach thousands of potential customers." robots="noindex, nofollow" />
       <div className="py-6 relative">
         <div className="absolute inset-0 mesh-gradient opacity-20" />
         <div className="container max-w-2xl relative">
