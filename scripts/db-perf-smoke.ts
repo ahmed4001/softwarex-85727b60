@@ -276,7 +276,14 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   }
 
   lines.push("");
-  lines.push(renderActiveThresholds(thresholds));
+  lines.push(
+    "",
+    "<details><summary><strong>Active thresholds</strong></summary>",
+    "",
+    renderActiveThresholds(thresholds),
+    "",
+    "</details>",
+  );
 
   const baseT = loadBaseThresholds(thresholds.envKey);
   const diff = diffThresholds(baseT, thresholds);
