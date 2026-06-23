@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
   return (
     <RequireAuth>
-      <SeoHead title={t("dashboard.title")} description={t("dashboard.subtitle")} />
+      <SeoHead title={t("dashboard.title")} description={t("dashboard.subtitle")} robots="noindex, nofollow" />
       <main className="container py-8 md:py-10 max-w-6xl">
         {!user ? (
           <DashboardSkeleton />
