@@ -20,8 +20,23 @@ export const PAGE_INTENT: Record<string, Intent> = {
 
 export const SITE_URL = "https://reviewhunts.com";
 
+// Hosts we must never emit as canonical/og:url. Lovable preview hosts
+// (e.g. softwarex.lovable.app, id-preview--*.lovable.app) leak into
+// crawler caches if they ever slip through, so we strip them here and
+// in SeoHead.
+const FORBIDDEN_HOST_FRAGMENTS = ["lovable.app", "lovableproject.com"];
+
+function isForbiddenHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return FORBIDDEN_HOST_FRAGMENTS.some((frag) => host.includes(frag));
+  } catch {
+    return false;
+  }
+}
+
 export function canonicalFor(path: string, override?: string | null) {
-  if (override) return override;
+  if (override && !isForbiddenHost(override)) return override;
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
