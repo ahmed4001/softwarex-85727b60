@@ -146,7 +146,7 @@ export default function WriteReviewPage() {
   if (!user) {
     return (
       <div className="container py-20 text-center">
-        <SeoHead title="Write a Review" description="Sign in to write a review." />
+        <SeoHead title="Write a Review" description="Sign in to share your honest software review and help others choose the right tools on ReviewHunts." />
         <p className="text-muted-foreground mb-4">You need to sign in to write a review.</p>
         <Link to="/login"><Button>Sign In</Button></Link>
       </div>
