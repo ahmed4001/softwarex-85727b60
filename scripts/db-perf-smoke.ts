@@ -39,6 +39,7 @@ import {
   ThresholdsValidationError,
   type SuggestedRule,
 } from "./lib/perf-thresholds";
+import { buildPrComment } from "./lib/perf-pr-comment";
 
 const url = process.env.VITE_SUPABASE_URL;
 const anon =
