@@ -272,13 +272,24 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
         `- \`${q.query_id}\` · **${label}** · mean ${q.mean_ms}ms (≤${q.applied_mean_ms ?? thresholds.mean_ms}) · max ${q.max_ms}ms (≤${q.applied_max_ms ?? thresholds.max_ms})`,
       );
     }
-    if (breachCount > 3) lines.push(`- … +${breachCount - 3} more (see table below)`);
+    if (breachCount > 3) lines.push(`- … +${breachCount - 3} more (see [breaches table](#breaches))`);
   }
 
-  lines.push("");
+  // Jump-to TOC for the collapsible sections below. GitHub auto-generates
+  // anchors from the `####` headings we emit ahead of each <details>.
+  const toc: string[] = [];
+  if (breachCount) toc.push("[🔥 Breaches](#breaches)");
+  if (uncovered.length) toc.push("[🛡 Coverage gaps](#coverage-gaps)");
+  if (missingIdxCount) toc.push("[🧱 Missing indexes](#missing-indexes)");
+  toc.push("[⚙ Active thresholds](#active-thresholds)");
+  // Suggested-patch link is appended later once we know it was applied.
+
+  lines.push("", `**Jump to:** ${toc.join(" · ")}`);
+
   lines.push(
     "",
-    "<details><summary><strong>Active thresholds</strong></summary>",
+    "#### Active thresholds",
+    "<details><summary>Resolved profile + per-query overrides</summary>",
     "",
     renderActiveThresholds(thresholds),
     "",
@@ -290,7 +301,7 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
   if (diff) lines.push("", diff);
 
   if (missingIdxCount) {
-    lines.push("", "**Missing indexes**");
+    lines.push("", "#### Missing indexes", "");
     for (const i of body.missing_indexes) lines.push(`- \`${i}\``);
   }
 
