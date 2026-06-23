@@ -383,7 +383,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       : "";
     lines.push(
       "",
-      `<details><summary><strong>Suggested patch</strong> — ${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote}</summary>`,
+      "#### Suggested patch",
+      `<details><summary>${mergeStats.added.length} added, ${mergeStats.replaced.length} replaced${clampNote}</summary>`,
       "",
       "Applied to `perf-thresholds.json` in this run. Download `perf-thresholds.diff.patch` from the run artifacts and commit it, or copy the diff below.",
       "",
