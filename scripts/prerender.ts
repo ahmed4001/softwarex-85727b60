@@ -44,6 +44,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const NAV_TIMEOUT = 30_000;
 const SETTLE_MS = 600;
 
+const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || "https://ffeimjfunghzxgeqiwma.supabase.co";
 const SUPABASE_KEY =
