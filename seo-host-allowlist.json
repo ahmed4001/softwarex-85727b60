@@ -1,0 +1,12 @@
+{
+  "_comment": "Hosts here are accepted by SEO gates even when they don't match SITE_URL. Per-gate keys (e.g. 'social-image-hosts'). '_default' applies to every gate. Wildcards like '*.example.com' supported. Env vars SEO_ALLOWED_HOSTS_<GATE_UPPER_SNAKE> and SEO_ALLOWED_HOSTS extend this at runtime.",
+  "_default": [],
+  "sitemap-hosts": [],
+  "sitemap-index-hosts": [],
+  "manifest-hosts": [],
+  "prerender-canonicals": [],
+  "jsonld-hosts": [],
+  "social-url-hosts": [],
+  "social-image-hosts": [],
+  "hreflang-hosts": []
+}

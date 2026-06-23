@@ -17,6 +17,9 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+
+const GATE = "jsonld-hosts";
 
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const EXPECTED_HOST = new URL(SITE_URL).hostname.toLowerCase();
@@ -130,15 +133,17 @@ for (const section of SECTIONS) {
   }
 }
 
-console.log(`[check-jsonld-hosts] scanned ${scanned} file(s), parsed ${blocksParsed} JSON-LD block(s) (${blocksInvalid} invalid)`);
+console.log(`[${GATE}] scanned ${scanned} file(s), parsed ${blocksParsed} JSON-LD block(s) (${blocksInvalid} invalid)`);
 
-if (violations.length > 0) {
-  console.error(`\n[check-jsonld-hosts] FAILED — ${violations.length} violation(s):\n`);
-  for (const v of violations.slice(0, 50)) {
-    console.error(`  ${v.file} ${v.pointer} [${v.field}]: ${v.url || "(no value)"}  (${v.reason})`);
-  }
-  if (violations.length > 50) console.error(`  …and ${violations.length - 50} more`);
-  process.exit(1);
-}
-
-console.log("[check-jsonld-hosts] OK — all JSON-LD @id / url / mainEntityOfPage hosts match SITE_URL");
+// Adapt {file, pointer, field, url, reason} → standard Violation (tag carries pointer + field).
+const normalized: Violation[] = violations.map((v) => ({
+  file: v.file,
+  tag: `${v.field} ${v.pointer}`,
+  url: v.url || "(no value)",
+  reason: v.reason,
+}));
+const { kept, filteredOut } = finalizeGate({
+  gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
+  workspacePrefix: "dist/",
+});
+reportAndExit(GATE, kept, filteredOut, "all JSON-LD @id / url / mainEntityOfPage hosts match SITE_URL");

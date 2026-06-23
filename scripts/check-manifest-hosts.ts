@@ -20,6 +20,9 @@
  */
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+
+const GATE = "manifest-hosts";
 
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const EXPECTED_HOST = new URL(SITE_URL).hostname.toLowerCase();
@@ -107,15 +110,11 @@ if (existsSync(indexPath)) {
   }
 }
 
-console.log(`[check-manifest-hosts] scanned ${found.length} manifest file(s)`);
+console.log(`[${GATE}] scanned ${found.length} manifest file(s)`);
 
-if (violations.length > 0) {
-  console.error(`\n[check-manifest-hosts] FAILED — ${violations.length} violation(s):\n`);
-  for (const v of violations.slice(0, 50)) {
-    console.error(`  ${v.file} [${v.field}]: ${v.url}  (${v.reason})`);
-  }
-  if (violations.length > 50) console.error(`  …and ${violations.length - 50} more`);
-  process.exit(1);
-}
-
-console.log("[check-manifest-hosts] OK — manifest URL fields match SITE_URL host");
+const normalized: Violation[] = violations.map((v) => ({ file: v.file, tag: v.field, url: v.url, reason: v.reason }));
+const { kept, filteredOut } = finalizeGate({
+  gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations: normalized,
+  // v.file is already workspace-relative ("public/manifest.json", "index.html").
+});
+reportAndExit(GATE, kept, filteredOut, "manifest URL fields match SITE_URL host");

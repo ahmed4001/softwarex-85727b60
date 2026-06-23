@@ -20,6 +20,9 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { finalizeGate, reportAndExit, type Violation } from "./lib/seo-hosts";
+
+const GATE = "social-image-hosts";
 
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const EXPECTED_HOST = new URL(SITE_URL).hostname.toLowerCase();
@@ -117,15 +120,10 @@ for (const section of SECTIONS) {
   }
 }
 
-console.log(`[check-social-image-hosts] scanned ${scanned} file(s) across ${SECTIONS.length} section(s)`);
+console.log(`[${GATE}] scanned ${scanned} file(s) across ${SECTIONS.length} section(s)`);
 
-if (violations.length > 0) {
-  console.error(`\n[check-social-image-hosts] FAILED — ${violations.length} violation(s):\n`);
-  for (const v of violations.slice(0, 50)) {
-    console.error(`  ${v.file} [${v.tag}]: ${v.url}  (${v.reason})`);
-  }
-  if (violations.length > 50) console.error(`  …and ${violations.length - 50} more`);
-  process.exit(1);
-}
-
-console.log("[check-social-image-hosts] OK — all og:image + twitter:image tags match allowed hosts");
+const { kept, filteredOut } = finalizeGate({
+  gate: GATE, siteUrl: SITE_URL, expectedHost: EXPECTED_HOST, violations,
+  workspacePrefix: "dist/",
+});
+reportAndExit(GATE, kept, filteredOut, "all og:image + twitter:image tags match allowed hosts");
