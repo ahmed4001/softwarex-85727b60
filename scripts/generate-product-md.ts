@@ -22,6 +22,7 @@ const SUPABASE_KEY =
 const OUT_DIR = resolve("public/product");
 
 interface ProductRow {
+  id: string;
   slug: string;
   name: string;
   tagline: string | null;
@@ -41,6 +42,17 @@ interface ProductRow {
   updated_at: string | null;
   info_score: number | null;
   categories?: { name?: string; slug?: string } | null;
+}
+
+interface QARow {
+  id: string;
+  product_id: string;
+  parent_id: string | null;
+  body: string | null;
+  upvote_count: number | null;
+  created_at: string | null;
+  user_id: string | null;
+  author_name?: string | null;
 }
 
 function mdEscape(s: string): string {
