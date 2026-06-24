@@ -89,11 +89,13 @@ export default function GlossaryTermPage() {
           <div className="glass-card p-6 mb-6">
             <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Definition</h2>
             <p className="text-foreground leading-relaxed">{term.definition}</p>
+            <FreshnessBadge updatedAt={(term as any).updated_at} contentForReadingTime={`${term.definition || ""} ${(term as any).extended_description || ""}`} />
           </div>
 
           {term.extended_description && (
             <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: term.extended_description }} />
           )}
+
 
           {relatedTerms.length > 0 && (
             <div>
