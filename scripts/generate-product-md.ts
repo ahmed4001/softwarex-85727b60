@@ -363,23 +363,29 @@ async function fetchTopQA(productIds: string[]): Promise<Map<string, QAThread>> 
   const topQuestionIds = [...topByProduct.values()].map((q) => q.id);
   if (!topQuestionIds.length) return out;
 
-  // Answers under those top questions.
+  // Answers under those top questions. Chunk the IN list to keep URL length
+  // safe (header overflow at ~16 KB on Supabase's edge).
   const answersByQ = new Map<string, QARow[]>();
-  for (let offset = 0; ; offset += PAGE) {
-    const url = `${SUPABASE_URL}/rest/v1/review_qa?select=id,product_id,parent_id,body,upvote_count,created_at,user_id&parent_id=in.(${topQuestionIds.join(",")})&status=eq.active&order=upvote_count.desc.nullslast&limit=${PAGE}&offset=${offset}`;
-    const res = await fetch(url, { headers });
-    if (!res.ok) {
-      console.warn(`[product-md] QA answers fetch failed: ${res.status}`);
-      break;
+  const topQSet = new Set(topQuestionIds);
+  const CHUNK = 100;
+  for (let i = 0; i < topQuestionIds.length; i += CHUNK) {
+    const ids = topQuestionIds.slice(i, i + CHUNK).join(",");
+    for (let offset = 0; ; offset += PAGE) {
+      const url = `${SUPABASE_URL}/rest/v1/review_qa?select=id,product_id,parent_id,body,upvote_count,created_at,user_id&parent_id=in.(${ids})&status=eq.active&order=upvote_count.desc.nullslast&limit=${PAGE}&offset=${offset}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        console.warn(`[product-md] QA answers fetch failed: ${res.status}`);
+        break;
+      }
+      const batch = (await res.json()) as QARow[];
+      for (const a of batch) {
+        if (!a.parent_id || !topQSet.has(a.parent_id)) continue;
+        const arr = answersByQ.get(a.parent_id) || [];
+        arr.push(a);
+        answersByQ.set(a.parent_id, arr);
+      }
+      if (batch.length < PAGE) break;
     }
-    const batch = (await res.json()) as QARow[];
-    for (const a of batch) {
-      if (!a.parent_id) continue;
-      const arr = answersByQ.get(a.parent_id) || [];
-      arr.push(a);
-      answersByQ.set(a.parent_id, arr);
-    }
-    if (batch.length < PAGE) break;
   }
 
   // Author names — single profiles lookup.
