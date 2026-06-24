@@ -60,10 +60,11 @@ const RULES: Record<string, Rule[]> = {
         errs.push("dateModified is not a parseable date");
     },
   ],
-  Product: [isHttpsSchemaContext, required(["name"])],
+  Product: [isHttpsSchemaContext, required(["name"]), checkDateModified],
   SoftwareApplication: [
     isHttpsSchemaContext,
     required(["name"]),
+    checkDateModified,
     (node, errs) => {
       const ar = node?.aggregateRating;
       if (ar) {
@@ -82,11 +83,25 @@ const RULES: Record<string, Rule[]> = {
     },
   ],
   Blog: [isHttpsSchemaContext],
-  CollectionPage: [isHttpsSchemaContext],
-  WebPage: [isHttpsSchemaContext],
+  CollectionPage: [isHttpsSchemaContext, checkDateModified],
+  WebPage: [isHttpsSchemaContext, checkDateModified],
+  DefinedTerm: [isHttpsSchemaContext, required(["name"]), checkDateModified],
+  HowTo: [isHttpsSchemaContext, required(["name", "step"]), checkDateModified],
+  Article: [isHttpsSchemaContext, required(["headline", "author", "datePublished"]), checkDateModified],
   Organization: [isHttpsSchemaContext, required(["name"])],
   WebSite: [isHttpsSchemaContext, required(["name"])],
 };
+
+/** Soft-validates dateModified: must be parseable when present. We don't make
+ *  it required at the validator level so types like WebPage stay flexible —
+ *  the regression test suite enforces presence per-page-type. */
+function checkDateModified(node: any, errs: string[]) {
+  if (node?.dateModified !== undefined) {
+    if (typeof node.dateModified !== "string" || Number.isNaN(Date.parse(node.dateModified))) {
+      errs.push("dateModified must be a parseable ISO date string");
+    }
+  }
+}
 
 export function validateJsonLd(blocks: object[]): JsonLdValidationResult {
   const valid: object[] = [];

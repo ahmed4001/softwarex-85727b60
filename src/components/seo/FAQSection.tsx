@@ -15,13 +15,15 @@ interface FAQSectionProps {
   editedByName?: string;
   /** Canonical page URL — used to namespace question anchors for citations. */
   pageUrl?: string;
+  /** Hide the visible table of contents above the FAQs. */
+  hideToc?: boolean;
 }
 
 /**
  * Renders an AEO/GEO-optimized FAQ block with FAQPage JSON-LD.
+ *  - Visible TOC with anchor jumps to each #faq-q{n} (also opens the <details>).
  *  - Adds `speakable` so voice assistants can quote answers.
  *  - Adds `author` (ReviewHunts) + optional `reviewedBy` for E-E-A-T.
- *  - Anchor-links every Q (#faq-q{n}) so AI engines can deep-link citations.
  */
 export function FAQSection({
   items,
@@ -30,6 +32,7 @@ export function FAQSection({
   isEdited,
   editedByName,
   pageUrl,
+  hideToc,
 }: FAQSectionProps) {
   if (!items || items.length === 0) return null;
 
@@ -65,6 +68,19 @@ export function FAQSection({
     })),
   };
 
+  // Anchor click → open target <details> + smooth-scroll. Works without JS too
+  // (native fragment navigation jumps to the element; <details> just stays closed).
+  const handleTocClick = (e: React.MouseEvent<HTMLAnchorElement>, idx: number) => {
+    const target = document.getElementById(`faq-q${idx + 1}`) as HTMLDetailsElement | null;
+    if (target) {
+      e.preventDefault();
+      target.open = true;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Update the URL hash so the link is shareable.
+      history.replaceState(null, "", `#faq-q${idx + 1}`);
+    }
+  };
+
   return (
     <section className={className ?? "mt-12"} aria-labelledby="faq-heading">
       <Helmet>
@@ -73,6 +89,31 @@ export function FAQSection({
       <h2 id="faq-heading" className="text-2xl font-bold mb-6">
         {title}
       </h2>
+
+      {!hideToc && items.length > 1 && (
+        <nav
+          aria-label="FAQ table of contents"
+          className="mb-6 rounded-lg border border-border bg-muted/30 p-4"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            On this page
+          </p>
+          <ol className="space-y-1.5 list-decimal list-inside marker:text-muted-foreground/60">
+            {items.map((item, idx) => (
+              <li key={idx} className="text-sm">
+                <a
+                  href={`#faq-q${idx + 1}`}
+                  onClick={(e) => handleTocClick(e, idx)}
+                  className="text-foreground hover:text-primary hover:underline underline-offset-2 transition-colors"
+                >
+                  {item.q}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
       <div className="space-y-4">
         {items.map((item, idx) => (
           <details

@@ -17,6 +17,8 @@ import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
 import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { FactsTable } from "@/components/seo/FactsTable";
+import { Helmet } from "react-helmet-async";
+import { CheckCircle2 } from "lucide-react";
 
 
 export default function ComparisonDetailPage() {
@@ -73,6 +75,8 @@ export default function ComparisonDetailPage() {
   );
 
   // Build JSON-LD structured data for SEO
+  const comparisonUpdatedAtIso = (comparison as any).updated_at ? new Date((comparison as any).updated_at).toISOString() : undefined;
+  const comparisonCreatedAtIso = (comparison as any).created_at ? new Date((comparison as any).created_at).toISOString() : undefined;
   const comparisonJsonLd = productA && productB ? [
     {
       "@context": "https://schema.org",
@@ -80,6 +84,8 @@ export default function ComparisonDetailPage() {
       "name": comparison.seo_title || comparison.title || `${productA.name} vs ${productB.name}`,
       "description": comparison.seo_description || comparison.summary?.substring(0, 160) || `Compare ${productA.name} and ${productB.name}`,
       "url": `https://reviewhunts.com/compare/${slug}`,
+      ...(comparisonCreatedAtIso && { "datePublished": comparisonCreatedAtIso }),
+      ...(comparisonUpdatedAtIso && { "dateModified": comparisonUpdatedAtIso }),
       "mainEntity": {
         "@type": "ItemList",
         "numberOfItems": 2,
@@ -424,6 +430,86 @@ export default function ComparisonDetailPage() {
             </Button>
           </Link>
         </div>
+
+        {/* Decision matrix — high-AEO surface: AI engines extract "Choose X if…" patterns verbatim. */}
+        {(comparison.best_for_a || comparison.best_for_b || prosA.length > 0 || prosB.length > 0) && (
+          <section aria-labelledby="decision-matrix-heading" className="mb-10">
+            <Helmet>
+              <script type="application/ld+json">
+                {JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "ItemList",
+                  name: `Decision matrix: ${productA.name} vs ${productB.name}`,
+                  url: `https://reviewhunts.com/compare/${slug}#decision-matrix`,
+                  itemListElement: [
+                    {
+                      "@type": "ListItem",
+                      position: 1,
+                      item: {
+                        "@type": "Recommendation",
+                        name: `Choose ${productA.name} if`,
+                        itemReviewed: { "@type": "SoftwareApplication", name: productA.name, url: `https://reviewhunts.com/product/${productA.slug}` },
+                        reviewBody: comparison.best_for_a || (prosA.length > 0 ? `Strengths: ${prosA.slice(0, 3).join("; ")}.` : ""),
+                      },
+                    },
+                    {
+                      "@type": "ListItem",
+                      position: 2,
+                      item: {
+                        "@type": "Recommendation",
+                        name: `Choose ${productB.name} if`,
+                        itemReviewed: { "@type": "SoftwareApplication", name: productB.name, url: `https://reviewhunts.com/product/${productB.slug}` },
+                        reviewBody: comparison.best_for_b || (prosB.length > 0 ? `Strengths: ${prosB.slice(0, 3).join("; ")}.` : ""),
+                      },
+                    },
+                  ],
+                })}
+              </script>
+            </Helmet>
+            <h2 id="decision-matrix-heading" className="text-xl md:text-2xl font-bold text-foreground mb-4">
+              Which one should you choose?
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                { name: productA.name, slug: productA.slug, logo: productA.logo_url, reason: comparison.best_for_a, pros: prosA, isWinner: isWinnerA },
+                { name: productB.name, slug: productB.slug, logo: productB.logo_url, reason: comparison.best_for_b, pros: prosB, isWinner: !isWinnerA && !!comparison.winner_product_id },
+              ].map((side, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "glass-card p-6 border-l-4 transition-all",
+                    side.isWinner ? "border-l-primary bg-primary/5" : "border-l-border",
+                  )}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {side.logo ? <img src={side.logo} alt={side.name} className="h-full w-full object-cover" /> : <span className="text-base font-bold text-primary">{side.name.charAt(0)}</span>}
+                    </div>
+                    <h3 className="font-bold text-foreground">
+                      Choose <span className="text-primary">{side.name}</span> if…
+                    </h3>
+                  </div>
+                  {side.reason ? (
+                    <p className="text-sm text-foreground leading-relaxed mb-3">{side.reason}</p>
+                  ) : null}
+                  {side.pros.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {side.pros.slice(0, 3).map((p: string, pi: number) => (
+                        <li key={pi} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))] mt-0.5 flex-shrink-0" />
+                          <span>{p}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Link to={`/product/${side.slug}`} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
+                    View {side.name} <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <AIFaqBlock
           entityType="comparison"
