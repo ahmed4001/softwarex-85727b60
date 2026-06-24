@@ -75,6 +75,7 @@ export default function BlogPostPage() {
         canonicalUrl={post.canonical_url || url}
         ogImage={post.og_image || post.featured_image || undefined}
         type="article"
+        markdownUrl={`/blog/${slug}.md`}
         jsonLd={[
           {
             "@context": "https://schema.org",
