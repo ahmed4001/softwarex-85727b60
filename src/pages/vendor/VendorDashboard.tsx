@@ -143,21 +143,6 @@ export default function VendorDashboard() {
       {!user ? (
         <VendorDashboardSkeleton />
       ) : (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Vendor Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Overview of your products and reviews</p>
-        </div>
-
-        {claims.length === 0 ? (
-          <div className="glass-card p-12 text-center">
-            <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-foreground mb-2">No claimed products yet</h2>
-            <p className="text-sm text-muted-foreground mb-4">Claim your product listing to respond to reviews and view analytics.</p>
-            <Link to="/vendor/claim"><Button>Claim a Product</Button></Link>
-          </div>
-        ) : (
-          <>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-6 border-b border-border/60">
