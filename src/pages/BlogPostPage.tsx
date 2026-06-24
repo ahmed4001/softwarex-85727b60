@@ -58,6 +58,12 @@ export default function BlogPostPage() {
 
   const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
   const url = `https://reviewhunts.com/blog/${slug}`;
+  const plainText = String(post.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const wordCount = plainText ? plainText.split(" ").filter(Boolean).length : undefined;
+  const aboutEntities = [
+    ...(post.category ? [{ "@type": "Thing", name: post.category }] : []),
+    ...tags.map((t) => ({ "@type": "Thing", name: t })),
+  ];
 
   return (
     <>
