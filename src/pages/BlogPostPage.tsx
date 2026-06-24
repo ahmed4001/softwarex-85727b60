@@ -86,10 +86,20 @@ export default function BlogPostPage() {
             datePublished: post.published_at,
             dateModified: post.updated_at || post.published_at,
             ...(post.reading_time && { timeRequired: `PT${post.reading_time}M` }),
+            ...(wordCount && { wordCount }),
+            ...(tags.length > 0 && { keywords: tags }),
+            articleSection: post.category || undefined,
+            inLanguage: "en",
+            ...(aboutEntities.length > 0 && { about: aboutEntities }),
+            speakable: {
+              "@type": "SpeakableSpecification",
+              cssSelector: ["#article-headline", "#article-excerpt", "article p:first-of-type"],
+              xpath: ["/html/head/title", "/html/head/meta[@name='description']/@content"],
+            },
             ...(author && {
               author: { "@type": "Person", name: (author as any).name || "Author" },
             }),
-            publisher: { "@type": "Organization", name: "ReviewHunts" },
+            publisher: { "@type": "Organization", name: "ReviewHunts", url: "https://reviewhunts.com", logo: { "@type": "ImageObject", url: "https://reviewhunts.com/reviewhunts-logo.png" } },
             mainEntityOfPage: { "@type": "WebPage", "@id": url },
           },
           {
