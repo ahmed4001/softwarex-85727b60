@@ -470,7 +470,7 @@ export default function ProductDetailPage() {
                   <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground border-0 font-semibold">{t("productDetail.sponsored")}</Badge>
                 )}
               </div>
-              {product.tagline && <p className="text-base sm:text-lg text-muted-foreground mb-3 sm:mb-4">{product.tagline}</p>}
+              {product.tagline && <p id="product-tagline" className="text-base sm:text-lg text-muted-foreground mb-3 sm:mb-4">{product.tagline}</p>}
               <p className="text-xs text-muted-foreground mb-3 sm:mb-4" itemProp="author">
                 By <span className="font-medium text-foreground">ReviewHunts Editorial Team</span>
                 {" · "}
