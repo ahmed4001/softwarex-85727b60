@@ -99,7 +99,7 @@ export default function BuyerGuidePage() {
 
   return (
     <>
-      <SeoHead title={guide.title} description={guide.description || "Interactive buyer guide"} />
+      <SeoHead title={guide.title} description={guide.description || "Interactive buyer guide"} markdownUrl={`/guides/${slug}.md`} />
       {howToJsonLd && (
         <Helmet>
           <script type="application/ld+json">{JSON.stringify(howToJsonLd)}</script>
