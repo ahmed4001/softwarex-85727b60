@@ -193,12 +193,20 @@ export default function DealsPage() {
     return c ? c.split(",").filter(Boolean) : [];
   }, [params]);
 
-  const setParam = (key: string, value: string | null) => {
+  // Filter/sort changes push a new history entry so back/forward walks
+  // through state. The free-text search input passes { replace: true } to
+  // avoid one history entry per keystroke.
+  const setParam = (
+    key: string,
+    value: string | null,
+    opts: { replace?: boolean } = {},
+  ) => {
     const next = new URLSearchParams(params);
     if (!value) next.delete(key);
     else next.set(key, value);
-    setParams(next, { replace: true });
+    setParams(next, opts);
   };
+
 
   const [email, setEmail] = useState("");
   const [tick, setTick] = useState(Date.now());
@@ -292,7 +300,7 @@ export default function DealsPage() {
   };
 
   const clearAll = () => {
-    setParams({}, { replace: true });
+    setParams({});
   };
 
   const subscribe = useMutation({
@@ -348,7 +356,7 @@ export default function DealsPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={search}
-                  onChange={(e) => setParam("q", e.target.value || null)}
+                  onChange={(e) => setParam("q", e.target.value || null, { replace: true })}
                   placeholder="Search deals..."
                   className="pl-10 h-11"
                 />

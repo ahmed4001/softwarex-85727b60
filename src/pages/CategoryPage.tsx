@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
@@ -25,9 +25,12 @@ const STALE_5_MIN = 5 * 60 * 1000;
 
 export default function CategoryPage() {
   const { slug } = useParams();
-  const [sort, setSort] = useState("rating");
-  const [tierFilter, setTierFilter] = useState("all");
-  const [page, setPage] = useState(0);
+  // URL is the source of truth for sort/tier/page so back/forward restores
+  // listing state. Defaults are omitted from the URL to keep it clean.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sort = searchParams.get("sort") || "rating";
+  const tierFilter = searchParams.get("tier") || "all";
+  const page = Math.max(0, parseInt(searchParams.get("page") || "0", 10) || 0);
   const isAll = slug === "all";
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -36,10 +39,18 @@ export default function CategoryPage() {
   const [filterVariant] = useAbVariant("mobile_filter_v1", ["A", "B"]);
   const useNewMobileFilters = isMobile;
 
+  const setParam = (key: string, value: string | null, defaultValue?: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (!value || value === defaultValue) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next);
+  };
+  const setPage = (next: number) => setParam("page", next > 0 ? String(next) : null, "0");
 
   // Debounce filter inputs so users tapping multiple chips don't fire 5 separate queries.
   const debouncedSort = useDebounce(sort, 200);
   const debouncedTier = useDebounce(tierFilter, 200);
+
 
   useEffect(() => {
     trackEvent("category_view", { slug: slug || "", variant: filterVariant, is_mobile: isMobile });
@@ -128,16 +139,17 @@ export default function CategoryPage() {
 
   // Reset page when sort/filter/slug changes + track analytics
   const handleSortChange = (value: string) => {
-    setSort(value);
+    setParam("sort", value, "rating");
     setPage(0);
     trackEvent("category_sort_change", { slug: slug || "", sort: value, variant: filterVariant, is_mobile: isMobile });
   };
 
   const handleTierFilterChange = (value: string) => {
-    setTierFilter(value);
+    setParam("tier", value, "all");
     setPage(0);
     trackEvent("category_filter_change", { slug: slug || "", tier: value, variant: filterVariant, is_mobile: isMobile });
   };
+
 
   const handleFilterDrawerOpen = (kind: "categories" | "tier") => {
     trackEvent("category_filter_open", { slug: slug || "", kind, variant: filterVariant, is_mobile: isMobile });
