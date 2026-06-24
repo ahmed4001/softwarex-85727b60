@@ -247,6 +247,58 @@ function renderMarkdown(p: ProductRow, qa: QAThread | null): string {
   lines.push("```");
   lines.push("");
 
+  // ---- QAPage JSON-LD: top user question + accepted/suggested answers ----
+  if (qa && qa.question?.body && qa.answers.length > 0) {
+    const top = qa.question;
+    const accepted = qa.answers[0];
+    const suggested = qa.answers.slice(1, 5);
+    const qaPage: Record<string, any> = {
+      "@context": "https://schema.org",
+      "@type": "QAPage",
+      mainEntity: {
+        "@type": "Question",
+        name: (top.body || "").slice(0, 240),
+        text: top.body || "",
+        url: `${url}#qa-${top.id}`,
+        answerCount: qa.answers.length,
+        ...(top.upvote_count != null && { upvoteCount: top.upvote_count }),
+        ...(top.created_at && { dateCreated: new Date(top.created_at).toISOString() }),
+        ...(top.author_name && { author: { "@type": "Person", name: top.author_name } }),
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: accepted.body || "",
+          ...(accepted.upvote_count != null && { upvoteCount: accepted.upvote_count }),
+          ...(accepted.created_at && {
+            dateCreated: new Date(accepted.created_at).toISOString(),
+          }),
+          ...(accepted.author_name && {
+            author: { "@type": "Person", name: accepted.author_name },
+          }),
+        },
+        ...(suggested.length > 0 && {
+          suggestedAnswer: suggested.map((a) => ({
+            "@type": "Answer",
+            text: a.body || "",
+            ...(a.upvote_count != null && { upvoteCount: a.upvote_count }),
+            ...(a.created_at && { dateCreated: new Date(a.created_at).toISOString() }),
+            ...(a.author_name && { author: { "@type": "Person", name: a.author_name } }),
+          })),
+        }),
+      },
+    };
+
+    lines.push("## Q&A (JSON-LD)");
+    lines.push("");
+    lines.push(
+      `Top community question for ${p.name}. Mirrors the QAPage schema embedded in the HTML page.`
+    );
+    lines.push("");
+    lines.push("```json");
+    lines.push(JSON.stringify(qaPage, null, 2));
+    lines.push("```");
+    lines.push("");
+  }
+
   lines.push("---");
   lines.push("");
   lines.push(
