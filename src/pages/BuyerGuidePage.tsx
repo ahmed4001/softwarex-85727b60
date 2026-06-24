@@ -172,8 +172,21 @@ export default function BuyerGuidePage() {
             excludeGuideSlug={slug}
             title="More guides and resources"
           />
+
+          <AIFaqBlock
+            entityType="guide"
+            entitySlug={slug}
+            context={{
+              name: guide.title,
+              description: guide.description || undefined,
+              category: (guide as any)?.categories?.name,
+            }}
+            title="Frequently asked questions"
+          />
+          <HelpfulVote pagePath={`/buyer-guides/${slug}`} />
         </motion.div>
       </main>
+
     </>
   );
 }
