@@ -158,85 +158,138 @@ export default function VendorDashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <StatCard title="Products" value={claims.length} icon={Package} />
-              <StatCard title="Total Views" value={totalViews.toLocaleString()} icon={Eye} />
-              <StatCard title="Clicks" value={totalClicks.toLocaleString()} icon={TrendingUp} />
-              <StatCard title="Avg Rating" value={avgRating} icon={Star} />
-              <StatCard title="Unanswered" value={unanswered} icon={MessageSquare} />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+        {/* Page header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-6 border-b border-border/60">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Vendor Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Overview of your products, reviews, and performance.</p>
+          </div>
+          {claims.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <Link to="/vendor/reviews"><Button variant="outline" size="sm" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Reviews</Button></Link>
+              <Link to="/vendor/analytics"><Button variant="outline" size="sm" className="gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Analytics</Button></Link>
+              <Link to="/vendor/claim"><Button size="sm" className="gap-1.5"><Package className="h-3.5 w-3.5" />Claim product</Button></Link>
             </div>
+          )}
+        </div>
 
-            {/* Response Metrics */}
-            <div className="mb-8">
-              <VendorResponseMetrics userId={user!.id} productIds={productIds} />
-            </div>
-
-            {/* Review Trend Chart */}
-            {reviews.length > 0 && (
-              <div className="glass-card p-6 mb-8">
-                <h2 className="text-lg font-display font-bold text-foreground mb-4">Review Trend (12 months)</h2>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="vendorGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="month" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                      <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "12px",
-                          fontSize: "12px",
-                        }}
-                      />
-                      <Area type="monotone" dataKey="reviews" stroke="hsl(var(--primary))" fill="url(#vendorGrad)" strokeWidth={2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+        {claims.length === 0 ? (
+          <div className="glass-card p-12 text-center">
+            <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-foreground mb-2">No claimed products yet</h2>
+            <p className="text-sm text-muted-foreground mb-4">Claim your product listing to respond to reviews and view analytics.</p>
+            <Link to="/vendor/claim"><Button>Claim a Product</Button></Link>
+          </div>
+        ) : (
+          <>
+            {/* KPIs */}
+            <section>
+              <SectionHeader icon={LayoutGrid} title="At a glance" description="Headline metrics across all claimed products." />
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+                <StatCard title="Products" value={claims.length} icon={Package} />
+                <StatCard title="Total Views" value={totalViews.toLocaleString()} icon={Eye} />
+                <StatCard title="Clicks" value={totalClicks.toLocaleString()} icon={TrendingUp} />
+                <StatCard title="Avg Rating" value={avgRating} icon={Star} />
+                <StatCard title="Unanswered" value={unanswered} icon={MessageSquare} />
               </div>
-            )}
+            </section>
 
-            {/* Competitor Benchmark */}
-            <div className="mb-8">
-              <VendorCompetitorBenchmark productIds={productIds} />
-            </div>
+            {/* Performance tabs */}
+            <section>
+              <SectionHeader icon={BarChart3} title="Performance" description="Review trends, response health, and competitor benchmarks." />
+              <Tabs defaultValue="trend" className="w-full">
+                <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+                  <TabsTrigger value="trend">Review trend</TabsTrigger>
+                  <TabsTrigger value="response">Response</TabsTrigger>
+                  <TabsTrigger value="benchmark">Benchmark</TabsTrigger>
+                </TabsList>
 
-            <h2 className="text-lg font-display font-bold text-foreground mb-4">Your Products</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {claims.map((c: any) => (
-                <div key={c.id} className="glass-card p-5 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {c.products?.logo_url ? (
-                      <img src={c.products.logo_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <Package className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{c.products?.name}</h3>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1"><Star className="h-3 w-3" />{c.products?.avg_rating || 0}</span>
-                      <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{c.products?.total_reviews || 0}</span>
-                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{c.products?.view_count || 0}</span>
+                <TabsContent value="trend" className="mt-4">
+                  {reviews.length > 0 ? (
+                    <div className="glass-card p-4 md:p-6">
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData}>
+                            <defs>
+                              <linearGradient id="vendorGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                            <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "hsl(var(--card))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "12px",
+                                fontSize: "12px",
+                              }}
+                            />
+                            <Area type="monotone" dataKey="reviews" stroke="hsl(var(--primary))" fill="url(#vendorGrad)" strokeWidth={2} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="glass-card p-8 text-center text-sm text-muted-foreground">No review data yet for the last 12 months.</div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="response" className="mt-4">
+                  <VendorResponseMetrics userId={user!.id} productIds={productIds} />
+                </TabsContent>
+
+                <TabsContent value="benchmark" className="mt-4">
+                  <VendorCompetitorBenchmark productIds={productIds} />
+                </TabsContent>
+              </Tabs>
+            </section>
+
+            {/* Products */}
+            <section>
+              <SectionHeader
+                icon={Users}
+                title="Your products"
+                description={`${claims.length} claimed product${claims.length === 1 ? "" : "s"}`}
+                action={
+                  <Link to="/vendor/products" className="hidden sm:block">
+                    <Button variant="ghost" size="sm" className="gap-1 text-xs">Manage all<ExternalLink className="h-3 w-3" /></Button>
+                  </Link>
+                }
+              />
+              <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
+                {claims.map((c: any) => (
+                  <div key={c.id} className="glass-card p-4 md:p-5 flex items-center gap-4 hover:border-primary/40 transition-colors">
+                    <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {c.products?.logo_url ? (
+                        <img src={c.products.logo_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Package className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{c.products?.name}</h3>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1"><Star className="h-3 w-3" />{c.products?.avg_rating || 0}</span>
+                        <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{c.products?.total_reviews || 0}</span>
+                        <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{c.products?.view_count || 0}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Link to={`/vendor/products/${c.products?.id}/edit`} aria-label="Edit product">
+                        <Button variant="ghost" size="sm" className="gap-1"><Pencil className="h-3.5 w-3.5" /></Button>
+                      </Link>
+                      <Link to={`/product/${c.products?.slug}`}>
+                        <Button variant="outline" size="sm">View</Button>
+                      </Link>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Link to={`/vendor/products/${c.products?.id}/edit`}>
-                      <Button variant="ghost" size="sm" className="gap-1"><Pencil className="h-3.5 w-3.5" /></Button>
-                    </Link>
-                    <Link to={`/product/${c.products?.slug}`}>
-                      <Button variant="outline" size="sm">View</Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </section>
           </>
         )}
       </motion.div>
