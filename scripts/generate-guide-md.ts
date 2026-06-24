@@ -1,0 +1,232 @@
+/**
+ * Generates per-guide Markdown alternates at public/guides/<slug>.md.
+ *
+ * Mirrors scripts/generate-product-md.ts so AI crawlers can ingest the
+ * buyer-guide content (steps + recommended products) without parsing the SPA.
+ * Linked from each guide via <link rel="alternate" type="text/markdown">.
+ */
+import { writeFileSync, mkdirSync, rmSync, existsSync } from "fs";
+import { resolve } from "path";
+
+const BASE_URL = process.env.SITE_URL || "https://reviewhunts.com";
+const SUPABASE_URL =
+  process.env.VITE_SUPABASE_URL || "https://ffeimjfunghzxgeqiwma.supabase.co";
+const SUPABASE_KEY =
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZWltamZ1bmdoenhnZXFpd21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MjI2MjEsImV4cCI6MjA4NzQ5ODYyMX0.SnPyI6XDg3zyI4fQTYUKRoAhu_gJ4QLvBw-y6muPYvg";
+
+const OUT_DIR = resolve("public/guides");
+
+interface GuideRow {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  steps: any;
+  result_product_ids: any;
+  updated_at: string | null;
+  created_at: string | null;
+  categories?: { name?: string; slug?: string } | null;
+}
+
+interface ProductLite {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string | null;
+}
+
+function stripHtml(s: string | null): string {
+  if (!s) return "";
+  return s
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function toIds(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.filter((x) => typeof x === "string");
+  return [];
+}
+
+function render(g: GuideRow, products: ProductLite[]): string {
+  const url = `${BASE_URL}/guides/${g.slug}`;
+  const category = g.categories?.name || null;
+  const desc = stripHtml(g.description);
+  const steps: any[] = Array.isArray(g.steps) ? g.steps : [];
+  const lines: string[] = [];
+
+  lines.push("---");
+  lines.push(`title: "${g.title.replace(/"/g, '\\"')}"`);
+  lines.push(`slug: ${g.slug}`);
+  lines.push(`url: ${url}`);
+  lines.push(`canonical: ${url}`);
+  if (category) lines.push(`category: "${category.replace(/"/g, '\\"')}"`);
+  if (g.created_at) lines.push(`date_published: ${g.created_at}`);
+  if (g.updated_at) lines.push(`date_modified: ${g.updated_at}`);
+  lines.push(`source: ReviewHunts`);
+  lines.push(`license: "Editorial content © ReviewHunts. AI training permitted per /ai.txt."`);
+  lines.push("---");
+  lines.push("");
+
+  lines.push(`# ${g.title}`);
+  lines.push("");
+  if (desc) {
+    lines.push(`> ${desc}`);
+    lines.push("");
+  }
+
+  if (steps.length) {
+    lines.push("## Steps");
+    lines.push("");
+    steps.forEach((s, i) => {
+      const title = s?.title || s?.question || s?.name || `Step ${i + 1}`;
+      const text = s?.description || s?.text || s?.body || "";
+      lines.push(`### ${i + 1}. ${stripHtml(String(title))}`);
+      if (text) {
+        lines.push("");
+        lines.push(stripHtml(String(text)));
+      }
+      const options = Array.isArray(s?.options) ? s.options : [];
+      if (options.length) {
+        lines.push("");
+        for (const o of options) {
+          const label = typeof o === "string" ? o : o?.label || o?.text || "";
+          if (label) lines.push(`- ${stripHtml(label)}`);
+        }
+      }
+      lines.push("");
+    });
+  }
+
+  if (products.length) {
+    lines.push("## Recommended Products");
+    lines.push("");
+    for (const p of products) {
+      const productUrl = `${BASE_URL}/product/${p.slug}`;
+      const tag = p.tagline ? ` — ${stripHtml(p.tagline)}` : "";
+      lines.push(`- [${p.name}](${productUrl})${tag}`);
+    }
+    lines.push("");
+  }
+
+  // HowTo JSON-LD excerpt — buyer guides are inherently step-by-step.
+  const howToSteps = steps.map((s, i) => ({
+    "@type": "HowToStep",
+    position: i + 1,
+    name: String(s?.title || s?.question || `Step ${i + 1}`).slice(0, 240),
+    ...(s?.description || s?.text ? { text: stripHtml(String(s?.description || s?.text)).slice(0, 800) } : {}),
+  }));
+
+  const jsonLd: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: g.title,
+    url,
+    inLanguage: "en",
+    ...(desc && { description: desc.slice(0, 500) }),
+    ...(g.created_at && { datePublished: g.created_at }),
+    ...((g.updated_at || g.created_at) && { dateModified: g.updated_at || g.created_at }),
+    ...(howToSteps.length && { step: howToSteps }),
+  };
+
+  lines.push("## Structured Data (JSON-LD)");
+  lines.push("");
+  lines.push("Canonical machine-readable summary for AI extraction. Mirrors JSON-LD embedded in the HTML page.");
+  lines.push("");
+  lines.push("```json");
+  lines.push(JSON.stringify(jsonLd, null, 2));
+  lines.push("```");
+  lines.push("");
+
+  lines.push("---");
+  lines.push("");
+  lines.push(`*Generated by ReviewHunts. Full interactive page: ${url}. See ${BASE_URL}/ai.txt for AI training terms.*`);
+  lines.push("");
+  return lines.join("\n");
+}
+
+async function fetchGuides(): Promise<GuideRow[]> {
+  const select = "id,slug,title,description,steps,result_product_ids,updated_at,created_at,categories:category_id(name,slug)";
+  const filter = "&is_published=eq.true";
+  const url = `${SUPABASE_URL}/rest/v1/buyer_guides?select=${select}${filter}&limit=2000`;
+  const res = await fetch(url, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+  });
+  if (!res.ok) {
+    console.warn(`[guide-md] fetch failed: ${res.status}`);
+    return [];
+  }
+  return (await res.json()) as GuideRow[];
+}
+
+async function fetchProducts(ids: string[]): Promise<Map<string, ProductLite>> {
+  const out = new Map<string, ProductLite>();
+  if (!ids.length) return out;
+  const CHUNK = 100;
+  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const list = ids.slice(i, i + CHUNK).join(",");
+    const url = `${SUPABASE_URL}/rest/v1/products?select=id,slug,name,tagline&id=in.(${list})&limit=500`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) continue;
+    const rows = (await res.json()) as ProductLite[];
+    for (const r of rows) out.set(r.id, r);
+  }
+  return out;
+}
+
+async function main() {
+  if (existsSync(OUT_DIR)) {
+    try {
+      rmSync(OUT_DIR, { recursive: true, force: true });
+    } catch {}
+  }
+  mkdirSync(OUT_DIR, { recursive: true });
+
+  const guides = await fetchGuides();
+  const allIds = new Set<string>();
+  for (const g of guides) for (const id of toIds(g.result_product_ids)) allIds.add(id);
+  const productMap = await fetchProducts([...allIds]);
+
+  let written = 0;
+  for (const g of guides) {
+    if (!g.slug) continue;
+    try {
+      const products = toIds(g.result_product_ids)
+        .map((id) => productMap.get(id))
+        .filter((p): p is ProductLite => !!p);
+      writeFileSync(resolve(OUT_DIR, `${g.slug}.md`), render(g, products));
+      written++;
+    } catch (e) {
+      console.warn(`[guide-md] failed for ${g.slug}:`, e);
+    }
+  }
+
+  const index = [
+    "# ReviewHunts — Buyer Guide Markdown Index",
+    "",
+    `Updated: ${new Date().toISOString()}`,
+    `Total: ${written} guides`,
+    "",
+    "Each entry is a canonical Markdown rendering of the corresponding HTML page.",
+    'Linked from each HTML page via <link rel="alternate" type="text/markdown">.',
+    "",
+    ...guides
+      .filter((g) => g.slug)
+      .map((g) => `- [${g.title}](${BASE_URL}/guides/${g.slug}.md) — ${BASE_URL}/guides/${g.slug}`),
+    "",
+  ].join("\n");
+  writeFileSync(resolve(OUT_DIR, "index.md"), index);
+  console.log(`[guide-md] wrote ${written} guide .md files`);
+}
+
+main().catch((e) => {
+  console.error("[guide-md] generation failed:", e);
+});
