@@ -14,6 +14,7 @@ interface Body {
     category?: string
     extra?: Record<string, unknown>
   }
+  /** Force regeneration even if a fresh cache entry exists. */
   force?: boolean
 }
 
@@ -30,6 +31,18 @@ Rules:
 
 Return ONLY valid JSON: {"items":[{"q":"...","a":"..."}, ...]} with exactly 6 items.`
 
+/** Stable SHA-256 hex of the canonical context. Used to detect content drift. */
+async function hashContext(ctx: Body['context']): Promise<string> {
+  const normalized = JSON.stringify({
+    name: ctx.name?.trim() ?? '',
+    description: ctx.description?.trim() ?? '',
+    category: ctx.category?.trim() ?? '',
+    extra: ctx.extra ?? {},
+  })
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized))
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -40,21 +53,34 @@ Deno.serve(async (req) => {
     }
 
     const sb = createClient(SUPABASE_URL, SERVICE_KEY)
+    const contentHash = await hashContext(body.context)
 
-    // 1. Check cache
+    // 1. Check cache — hit only when force is false AND stored hash matches.
     if (!body.force) {
       const { data: existing } = await sb
         .from('faq_cache')
-        .select('items, source, is_edited, generated_at')
+        .select('items, source, is_edited, generated_at, content_hash')
         .eq('entity_type', body.entity_type)
         .eq('entity_slug', body.entity_slug)
         .maybeSingle()
-      if (existing && Array.isArray((existing as any).items) && (existing as any).items.length > 0) {
-        return json({ items: (existing as any).items, cached: true, source: (existing as any).source })
+
+      const hit =
+        existing &&
+        Array.isArray((existing as any).items) &&
+        (existing as any).items.length > 0 &&
+        ((existing as any).content_hash === contentHash || (existing as any).is_edited === true)
+
+      if (hit) {
+        return json({
+          items: (existing as any).items,
+          cached: true,
+          source: (existing as any).source,
+          reason: (existing as any).is_edited ? 'edited' : 'hash_match',
+        })
       }
     }
 
-    // 2. Generate via Lovable AI Gateway
+    // 2. Generate via Lovable AI Gateway.
     const prompt = buildPrompt(body)
     const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -84,14 +110,17 @@ Deno.serve(async (req) => {
     let parsed: { items?: FAQItem[] } = {}
     try { parsed = JSON.parse(raw) } catch { parsed = {} }
     const items: FAQItem[] = Array.isArray(parsed.items)
-      ? parsed.items.filter((i) => i?.q && i?.a).slice(0, 8)
+      ? parsed.items
+          .filter((i) => i && typeof i.q === 'string' && typeof i.a === 'string' && i.q.trim() && i.a.trim())
+          .slice(0, 8)
       : []
 
     if (items.length === 0) {
       return json({ error: 'AI returned no FAQs', raw: raw.slice(0, 300) }, 502)
     }
 
-    // 3. Upsert into cache
+    // 3. Idempotent upsert keyed on (entity_type, entity_slug).
+    //    Resets is_edited because content drifted / admin requested refresh.
     await sb.from('faq_cache').upsert(
       {
         entity_type: body.entity_type,
@@ -100,6 +129,8 @@ Deno.serve(async (req) => {
         model: 'google/gemini-3-flash-preview',
         source: 'ai',
         is_edited: false,
+        edited_by: null,
+        content_hash: contentHash,
         generated_at: new Date().toISOString(),
       },
       { onConflict: 'entity_type,entity_slug' }
