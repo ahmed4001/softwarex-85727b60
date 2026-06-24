@@ -4568,6 +4568,16 @@ export type Database = {
             Args: { _max_ms?: number; _mean_ms?: number; _queries?: Json }
             Returns: Json
           }
+        | {
+            Args: {
+              _max_ms?: number
+              _max_rows?: number
+              _mean_ms?: number
+              _mean_rows?: number
+              _queries?: Json
+            }
+            Returns: Json
+          }
       get_best_brevo_account: { Args: never; Returns: string }
       has_role: {
         Args: {
