@@ -50,9 +50,11 @@ export default function BlogPage() {
   const urlCategory = searchParams.get("category") || "";
   const isMobile = useIsMobile();
 
-  // A/B test: legacy chip nav (A) vs new mobile-first drawer filters (B)
+  // Mobile-first filter drawer is the only mobile layout — A/B flag retained
+  // for analytics dashboards but always resolves to B on mobile.
   const [filterVariant] = useAbVariant("blog_filter_v1", ["A", "B"]);
-  const useNewMobileFilters = isMobile && filterVariant === "B";
+  const useNewMobileFilters = isMobile;
+
 
   // Local filter state for instant UI feedback; debounce -> URL/derived list
   const [tag, setTag] = useState(urlTag);
@@ -363,8 +365,9 @@ export default function BlogPage() {
           </div>
         )}
 
-        {/* Legacy / desktop / Variant A chip nav */}
-        {(!useNewMobileFilters) && (allTags.length > 0 || allCategories.length > 0) && (
+        {/* Desktop chip nav (mobile uses the drawer above). */}
+        {!isMobile && (allTags.length > 0 || allCategories.length > 0) && (
+
           <nav
             className="flex items-center justify-center gap-2 flex-wrap mb-10 sm:mb-12 pb-6 sm:pb-8 border-b border-border"
             data-ab-variant={isMobile ? "A" : "desktop"}
