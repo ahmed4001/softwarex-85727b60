@@ -54,6 +54,8 @@ export default function GlossaryTermPage() {
             "name": term.term,
             "description": term.definition,
             "url": `https://reviewhunts.com/glossary/${slug}`,
+            ...((term as any).created_at && { "datePublished": new Date((term as any).created_at).toISOString() }),
+            ...((term as any).updated_at && { "dateModified": new Date((term as any).updated_at).toISOString() }),
             ...(term.category && { "inDefinedTermSet": { "@type": "DefinedTermSet", "name": `${term.category} Glossary` } })
           },
           {
