@@ -249,6 +249,8 @@ function AppContent() {
           <Route path="buyer-guides" element={<ErrorBoundary><AdminBuyerGuidesPage /></ErrorBoundary>} />
           <Route path="moderation" element={<ErrorBoundary><AdminModerationPage /></ErrorBoundary>} />
           <Route path="glossary" element={<ErrorBoundary><AdminGlossaryPage /></ErrorBoundary>} />
+          <Route path="faq-cache" element={<ErrorBoundary><AdminFaqCachePage /></ErrorBoundary>} />
+
           <Route path="trend-reports" element={<ErrorBoundary><AdminTrendReportsPage /></ErrorBoundary>} />
           <Route path="cohort" element={<ErrorBoundary><AdminCohortPage /></ErrorBoundary>} />
           <Route path="partner-links" element={<ErrorBoundary><AdminPartnerLinksPage /></ErrorBoundary>} />
