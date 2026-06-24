@@ -23,6 +23,38 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
   const [answerText, setAnswerText] = useState("");
   const [expandedQ, setExpandedQ] = useState<Set<string>>(new Set());
 
+  // The hook orders questions by upvote_count desc, so questions[0] is the
+  // same "top question" the .md QAPage JSON-LD picks. Auto-expand it (and
+  // honour a deep link to #qa-<id>) so the accepted answer is visible by
+  // default, matching what AI crawlers see in the JSON-LD block.
+  const topQuestionId = questions[0]?.id as string | undefined;
+  useEffect(() => {
+    if (!topQuestionId) return;
+    setExpandedQ((prev) => {
+      if (prev.has(topQuestionId)) return prev;
+      const next = new Set(prev);
+      next.add(topQuestionId);
+      return next;
+    });
+  }, [topQuestionId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash?.startsWith("#qa-")) return;
+    const id = hash.slice(4);
+    setExpandedQ((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    // Defer scroll until the card has rendered.
+    requestAnimationFrame(() => {
+      document.getElementById(`qa-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [questions.length]);
+
   const toggleExpand = (id: string) => {
     setExpandedQ((prev) => {
       const next = new Set(prev);
