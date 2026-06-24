@@ -362,6 +362,7 @@ export default function ProductDetailPage() {
           : `${product.name} review for 2026 — pricing, pros & cons, features, and verified user ratings on ReviewHunts.`.slice(0, 154))}
         keywords={product.seo_keywords || `${product.name}, ${product.name} review, ${product.name} pricing, ${product.name} pros and cons, ${(product.categories as any)?.name || "software"} 2026`}
         canonicalUrl={`https://reviewhunts.com/product/${product.slug}`}
+        markdownUrl={`/product/${product.slug}.md`}
         ogImage={product.logo_url || undefined}
         type="product"
         author="ReviewHunts Editorial Team"

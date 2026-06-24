@@ -13,6 +13,13 @@ interface SeoHeadProps {
   author?: string;
   robots?: string;
   lang?: string;
+  /**
+   * Absolute or site-relative URL to a Markdown alternate of this page.
+   * Emits <link rel="alternate" type="text/markdown"> so AI crawlers
+   * (ChatGPT, Claude, Perplexity, Gemini) can ingest the canonical text
+   * content without parsing the SPA.
+   */
+  markdownUrl?: string;
 }
 
 // Resolve runtime environment for logging severity. Staging/preview hosts
@@ -39,6 +46,7 @@ export function SeoHead({
   author,
   robots = "index, follow",
   lang = "en",
+  markdownUrl,
 }: SeoHeadProps) {
   const settings = useSeoSettings();
 
@@ -153,6 +161,20 @@ export function SeoHead({
 
       {/* Canonical (self-referencing by default) */}
       {resolvedCanonical && <link rel="canonical" href={resolvedCanonical} />}
+
+      {/* Markdown alternate — AI crawlers prefer .md over rendered HTML. */}
+      {markdownUrl && (
+        <link
+          rel="alternate"
+          type="text/markdown"
+          href={
+            markdownUrl.startsWith("http")
+              ? stripForbiddenHost(markdownUrl)
+              : `${SITE_URL}${markdownUrl.startsWith("/") ? "" : "/"}${markdownUrl}`
+          }
+          title="Markdown version (AI-friendly)"
+        />
+      )}
 
       {/* JSON-LD Structured Data */}
       {jsonLdArray.map((ld, i) => (
