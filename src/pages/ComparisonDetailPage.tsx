@@ -82,10 +82,10 @@ export default function ComparisonDetailPage() {
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": comparison.seo_title || comparison.title || `${productA.name} vs ${productB.name}`,
-      "description": comparison.seo_description || comparison.summary?.substring(0, 160) || `Compare ${productA.name} and ${productB.name}`,
+      "description": comparison.seo_description || comparison.summary || `Compare ${productA.name} and ${productB.name}`,
       "url": `https://reviewhunts.com/compare/${slug}`,
       ...(comparisonCreatedAtIso && { "datePublished": comparisonCreatedAtIso }),
-      ...(comparisonUpdatedAtIso && { "dateModified": comparisonUpdatedAtIso }),
+      "dateModified": comparisonUpdatedAtIso || comparisonCreatedAtIso || new Date().toISOString(),
       "mainEntity": {
         "@type": "ItemList",
         "numberOfItems": 2,
@@ -96,7 +96,7 @@ export default function ComparisonDetailPage() {
             "item": {
               "@type": "SoftwareApplication",
               "name": productA.name,
-              "description": productA.tagline || productA.description?.substring(0, 160),
+              "description": productA.description || productA.tagline || productA.name,
               "url": `https://reviewhunts.com/product/${productA.slug}`,
               ...(productA.logo_url && { "image": productA.logo_url }),
               ...(productA.avg_rating && {
@@ -122,7 +122,7 @@ export default function ComparisonDetailPage() {
             "item": {
               "@type": "SoftwareApplication",
               "name": productB.name,
-              "description": productB.tagline || productB.description?.substring(0, 160),
+              "description": productB.description || productB.tagline || productB.name,
               "url": `https://reviewhunts.com/product/${productB.slug}`,
               ...(productB.logo_url && { "image": productB.logo_url }),
               ...(productB.avg_rating && {
@@ -279,7 +279,36 @@ export default function ComparisonDetailPage() {
         {featureScores.length > 0 && (
           <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card p-6 mb-8">
             <h3 className="font-bold text-foreground mb-6 text-lg">{t("comparisonDetail.featureScores")}</h3>
-            <div className="space-y-5">
+
+            {/* Machine-readable scores table — visually hidden but extractable by AI/crawlers */}
+            <table className="sr-only" aria-label={`${productA.name} vs ${productB.name} feature scores`}>
+              <caption>{`${productA.name} vs ${productB.name} — feature scores (out of 10)`}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Feature</th>
+                  <th scope="col">{productA.name}</th>
+                  <th scope="col">{productB.name}</th>
+                  <th scope="col">Winner</th>
+                </tr>
+              </thead>
+              <tbody>
+                {featureScores.map((fs: any, i: number) => {
+                  const scoreA = Number(fs.score_a) || 0;
+                  const scoreB = Number(fs.score_b) || 0;
+                  const winner = scoreA === scoreB ? "Tie" : scoreA > scoreB ? productA.name : productB.name;
+                  return (
+                    <tr key={`score-row-${i}`}>
+                      <th scope="row">{fs.feature}</th>
+                      <td>{scoreA}/10</td>
+                      <td>{scoreB}/10</td>
+                      <td>{winner}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div className="space-y-5" aria-hidden="true">
               {featureScores.map((fs: any, i: number) => {
                 const scoreA = Number(fs.score_a) || 0;
                 const scoreB = Number(fs.score_b) || 0;
