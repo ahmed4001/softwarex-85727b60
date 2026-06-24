@@ -57,7 +57,7 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const hash = window.location.hash;
+    const hash = initialHashRef.current;
     if (!hash?.startsWith("#qa-")) return;
     const id = hash.slice(4);
     setExpandedQ((prev) => {
@@ -70,7 +70,33 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
     requestAnimationFrame(() => {
       document.getElementById(`qa-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [questions.length]);
+    // Fire-once: outbound QA deep-link visit. Wait until questions resolved
+    // so we know whether the anchored question is the top one.
+    if (!deeplinkTrackedRef.current && questions.length > 0) {
+      deeplinkTrackedRef.current = true;
+      const referrer = typeof document !== "undefined" ? document.referrer || "" : "";
+      let referrerHost = "";
+      try {
+        referrerHost = referrer ? new URL(referrer).hostname : "";
+      } catch {
+        /* noop */
+      }
+      const currentHost = window.location.hostname;
+      const source = !referrer
+        ? "direct"
+        : referrerHost === currentHost
+        ? "internal"
+        : "external";
+      trackEvent("qa_deeplink_visit", {
+        product_slug: getProductSlugFromPath(),
+        product_id: productId,
+        question_id: id,
+        is_top_question: id === questions[0]?.id,
+        source,
+        referrer_host: referrerHost,
+      });
+    }
+  }, [questions.length, productId]);
 
   const toggleExpand = (id: string) => {
     setExpandedQ((prev) => {
