@@ -22,6 +22,7 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
   const [questionText, setQuestionText] = useState("");
   const [answeringId, setAnsweringId] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedQ, setExpandedQ] = useState<Set<string>>(new Set());
 
   // The hook orders questions by upvote_count desc, so questions[0] is the
