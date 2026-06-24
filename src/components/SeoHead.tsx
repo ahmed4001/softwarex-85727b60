@@ -46,6 +46,7 @@ export function SeoHead({
   author,
   robots = "index, follow",
   lang = "en",
+  markdownUrl,
 }: SeoHeadProps) {
   const settings = useSeoSettings();
 
