@@ -772,6 +772,7 @@ export default function ProductDetailPage() {
             category: (product as any).categories?.name,
           }}
           title={`Frequently asked questions about ${product.name}`}
+          pageUrl={`https://reviewhunts.com/product/${product.slug}`}
         />
         <HelpfulVote pagePath={`/product/${product.slug}`} />
       </div>
