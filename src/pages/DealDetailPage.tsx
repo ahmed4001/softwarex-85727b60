@@ -152,6 +152,9 @@ export default function DealDetailPage() {
             : "https://schema.org/InStock",
           ...(deal.start_date && { validFrom: deal.start_date }),
           ...(deal.end_date && { validThrough: deal.end_date }),
+          priceValidUntil:
+            deal.end_date ||
+            new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
           ...(deal.coupon_code && {
             priceSpecification: {
               "@type": "UnitPriceSpecification",
