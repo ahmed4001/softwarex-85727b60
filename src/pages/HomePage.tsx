@@ -267,7 +267,7 @@ export default function HomePage() {
         canonicalUrl={SITE_URL}
         ogImage={`${SITE_URL}/og-image.png`}
         author="ReviewHunts"
-        jsonLd={[websiteJsonLd, organizationJsonLd, faqJsonLd, breadcrumbJsonLd]}
+        jsonLd={[websiteJsonLd, organizationJsonLd, siteItemListJsonLd, datasetJsonLd, faqJsonLd, breadcrumbJsonLd]}
       />
 
       <ReadingProgress />
