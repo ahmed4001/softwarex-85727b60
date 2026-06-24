@@ -67,12 +67,15 @@ export default function GlossaryTermPage() {
       />
       <main className="container py-10 max-w-3xl">
         <Link to="/glossary">
-          <Button variant="ghost" size="sm" className="gap-1.5 mb-6 text-muted-foreground">
+          <Button variant="ghost" size="sm" className="gap-1.5 mb-3 text-muted-foreground">
             <ArrowLeft className="h-4 w-4" /> Back to Glossary
           </Button>
         </Link>
 
+        <Breadcrumbs items={[{ label: "Glossary", href: "/glossary" }, { label: term.term }]} />
+
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+
           <div className="flex items-center gap-3 mb-4">
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <BookOpen className="h-6 w-6 text-primary" />
