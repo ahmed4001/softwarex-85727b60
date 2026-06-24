@@ -15,6 +15,8 @@ import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
 import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+import { AnswerBlock } from "@/components/seo/AnswerBlock";
+import { FactsTable } from "@/components/seo/FactsTable";
 
 
 export default function ComparisonDetailPage() {
