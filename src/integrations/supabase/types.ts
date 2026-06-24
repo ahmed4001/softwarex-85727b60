@@ -1423,6 +1423,7 @@ export type Database = {
       }
       faq_cache: {
         Row: {
+          content_hash: string | null
           created_at: string
           edited_by: string | null
           entity_slug: string
@@ -1436,6 +1437,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          content_hash?: string | null
           created_at?: string
           edited_by?: string | null
           entity_slug: string
@@ -1449,6 +1451,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          content_hash?: string | null
           created_at?: string
           edited_by?: string | null
           entity_slug?: string
