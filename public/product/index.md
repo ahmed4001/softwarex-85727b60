@@ -1,7 +1,7 @@
 # ReviewHunts — Product Markdown Index
 
-Updated: 2026-06-24T07:34:52.742Z
-Total: 607 products
+Updated: 2026-06-24T07:38:45.505Z
+Total: 607 products (0 with QAPage data)
 
 Each entry is a canonical Markdown rendering of the corresponding HTML page.
 Linked from each HTML page via <link rel="alternate" type="text/markdown">.

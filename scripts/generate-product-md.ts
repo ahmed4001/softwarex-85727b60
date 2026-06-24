@@ -22,6 +22,7 @@ const SUPABASE_KEY =
 const OUT_DIR = resolve("public/product");
 
 interface ProductRow {
+  id: string;
   slug: string;
   name: string;
   tagline: string | null;
@@ -41,6 +42,17 @@ interface ProductRow {
   updated_at: string | null;
   info_score: number | null;
   categories?: { name?: string; slug?: string } | null;
+}
+
+interface QARow {
+  id: string;
+  product_id: string;
+  parent_id: string | null;
+  body: string | null;
+  upvote_count: number | null;
+  created_at: string | null;
+  user_id: string | null;
+  author_name?: string | null;
 }
 
 function mdEscape(s: string): string {
@@ -78,7 +90,12 @@ function toList(v: any): string[] {
   return [];
 }
 
-function renderMarkdown(p: ProductRow): string {
+interface QAThread {
+  question: QARow;
+  answers: QARow[]; // ordered: highest upvotes first
+}
+
+function renderMarkdown(p: ProductRow, qa: QAThread | null): string {
   const url = `${BASE_URL}/product/${p.slug}`;
   const category = p.categories?.name || "Software";
   const lines: string[] = [];
@@ -230,6 +247,58 @@ function renderMarkdown(p: ProductRow): string {
   lines.push("```");
   lines.push("");
 
+  // ---- QAPage JSON-LD: top user question + accepted/suggested answers ----
+  if (qa && qa.question?.body && qa.answers.length > 0) {
+    const top = qa.question;
+    const accepted = qa.answers[0];
+    const suggested = qa.answers.slice(1, 5);
+    const qaPage: Record<string, any> = {
+      "@context": "https://schema.org",
+      "@type": "QAPage",
+      mainEntity: {
+        "@type": "Question",
+        name: (top.body || "").slice(0, 240),
+        text: top.body || "",
+        url: `${url}#qa-${top.id}`,
+        answerCount: qa.answers.length,
+        ...(top.upvote_count != null && { upvoteCount: top.upvote_count }),
+        ...(top.created_at && { dateCreated: new Date(top.created_at).toISOString() }),
+        ...(top.author_name && { author: { "@type": "Person", name: top.author_name } }),
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: accepted.body || "",
+          ...(accepted.upvote_count != null && { upvoteCount: accepted.upvote_count }),
+          ...(accepted.created_at && {
+            dateCreated: new Date(accepted.created_at).toISOString(),
+          }),
+          ...(accepted.author_name && {
+            author: { "@type": "Person", name: accepted.author_name },
+          }),
+        },
+        ...(suggested.length > 0 && {
+          suggestedAnswer: suggested.map((a) => ({
+            "@type": "Answer",
+            text: a.body || "",
+            ...(a.upvote_count != null && { upvoteCount: a.upvote_count }),
+            ...(a.created_at && { dateCreated: new Date(a.created_at).toISOString() }),
+            ...(a.author_name && { author: { "@type": "Person", name: a.author_name } }),
+          })),
+        }),
+      },
+    };
+
+    lines.push("## Q&A (JSON-LD)");
+    lines.push("");
+    lines.push(
+      `Top community question for ${p.name}. Mirrors the QAPage schema embedded in the HTML page.`
+    );
+    lines.push("");
+    lines.push("```json");
+    lines.push(JSON.stringify(qaPage, null, 2));
+    lines.push("```");
+    lines.push("");
+  }
+
   lines.push("---");
   lines.push("");
   lines.push(
@@ -242,20 +311,110 @@ function renderMarkdown(p: ProductRow): string {
 
 async function fetchProducts(): Promise<ProductRow[]> {
   const select =
-    "slug,name,tagline,description,website_url,pricing_model,starting_price,pricing_description,founded_year,headquarters,avg_rating,total_reviews,features,integrations,pros_summary,cons_summary,updated_at,info_score,categories:category_id(name,slug)";
+    "id,slug,name,tagline,description,website_url,pricing_model,starting_price,pricing_description,founded_year,headquarters,avg_rating,total_reviews,features,integrations,pros_summary,cons_summary,updated_at,info_score,categories:category_id(name,slug)";
   const filter = "&is_active=eq.true&info_score=gte.4&total_reviews=gte.1";
   const url = `${SUPABASE_URL}/rest/v1/products?select=${select}${filter}&limit=5000`;
   const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-    },
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
   if (!res.ok) {
     console.warn(`[product-md] fetch failed: ${res.status}`);
     return [];
   }
   return (await res.json()) as ProductRow[];
+}
+
+/**
+ * Fetch the top question (by upvotes) for every product plus its answers.
+ * Pages through review_qa to capture all top-level questions, then all
+ * answers under those top questions. Author names join via a single
+ * profiles lookup.
+ */
+async function fetchTopQA(productIds: string[]): Promise<Map<string, QAThread>> {
+  const out = new Map<string, QAThread>();
+  if (!productIds.length) return out;
+  const PAGE = 1000;
+  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+
+  // Top-level questions across all products, ordered by upvotes desc.
+  const productSet = new Set(productIds);
+
+  // Fetch all active top-level questions globally (filtering by 600+ product
+  // IDs would overflow URL/header limits). We filter to our product set in
+  // memory afterwards.
+  const all: QARow[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const url = `${SUPABASE_URL}/rest/v1/review_qa?select=id,product_id,parent_id,body,upvote_count,created_at,user_id&parent_id=is.null&status=eq.active&order=upvote_count.desc.nullslast&limit=${PAGE}&offset=${offset}`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      console.warn(`[product-md] QA questions fetch failed: ${res.status}`);
+      break;
+    }
+    const batch = (await res.json()) as QARow[];
+    all.push(...batch);
+    if (batch.length < PAGE) break;
+  }
+
+  const topByProduct = new Map<string, QARow>();
+  for (const q of all) {
+    if (!productSet.has(q.product_id)) continue;
+    if (!topByProduct.has(q.product_id)) topByProduct.set(q.product_id, q);
+  }
+  const topQuestionIds = [...topByProduct.values()].map((q) => q.id);
+  if (!topQuestionIds.length) return out;
+
+  // Answers under those top questions. Chunk the IN list to keep URL length
+  // safe (header overflow at ~16 KB on Supabase's edge).
+  const answersByQ = new Map<string, QARow[]>();
+  const topQSet = new Set(topQuestionIds);
+  const CHUNK = 100;
+  for (let i = 0; i < topQuestionIds.length; i += CHUNK) {
+    const ids = topQuestionIds.slice(i, i + CHUNK).join(",");
+    for (let offset = 0; ; offset += PAGE) {
+      const url = `${SUPABASE_URL}/rest/v1/review_qa?select=id,product_id,parent_id,body,upvote_count,created_at,user_id&parent_id=in.(${ids})&status=eq.active&order=upvote_count.desc.nullslast&limit=${PAGE}&offset=${offset}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        console.warn(`[product-md] QA answers fetch failed: ${res.status}`);
+        break;
+      }
+      const batch = (await res.json()) as QARow[];
+      for (const a of batch) {
+        if (!a.parent_id || !topQSet.has(a.parent_id)) continue;
+        const arr = answersByQ.get(a.parent_id) || [];
+        arr.push(a);
+        answersByQ.set(a.parent_id, arr);
+      }
+      if (batch.length < PAGE) break;
+    }
+  }
+
+  // Author names — single profiles lookup.
+  const userIds = new Set<string>();
+  for (const q of topByProduct.values()) if (q.user_id) userIds.add(q.user_id);
+  for (const arr of answersByQ.values()) for (const a of arr) if (a.user_id) userIds.add(a.user_id);
+  const nameMap = new Map<string, string>();
+  const uidArr = [...userIds];
+  for (let i = 0; i < uidArr.length; i += CHUNK) {
+    const ids = uidArr.slice(i, i + CHUNK).join(",");
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=user_id,name&user_id=in.(${ids})&limit=5000`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) continue;
+    const rows = (await res.json()) as Array<{ user_id: string; name: string | null }>;
+    for (const r of rows) if (r.name) nameMap.set(r.user_id, r.name);
+  }
+
+  for (const [productId, q] of topByProduct) {
+    const answers = (answersByQ.get(q.id) || []).map((a) => ({
+      ...a,
+      author_name: a.user_id ? nameMap.get(a.user_id) || null : null,
+    }));
+    if (!answers.length) continue; // QAPage requires at least one answer.
+    out.set(productId, {
+      question: { ...q, author_name: q.user_id ? nameMap.get(q.user_id) || null : null },
+      answers,
+    });
+  }
+  return out;
 }
 
 async function main() {
@@ -267,11 +426,15 @@ async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
 
   const products = await fetchProducts();
+  const qaMap = await fetchTopQA(products.map((p) => p.id).filter(Boolean));
   let written = 0;
+  let withQa = 0;
   for (const p of products) {
     if (!p.slug) continue;
     try {
-      writeFileSync(resolve(OUT_DIR, `${p.slug}.md`), renderMarkdown(p));
+      const qa = qaMap.get(p.id) || null;
+      if (qa) withQa++;
+      writeFileSync(resolve(OUT_DIR, `${p.slug}.md`), renderMarkdown(p, qa));
       written++;
     } catch (e) {
       console.warn(`[product-md] failed for ${p.slug}:`, e);
@@ -283,7 +446,7 @@ async function main() {
     "# ReviewHunts — Product Markdown Index",
     "",
     `Updated: ${new Date().toISOString()}`,
-    `Total: ${written} products`,
+    `Total: ${written} products (${withQa} with QAPage data)`,
     "",
     "Each entry is a canonical Markdown rendering of the corresponding HTML page.",
     "Linked from each HTML page via <link rel=\"alternate\" type=\"text/markdown\">.",
@@ -298,7 +461,7 @@ async function main() {
   ].join("\n");
   writeFileSync(resolve(OUT_DIR, "index.md"), index);
 
-  console.log(`[product-md] wrote ${written} product .md files`);
+  console.log(`[product-md] wrote ${written} product .md files (${withQa} with QAPage)`);
 }
 
 main().catch((e) => {
