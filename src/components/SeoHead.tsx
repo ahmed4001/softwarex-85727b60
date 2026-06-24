@@ -13,6 +13,13 @@ interface SeoHeadProps {
   author?: string;
   robots?: string;
   lang?: string;
+  /**
+   * Absolute or site-relative URL to a Markdown alternate of this page.
+   * Emits <link rel="alternate" type="text/markdown"> so AI crawlers
+   * (ChatGPT, Claude, Perplexity, Gemini) can ingest the canonical text
+   * content without parsing the SPA.
+   */
+  markdownUrl?: string;
 }
 
 // Resolve runtime environment for logging severity. Staging/preview hosts
