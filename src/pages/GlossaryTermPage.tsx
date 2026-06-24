@@ -88,11 +88,23 @@ export default function GlossaryTermPage() {
             </div>
           </div>
 
+          <AnswerBlock label="Definition">{term.definition}</AnswerBlock>
+
           <div className="glass-card p-6 mb-6">
             <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Definition</h2>
             <p className="text-foreground leading-relaxed">{term.definition}</p>
             <FreshnessBadge updatedAt={(term as any).updated_at} contentForReadingTime={`${term.definition || ""} ${(term as any).extended_description || ""}`} />
           </div>
+
+          <FactsTable
+            title="Key facts"
+            rows={[
+              { label: "Term", value: term.term },
+              { label: "Category", value: term.category || undefined },
+              { label: "Related terms", value: relatedTerms.length || undefined },
+              { label: "Last updated", value: (term as any).updated_at ? new Date((term as any).updated_at).toLocaleDateString() : undefined },
+            ]}
+          />
 
           {term.extended_description && (
             <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: term.extended_description }} />
