@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProductQA } from "@/hooks/useProductQA";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,14 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackEvent } from "@/lib/analytics";
+
+// Derive `<slug>` from a `/product/<slug>` pathname for analytics tagging.
+function getProductSlugFromPath(): string {
+  if (typeof window === "undefined") return "";
+  const m = window.location.pathname.match(/\/product\/([^/?#]+)/);
+  return m?.[1] ?? "";
+}
 
 interface ProductQASectionProps {
   productId: string;
@@ -24,6 +32,13 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
   const [answerText, setAnswerText] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedQ, setExpandedQ] = useState<Set<string>>(new Set());
+  // Snapshot the initial hash so we can distinguish a real deep-link arrival
+  // (user landed with #qa-<id>) from later in-app updates (Copy link button
+  // mutates the hash via replaceState).
+  const initialHashRef = useRef<string>(
+    typeof window !== "undefined" ? window.location.hash : ""
+  );
+  const deeplinkTrackedRef = useRef(false);
 
   // The hook orders questions by upvote_count desc, so questions[0] is the
   // same "top question" the .md QAPage JSON-LD picks. Auto-expand it (and
@@ -42,7 +57,7 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const hash = window.location.hash;
+    const hash = initialHashRef.current;
     if (!hash?.startsWith("#qa-")) return;
     const id = hash.slice(4);
     setExpandedQ((prev) => {
@@ -55,7 +70,33 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
     requestAnimationFrame(() => {
       document.getElementById(`qa-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [questions.length]);
+    // Fire-once: outbound QA deep-link visit. Wait until questions resolved
+    // so we know whether the anchored question is the top one.
+    if (!deeplinkTrackedRef.current && questions.length > 0) {
+      deeplinkTrackedRef.current = true;
+      const referrer = typeof document !== "undefined" ? document.referrer || "" : "";
+      let referrerHost = "";
+      try {
+        referrerHost = referrer ? new URL(referrer).hostname : "";
+      } catch {
+        /* noop */
+      }
+      const currentHost = window.location.hostname;
+      const source = !referrer
+        ? "direct"
+        : referrerHost === currentHost
+        ? "internal"
+        : "external";
+      trackEvent("qa_deeplink_visit", {
+        product_slug: getProductSlugFromPath(),
+        product_id: productId,
+        question_id: id,
+        is_top_question: id === questions[0]?.id,
+        source,
+        referrer_host: referrerHost,
+      });
+    }
+  }, [questions.length, productId]);
 
   const toggleExpand = (id: string) => {
     setExpandedQ((prev) => {
@@ -107,8 +148,21 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
       toast.success("Link copied", {
         description: "Reopen it to jump straight to this question.",
       });
+      trackEvent("qa_copy_link", {
+        product_slug: getProductSlugFromPath(),
+        product_id: productId,
+        question_id: questionId,
+        is_top_question: questionId === topQuestionId,
+        link,
+      });
       setTimeout(() => setCopiedId((c) => (c === questionId ? null : c)), 1800);
-    } catch {
+    } catch (err) {
+      trackEvent("qa_copy_link_failed", {
+        product_slug: getProductSlugFromPath(),
+        product_id: productId,
+        question_id: questionId,
+        message: String((err as any)?.message || err || ""),
+      });
       toast.error("Could not copy link", { description: link });
     }
   };
