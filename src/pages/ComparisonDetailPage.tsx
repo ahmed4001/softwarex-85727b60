@@ -279,7 +279,36 @@ export default function ComparisonDetailPage() {
         {featureScores.length > 0 && (
           <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card p-6 mb-8">
             <h3 className="font-bold text-foreground mb-6 text-lg">{t("comparisonDetail.featureScores")}</h3>
-            <div className="space-y-5">
+
+            {/* Machine-readable scores table — visually hidden but extractable by AI/crawlers */}
+            <table className="sr-only" aria-label={`${productA.name} vs ${productB.name} feature scores`}>
+              <caption>{`${productA.name} vs ${productB.name} — feature scores (out of 10)`}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Feature</th>
+                  <th scope="col">{productA.name}</th>
+                  <th scope="col">{productB.name}</th>
+                  <th scope="col">Winner</th>
+                </tr>
+              </thead>
+              <tbody>
+                {featureScores.map((fs: any, i: number) => {
+                  const scoreA = Number(fs.score_a) || 0;
+                  const scoreB = Number(fs.score_b) || 0;
+                  const winner = scoreA === scoreB ? "Tie" : scoreA > scoreB ? productA.name : productB.name;
+                  return (
+                    <tr key={`score-row-${i}`}>
+                      <th scope="row">{fs.feature}</th>
+                      <td>{scoreA}/10</td>
+                      <td>{scoreB}/10</td>
+                      <td>{winner}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div className="space-y-5" aria-hidden="true">
               {featureScores.map((fs: any, i: number) => {
                 const scoreA = Number(fs.score_a) || 0;
                 const scoreB = Number(fs.score_b) || 0;
