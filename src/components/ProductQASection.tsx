@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProductQA } from "@/hooks/useProductQA";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, MessageCircle, Send, Trash2, Store, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ThumbsUp, MessageCircle, Send, Trash2, Store, ChevronDown, ChevronUp, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -22,6 +22,38 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
   const [answeringId, setAnsweringId] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [expandedQ, setExpandedQ] = useState<Set<string>>(new Set());
+
+  // The hook orders questions by upvote_count desc, so questions[0] is the
+  // same "top question" the .md QAPage JSON-LD picks. Auto-expand it (and
+  // honour a deep link to #qa-<id>) so the accepted answer is visible by
+  // default, matching what AI crawlers see in the JSON-LD block.
+  const topQuestionId = questions[0]?.id as string | undefined;
+  useEffect(() => {
+    if (!topQuestionId) return;
+    setExpandedQ((prev) => {
+      if (prev.has(topQuestionId)) return prev;
+      const next = new Set(prev);
+      next.add(topQuestionId);
+      return next;
+    });
+  }, [topQuestionId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash?.startsWith("#qa-")) return;
+    const id = hash.slice(4);
+    setExpandedQ((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    // Defer scroll until the card has rendered.
+    requestAnimationFrame(() => {
+      document.getElementById(`qa-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [questions.length]);
 
   const toggleExpand = (id: string) => {
     setExpandedQ((prev) => {
@@ -88,9 +120,17 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
           const qAnswers = answers(q.id);
           const isExpanded = expandedQ.has(q.id);
           const hasVoted = userVotes.includes(q.id);
+          const isTopQuestion = q.id === topQuestionId && qAnswers.length > 0;
 
           return (
-            <div key={q.id} className="glass-card p-6 space-y-4">
+            <div
+              key={q.id}
+              id={`qa-${q.id}`}
+              className={cn(
+                "glass-card p-6 space-y-4 scroll-mt-24",
+                isTopQuestion && "ring-1 ring-primary/30"
+              )}
+            >
               {/* Question header */}
               <div className="flex items-start gap-3">
                 <Button
@@ -107,6 +147,14 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                   <span className="text-xs font-bold">{q.upvote_count}</span>
                 </Button>
                 <div className="flex-1 min-w-0">
+                  {isTopQuestion && (
+                    <Badge
+                      className="mb-2 bg-primary/10 text-primary border-0 text-[10px] px-2 py-0.5 gap-1"
+                      title="Highest-voted question — featured in this page's QAPage structured data."
+                    >
+                      <Sparkles className="h-2.5 w-2.5" /> Top question
+                    </Badge>
+                  )}
                   <p className="text-foreground font-medium leading-relaxed">{q.body}</p>
                   <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                     <span className="font-semibold text-foreground">{q.profiles?.name || "User"}</span>
@@ -120,6 +168,7 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                   </div>
                 </div>
               </div>
+
 
               {/* Answers toggle */}
               <div className="flex items-center gap-2">
@@ -156,10 +205,19 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                     className="overflow-hidden"
                   >
                     <div className="ml-10 space-y-3 pt-2 border-t border-border/50">
-                      {qAnswers.map((a: any) => {
+                      {qAnswers.map((a: any, idx: number) => {
                         const aHasVoted = userVotes.includes(a.id);
+                        // First answer = highest upvotes (hook ordering) =
+                        // `acceptedAnswer` in the QAPage JSON-LD block.
+                        const isAccepted = idx === 0;
                         return (
-                          <div key={a.id} className="flex items-start gap-3 py-2">
+                          <div
+                            key={a.id}
+                            className={cn(
+                              "flex items-start gap-3 py-2",
+                              isAccepted && "rounded-xl bg-primary/5 px-3 -mx-3"
+                            )}
+                          >
                             <Button
                               variant="ghost"
                               size="sm"
@@ -174,7 +232,15 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                               <span className="text-[10px] font-bold">{a.upvote_count}</span>
                             </Button>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-1">
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                {isAccepted && (
+                                  <Badge
+                                    className="bg-primary/15 text-primary border-0 text-[10px] px-1.5 py-0 gap-0.5"
+                                    title="Highest-voted answer — surfaced as acceptedAnswer in this page's QAPage JSON-LD."
+                                  >
+                                    <CheckCircle2 className="h-2.5 w-2.5" /> Accepted answer
+                                  </Badge>
+                                )}
                                 <span className="text-xs font-semibold text-foreground">{a.profiles?.name || "User"}</span>
                                 {a.is_vendor_answer && (
                                   <Badge className="bg-primary/10 text-primary border-0 text-[10px] px-1.5 py-0 gap-0.5">

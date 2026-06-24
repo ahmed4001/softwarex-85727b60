@@ -38,22 +38,26 @@ export function useProductQA(productId: string | undefined) {
   const { data: allAnswers = [] } = useQuery({
     queryKey: ["product-qa-answers", questionIds],
     queryFn: async () => {
+      // Order by upvote_count desc so the first answer rendered under each
+      // question matches the `acceptedAnswer` emitted in QAPage JSON-LD
+      // (both here and in scripts/generate-product-md.ts).
       const { data } = await supabase
         .from("review_qa")
         .select("*")
         .in("parent_id", questionIds)
         .eq("status", "active")
+        .order("upvote_count", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: true });
-      
+
       if (!data || data.length === 0) return [];
-      
+
       const userIds = [...new Set(data.map((a) => a.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, name, avatar_url")
         .in("user_id", userIds);
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      
+
       return data.map((a) => ({ ...a, profiles: profileMap.get(a.user_id) || null })) as any[];
     },
     enabled: questionIds.length > 0,
