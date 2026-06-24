@@ -201,83 +201,130 @@ export default function VendorDashboard() {
       {!user ? (
         <VendorDashboardSkeleton />
       ) : (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+      <div
+        className="relative rounded-lg overflow-hidden -mx-2 sm:mx-0"
+        style={{ background: NAVY, color: "#e8e8ff" }}
+      >
+        {/* Ambient glow */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none opacity-60"
+          style={{
+            background: `radial-gradient(800px 300px at 80% -10%, ${ACCENT}26, transparent 60%), radial-gradient(600px 300px at 0% 100%, ${ACCENT}1a, transparent 60%)`,
+          }}
+        />
+        {/* Grid backdrop */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(${ACCENT_GLOW} 1px, transparent 1px), linear-gradient(90deg, ${ACCENT_GLOW} 1px, transparent 1px)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative space-y-8 p-4 md:p-8">
+        {/* Status bar */}
+        <div
+          className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border font-mono text-[11px] uppercase tracking-[0.2em]"
+          style={{ background: PANEL_HI, borderColor: BORDER, color: ACCENT_GLOW }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping" style={{ background: "#4ade80" }} />
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#4ade80" }} />
+            </span>
+            <span>SYS // VENDOR.OPS</span>
+            <span className="hidden sm:inline opacity-60">/ NODE 01 / LIVE</span>
+          </div>
+          <div className="hidden md:flex items-center gap-3 opacity-70">
+            <Radio className="h-3 w-3" />
+            <span>{new Date().toISOString().slice(0,16).replace("T"," ")}Z</span>
+          </div>
+        </div>
+
         {/* Page header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-6 border-b border-border/60">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-6 border-b" style={{ borderColor: BORDER }}>
           <div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Vendor Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">Overview of your products, reviews, and performance.</p>
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-indigo-300/60 mb-2">// CONTROL ROOM</div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-indigo-50 leading-tight">Vendor Command</h1>
+            <p className="text-sm text-indigo-300/70 mt-1 font-mono">Live telemetry across your products, reviews, and signal.</p>
           </div>
           {claims.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <Link to="/vendor/reviews"><Button variant="outline" size="sm" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Reviews</Button></Link>
-              <Link to="/vendor/analytics"><Button variant="outline" size="sm" className="gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Analytics</Button></Link>
-              <Link to="/vendor/claim"><Button size="sm" className="gap-1.5"><Package className="h-3.5 w-3.5" />Claim product</Button></Link>
+              <Link to="/vendor/reviews"><Button variant="outline" size="sm" className="gap-1.5 border-indigo-700/60 bg-indigo-950/40 text-indigo-100 hover:bg-indigo-900/60 hover:text-white font-mono text-xs uppercase tracking-wider"><MessageSquare className="h-3.5 w-3.5" />Reviews</Button></Link>
+              <Link to="/vendor/analytics"><Button variant="outline" size="sm" className="gap-1.5 border-indigo-700/60 bg-indigo-950/40 text-indigo-100 hover:bg-indigo-900/60 hover:text-white font-mono text-xs uppercase tracking-wider"><BarChart3 className="h-3.5 w-3.5" />Analytics</Button></Link>
+              <Link to="/vendor/claim"><Button size="sm" className="gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs uppercase tracking-wider shadow-[0_0_20px_-4px_#4f46e5]"><Package className="h-3.5 w-3.5" />Claim</Button></Link>
             </div>
           )}
         </div>
 
         {claims.length === 0 ? (
-          <div className="glass-card p-12 text-center">
-            <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-foreground mb-2">No claimed products yet</h2>
-            <p className="text-sm text-muted-foreground mb-4">Claim your product listing to respond to reviews and view analytics.</p>
-            <Link to="/vendor/claim"><Button>Claim a Product</Button></Link>
-          </div>
+          <CommandPanel className="p-12 text-center">
+            <Package className="h-12 w-12 text-indigo-400/40 mx-auto mb-4" />
+            <h2 className="text-lg font-mono uppercase tracking-wider text-indigo-100 mb-2">No claimed products</h2>
+            <p className="text-sm text-indigo-300/70 mb-4 font-mono">// Claim a product to begin transmission.</p>
+            <Link to="/vendor/claim"><Button className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono uppercase tracking-wider">Claim a Product</Button></Link>
+          </CommandPanel>
         ) : (
           <>
             {/* KPIs */}
             <section>
-              <SectionHeader icon={LayoutGrid} title="At a glance" description="Headline metrics across all claimed products." />
+              <SectionHeader icon={LayoutGrid} title="Telemetry" description="headline metrics — all claimed products" />
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-                <StatCard title="Products" value={claims.length} icon={Package} />
-                <StatCard title="Total Views" value={totalViews.toLocaleString()} icon={Eye} />
-                <StatCard title="Clicks" value={totalClicks.toLocaleString()} icon={TrendingUp} />
-                <StatCard title="Avg Rating" value={avgRating} icon={Star} />
-                <StatCard title="Unanswered" value={unanswered} icon={MessageSquare} />
+                <CommandStat title="Products" value={claims.length} icon={Package} />
+                <CommandStat title="Views" value={totalViews.toLocaleString()} icon={Eye} />
+                <CommandStat title="Clicks" value={totalClicks.toLocaleString()} icon={TrendingUp} />
+                <CommandStat title="Avg Rating" value={avgRating} icon={Star} accent />
+                <CommandStat title="Unanswered" value={unanswered} icon={MessageSquare} accent={unanswered > 0} />
               </div>
             </section>
 
             {/* Performance tabs */}
             <section>
-              <SectionHeader icon={BarChart3} title="Performance" description="Review trends, response health, and competitor benchmarks." />
+              <SectionHeader icon={Activity} title="Performance" description="trends, response, benchmark" />
               <Tabs defaultValue="trend" className="w-full">
-                <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
-                  <TabsTrigger value="trend">Review trend</TabsTrigger>
-                  <TabsTrigger value="response">Response</TabsTrigger>
-                  <TabsTrigger value="benchmark">Benchmark</TabsTrigger>
+                <TabsList
+                  className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex p-1 rounded-md border h-auto"
+                  style={{ background: PANEL_HI, borderColor: BORDER }}
+                >
+                  <TabsTrigger value="trend" className="font-mono text-[11px] uppercase tracking-wider data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-indigo-200">Trend</TabsTrigger>
+                  <TabsTrigger value="response" className="font-mono text-[11px] uppercase tracking-wider data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-indigo-200">Response</TabsTrigger>
+                  <TabsTrigger value="benchmark" className="font-mono text-[11px] uppercase tracking-wider data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-indigo-200">Benchmark</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="trend" className="mt-4">
                   {reviews.length > 0 ? (
-                    <div className="glass-card p-4 md:p-6">
+                    <CommandPanel label="Review.flux / 12mo" className="p-4 md:p-6 pt-6">
                       <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={chartData}>
                             <defs>
                               <linearGradient id="vendorGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                <stop offset="5%" stopColor={ACCENT_GLOW} stopOpacity={0.5} />
+                                <stop offset="95%" stopColor={ACCENT_GLOW} stopOpacity={0} />
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                            <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                            <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                            <CartesianGrid strokeDasharray="2 4" stroke={BORDER} />
+                            <XAxis dataKey="month" tick={{ fill: "#a5b4fc", fontSize: 10, fontFamily: "monospace" }} stroke={BORDER} />
+                            <YAxis tick={{ fill: "#a5b4fc", fontSize: 10, fontFamily: "monospace" }} stroke={BORDER} />
                             <Tooltip
                               contentStyle={{
-                                backgroundColor: "hsl(var(--card))",
-                                border: "1px solid hsl(var(--border))",
-                                borderRadius: "12px",
-                                fontSize: "12px",
+                                backgroundColor: PANEL_HI,
+                                border: `1px solid ${BORDER}`,
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontFamily: "monospace",
+                                color: "#e8e8ff",
                               }}
                             />
-                            <Area type="monotone" dataKey="reviews" stroke="hsl(var(--primary))" fill="url(#vendorGrad)" strokeWidth={2} />
+                            <Area type="monotone" dataKey="reviews" stroke={ACCENT_GLOW} fill="url(#vendorGrad)" strokeWidth={2} />
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
-                    </div>
+                    </CommandPanel>
                   ) : (
-                    <div className="glass-card p-8 text-center text-sm text-muted-foreground">No review data yet for the last 12 months.</div>
+                    <CommandPanel className="p-8 text-center text-sm text-indigo-300/60 font-mono">// no signal — past 12 months</CommandPanel>
                   )}
                 </TabsContent>
 
@@ -295,27 +342,35 @@ export default function VendorDashboard() {
             <section>
               <SectionHeader
                 icon={Users}
-                title="Your products"
-                description={`${claims.length} claimed product${claims.length === 1 ? "" : "s"}`}
+                title="Assets"
+                description={`${claims.length} claimed unit${claims.length === 1 ? "" : "s"}`}
                 action={
                   <Link to="/vendor/products" className="hidden sm:block">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs">Manage all<ExternalLink className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="sm" className="gap-1 text-[11px] font-mono uppercase tracking-wider text-indigo-300 hover:text-white hover:bg-indigo-900/50">Manage<ExternalLink className="h-3 w-3" /></Button>
                   </Link>
                 }
               />
               <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
-                {claims.map((c: any) => (
-                  <div key={c.id} className="glass-card p-4 md:p-5 flex items-center gap-4 hover:border-primary/40 transition-colors">
-                    <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {claims.map((c: any, i: number) => (
+                  <div
+                    key={c.id}
+                    className="relative rounded-md border p-4 md:p-5 flex items-center gap-4 transition-all hover:border-indigo-500/80 hover:shadow-[0_0_24px_-6px_#4f46e5]"
+                    style={{ background: PANEL, borderColor: BORDER }}
+                  >
+                    <div className="absolute top-2 right-2 text-[9px] font-mono text-indigo-400/40 tracking-wider">#{String(i + 1).padStart(3, "0")}</div>
+                    <div
+                      className="h-12 w-12 rounded-sm flex items-center justify-center flex-shrink-0 overflow-hidden border"
+                      style={{ background: PANEL_HI, borderColor: BORDER }}
+                    >
                       {c.products?.logo_url ? (
                         <img src={c.products.logo_url} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <Package className="h-5 w-5 text-muted-foreground" />
+                        <Package className="h-5 w-5 text-indigo-400/60" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{c.products?.name}</h3>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                      <h3 className="font-semibold text-indigo-50 truncate">{c.products?.name}</h3>
+                      <div className="flex items-center gap-3 text-[11px] text-indigo-300/70 mt-1 font-mono tabular-nums">
                         <span className="flex items-center gap-1"><Star className="h-3 w-3" />{c.products?.avg_rating || 0}</span>
                         <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{c.products?.total_reviews || 0}</span>
                         <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{c.products?.view_count || 0}</span>
@@ -323,10 +378,10 @@ export default function VendorDashboard() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Link to={`/vendor/products/${c.products?.id}/edit`} aria-label="Edit product">
-                        <Button variant="ghost" size="sm" className="gap-1"><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" className="text-indigo-200 hover:text-white hover:bg-indigo-900/60"><Pencil className="h-3.5 w-3.5" /></Button>
                       </Link>
                       <Link to={`/product/${c.products?.slug}`}>
-                        <Button variant="outline" size="sm">View</Button>
+                        <Button variant="outline" size="sm" className="border-indigo-700/60 bg-indigo-950/40 text-indigo-100 hover:bg-indigo-900/60 hover:text-white font-mono text-xs uppercase tracking-wider">View</Button>
                       </Link>
                     </div>
                   </div>
@@ -336,6 +391,7 @@ export default function VendorDashboard() {
           </>
         )}
       </motion.div>
+      </div>
       )}
     </>
   );
