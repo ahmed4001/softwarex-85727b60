@@ -143,8 +143,13 @@ try {
 }
 
 const presentLayers = layers.filter((p) => fs.existsSync(p));
+const rowsSummary =
+  thresholds.mean_rows !== undefined || thresholds.max_rows !== undefined
+    ? ` rows: mean≤${thresholds.mean_rows ?? "∞"} max≤${thresholds.max_rows ?? "∞"}`
+    : "";
 console.log(
   `▶ thresholds [${thresholds.envKey}] mean≤${thresholds.mean_ms}ms max≤${thresholds.max_ms}ms` +
+    rowsSummary +
     (thresholds.queries.length ? ` (+${thresholds.queries.length} per-query rules)` : "") +
     ` (layers: ${presentLayers.join(" → ")})` +
     (maxChangePct ? ` [max ±${maxChangePct}%/run]` : ""),
@@ -164,6 +169,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     body: JSON.stringify({
       mean_ms: thresholds.mean_ms,
       max_ms: thresholds.max_ms,
+      mean_rows: thresholds.mean_rows,
+      max_rows: thresholds.max_rows,
       queries: thresholds.queries,
     }),
   });
