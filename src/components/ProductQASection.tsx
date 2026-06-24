@@ -32,6 +32,13 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
   const [answerText, setAnswerText] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedQ, setExpandedQ] = useState<Set<string>>(new Set());
+  // Snapshot the initial hash so we can distinguish a real deep-link arrival
+  // (user landed with #qa-<id>) from later in-app updates (Copy link button
+  // mutates the hash via replaceState).
+  const initialHashRef = useRef<string>(
+    typeof window !== "undefined" ? window.location.hash : ""
+  );
+  const deeplinkTrackedRef = useRef(false);
 
   // The hook orders questions by upvote_count desc, so questions[0] is the
   // same "top question" the .md QAPage JSON-LD picks. Auto-expand it (and
