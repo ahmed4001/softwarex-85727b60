@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { MobileFilterDrawer, FilterSection, FilterOptionList } from "@/components/MobileFilterDrawer";
+
 
 
 type Deal = {
