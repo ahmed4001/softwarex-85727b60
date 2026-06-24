@@ -162,6 +162,12 @@ export function SeoHead({
       {/* Canonical (self-referencing by default) */}
       {resolvedCanonical && <link rel="canonical" href={resolvedCanonical} />}
 
+      {/* hreflang — self + x-default so multilingual crawlers know this
+          page is the canonical English representation. i18n routing is
+          query-string based today; the canonical URL is the x-default. */}
+      {resolvedCanonical && <link rel="alternate" hrefLang={lang || "en"} href={resolvedCanonical} />}
+      {resolvedCanonical && <link rel="alternate" hrefLang="x-default" href={resolvedCanonical} />}
+
       {/* Markdown alternate — AI crawlers prefer .md over rendered HTML. */}
       {markdownUrl && (
         <link
