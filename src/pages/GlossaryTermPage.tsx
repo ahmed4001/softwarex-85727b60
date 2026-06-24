@@ -129,6 +129,7 @@ export default function GlossaryTermPage() {
             entitySlug={slug}
             context={{ name: term.term, description: term.definition, category: term.category || undefined }}
             title={`FAQs about ${term.term}`}
+            pageUrl={`https://reviewhunts.com/glossary/${slug}`}
           />
           <HelpfulVote pagePath={`/glossary/${slug}`} />
         </motion.div>
