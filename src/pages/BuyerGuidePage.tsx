@@ -82,7 +82,7 @@ export default function BuyerGuidePage() {
       <main className="container py-8 md:py-12 max-w-2xl">
         <Breadcrumbs
           items={[
-            { label: "Buyer Guides", href: "/buyer-guides" },
+            { label: "Buyer Guides", href: "/guides" },
             ...((guide as any)?.categories?.name
               ? [{ label: (guide as any).categories.name, href: `/category/${(guide as any).categories.slug}` }]
               : []),
