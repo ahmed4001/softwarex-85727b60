@@ -56,7 +56,10 @@ Allow: /
 User-agent: Amazonbot
 Allow: /
 
-User-agent: meta-externalagent
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
 Allow: /
 
 User-agent: CCBot
@@ -65,10 +68,22 @@ Allow: /
 User-agent: cohere-ai
 Allow: /
 
+User-agent: cohere-training-data-crawler
+Allow: /
+
 User-agent: DuckAssistBot
 Allow: /
 
 User-agent: YouBot
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Timpibot
 Allow: /
 
 Sitemap: https://reviewhunts.com/sitemap.xml
