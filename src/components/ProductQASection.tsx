@@ -205,10 +205,19 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                     className="overflow-hidden"
                   >
                     <div className="ml-10 space-y-3 pt-2 border-t border-border/50">
-                      {qAnswers.map((a: any) => {
+                      {qAnswers.map((a: any, idx: number) => {
                         const aHasVoted = userVotes.includes(a.id);
+                        // First answer = highest upvotes (hook ordering) =
+                        // `acceptedAnswer` in the QAPage JSON-LD block.
+                        const isAccepted = idx === 0;
                         return (
-                          <div key={a.id} className="flex items-start gap-3 py-2">
+                          <div
+                            key={a.id}
+                            className={cn(
+                              "flex items-start gap-3 py-2",
+                              isAccepted && "rounded-xl bg-primary/5 px-3 -mx-3"
+                            )}
+                          >
                             <Button
                               variant="ghost"
                               size="sm"
@@ -223,7 +232,15 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                               <span className="text-[10px] font-bold">{a.upvote_count}</span>
                             </Button>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-1">
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                {isAccepted && (
+                                  <Badge
+                                    className="bg-primary/15 text-primary border-0 text-[10px] px-1.5 py-0 gap-0.5"
+                                    title="Highest-voted answer — surfaced as acceptedAnswer in this page's QAPage JSON-LD."
+                                  >
+                                    <CheckCircle2 className="h-2.5 w-2.5" /> Accepted answer
+                                  </Badge>
+                                )}
                                 <span className="text-xs font-semibold text-foreground">{a.profiles?.name || "User"}</span>
                                 {a.is_vendor_answer && (
                                   <Badge className="bg-primary/10 text-primary border-0 text-[10px] px-1.5 py-0 gap-0.5">
