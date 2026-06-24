@@ -78,6 +78,41 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
     setAnsweringId(null);
   };
 
+  // Build a shareable URL using the same `#qa-<id>` anchor that the QAPage
+  // JSON-LD references and that the hash-watcher above expands/scrolls to.
+  const copyLink = async (questionId: string) => {
+    const base =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${window.location.pathname}`
+        : "";
+    const link = `${base}#qa-${questionId}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      // Reflect the new hash so a reload from here also auto-expands/scrolls.
+      if (typeof window !== "undefined" && window.history?.replaceState) {
+        window.history.replaceState(null, "", `#qa-${questionId}`);
+      }
+      setCopiedId(questionId);
+      toast.success("Link copied", {
+        description: "Reopen it to jump straight to this question.",
+      });
+      setTimeout(() => setCopiedId((c) => (c === questionId ? null : c)), 1800);
+    } catch {
+      toast.error("Could not copy link", { description: link });
+    }
+  };
+
   if (isLoading) {
     return <div className="text-center py-12 text-muted-foreground">Loading questions...</div>;
   }
