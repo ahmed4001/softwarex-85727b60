@@ -71,7 +71,8 @@ async function main() {
   const [products, categories, posts, comparisons, pages, guides, lists, glossary, landing, discussions] =
     await Promise.all([
       // Quality filter: must have description (skip thin pages Google would mark "Crawled - not indexed")
-      fetchTable("products", "slug,updated_at,description", "&is_active=eq.true"),
+      // Quality filter: must have description, real website, and at least 1 review (avoids "Crawled - not indexed")
+      fetchTable("products", "slug,updated_at,description,website_url,total_reviews,info_score", "&is_active=eq.true&info_score=gte.4&total_reviews=gte.1"),
       fetchTable("categories", "slug,updated_at,description", "&is_active=eq.true"),
       fetchTable("blog_posts", "slug,updated_at", "&status=eq.published"),
       fetchTable("comparisons", "slug,created_at", "&is_published=eq.true"),
