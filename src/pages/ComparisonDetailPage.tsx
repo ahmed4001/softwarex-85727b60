@@ -82,10 +82,10 @@ export default function ComparisonDetailPage() {
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": comparison.seo_title || comparison.title || `${productA.name} vs ${productB.name}`,
-      "description": comparison.seo_description || comparison.summary?.substring(0, 160) || `Compare ${productA.name} and ${productB.name}`,
+      "description": comparison.seo_description || comparison.summary || `Compare ${productA.name} and ${productB.name}`,
       "url": `https://reviewhunts.com/compare/${slug}`,
       ...(comparisonCreatedAtIso && { "datePublished": comparisonCreatedAtIso }),
-      ...(comparisonUpdatedAtIso && { "dateModified": comparisonUpdatedAtIso }),
+      "dateModified": comparisonUpdatedAtIso || comparisonCreatedAtIso || new Date().toISOString(),
       "mainEntity": {
         "@type": "ItemList",
         "numberOfItems": 2,
