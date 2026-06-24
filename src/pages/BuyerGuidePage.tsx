@@ -223,6 +223,7 @@ export default function BuyerGuidePage() {
               category: (guide as any)?.categories?.name,
             }}
             title="Frequently asked questions"
+            pageUrl={`https://reviewhunts.com/guides/${slug}`}
           />
           <HelpfulVote pagePath={`/guides/${slug}`} />
         </motion.div>
