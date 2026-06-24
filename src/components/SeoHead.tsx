@@ -1,6 +1,8 @@
 import { Helmet } from "react-helmet-async";
 import { useSeoSettings } from "@/hooks/useSeoSettings";
 import { validateJsonLd } from "@/lib/jsonLdValidator";
+import { hasMarkdownAlternate } from "@/generated/md-manifest";
+
 
 interface SeoHeadProps {
   title: string;
@@ -168,8 +170,10 @@ export function SeoHead({
       {resolvedCanonical && <link rel="alternate" hrefLang={lang || "en"} href={resolvedCanonical} />}
       {resolvedCanonical && <link rel="alternate" hrefLang="x-default" href={resolvedCanonical} />}
 
-      {/* Markdown alternate — AI crawlers prefer .md over rendered HTML. */}
-      {markdownUrl && (
+      {/* Markdown alternate — AI crawlers prefer .md over rendered HTML.
+          Gated on the build-time manifest so we never advertise a .md URL
+          that hasn't been generated yet (would otherwise 404 for crawlers). */}
+      {markdownUrl && hasMarkdownAlternate(markdownUrl) && (
         <link
           rel="alternate"
           type="text/markdown"
@@ -181,6 +185,7 @@ export function SeoHead({
           title="Markdown version (AI-friendly)"
         />
       )}
+
 
       {/* JSON-LD Structured Data */}
       {jsonLdArray.map((ld, i) => (
