@@ -109,8 +109,17 @@ export default function GlossaryTermPage() {
               </div>
             </div>
           )}
+
+          <AIFaqBlock
+            entityType="glossary"
+            entitySlug={slug}
+            context={{ name: term.term, description: term.definition, category: term.category || undefined }}
+            title={`FAQs about ${term.term}`}
+          />
+          <HelpfulVote pagePath={`/glossary/${slug}`} />
         </motion.div>
       </main>
+
     </>
   );
 }
