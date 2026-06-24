@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS idx_products_active_avg_rating ON public.products (is_active, avg_rating DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_products_active_total_reviews ON public.products (is_active, total_reviews DESC NULLS LAST);
