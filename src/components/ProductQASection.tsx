@@ -10,7 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ln as trackEvent } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 // Derive `<slug>` from a `/product/<slug>` pathname for analytics tagging.
 function getProductSlugFromPath(): string {
