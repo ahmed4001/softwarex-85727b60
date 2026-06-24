@@ -51,12 +51,33 @@ export default function GlossaryTermPage() {
           {
             "@context": "https://schema.org",
             "@type": "DefinedTerm",
+            "@id": `https://reviewhunts.com/glossary/${slug}#term`,
             "name": term.term,
+            "termCode": slug,
             "description": term.definition,
             "url": `https://reviewhunts.com/glossary/${slug}`,
+            "identifier": slug,
+            ...((term as any).alternate_names && Array.isArray((term as any).alternate_names) && (term as any).alternate_names.length > 0 && {
+              "alternateName": (term as any).alternate_names,
+            }),
+            "sameAs": [
+              `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(term.term)}`,
+              `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(term.term)}`,
+            ],
             ...((term as any).created_at && { "datePublished": new Date((term as any).created_at).toISOString() }),
             ...((term as any).updated_at && { "dateModified": new Date((term as any).updated_at).toISOString() }),
-            ...(term.category && { "inDefinedTermSet": { "@type": "DefinedTermSet", "name": `${term.category} Glossary` } })
+            "inDefinedTermSet": {
+              "@type": "DefinedTermSet",
+              "@id": "https://reviewhunts.com/glossary#set",
+              "name": "ReviewHunts SaaS Glossary",
+              "url": "https://reviewhunts.com/glossary",
+            },
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "ReviewHunts",
+              "url": "https://reviewhunts.com",
+            },
+            "publisher": { "@type": "Organization", "name": "ReviewHunts", "url": "https://reviewhunts.com" },
           },
           {
             "@context": "https://schema.org",
