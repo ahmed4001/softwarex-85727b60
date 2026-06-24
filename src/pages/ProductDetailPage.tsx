@@ -560,7 +560,7 @@ export default function ProductDetailPage() {
 
           <TabsContent value="overview" className="space-y-6">
             {product.description && (
-              <div className="glass-card p-8">
+              <div id="product-overview" className="glass-card p-8 product-summary">
                 <h2 className="text-xl font-display font-bold mb-4">{t("productDetail.about", { name: product.name })}</h2>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{product.description}</p>
               </div>
