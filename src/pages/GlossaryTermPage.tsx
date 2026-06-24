@@ -5,6 +5,11 @@ import { SeoHead } from "@/components/SeoHead";
 import { motion } from "framer-motion";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function GlossaryTermPage() {
   const { slug } = useParams<{ slug: string }>();
