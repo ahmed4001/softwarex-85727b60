@@ -92,11 +92,43 @@ export default function GlossaryTermPage() {
 
           <AnswerBlock label="Definition">{term.definition}</AnswerBlock>
 
-          <div className="glass-card p-6 mb-6">
-            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Definition</h2>
-            <p className="text-foreground leading-relaxed">{term.definition}</p>
-            <FreshnessBadge updatedAt={(term as any).updated_at} contentForReadingTime={`${term.definition || ""} ${(term as any).extended_description || ""}`} />
-          </div>
+          {/* Definition box — AEO-optimized. First sentence is bolded so
+              extractive AI engines (AI Overviews, Perplexity) quote it as the
+              canonical definition. DefinedTerm JSON-LD is emitted in <head>. */}
+          {(() => {
+            const fullDef = String(term.definition || "");
+            const match = fullDef.match(/^([^.!?]+[.!?])\s*(.*)$/s);
+            const firstSentence = match ? match[1].trim() : fullDef;
+            const rest = match ? match[2].trim() : "";
+            return (
+              <article
+                itemScope
+                itemType="https://schema.org/DefinedTerm"
+                className="glass-card p-6 mb-6 border-l-4 border-l-primary"
+                aria-labelledby="definition-heading"
+              >
+                <meta itemProp="name" content={term.term} />
+                <div className="flex items-baseline justify-between gap-3 mb-3">
+                  <h2 id="definition-heading" className="text-sm font-bold text-primary uppercase tracking-wider">
+                    Definition
+                  </h2>
+                  {term.category && (
+                    <span itemProp="inDefinedTermSet" className="text-[11px] font-medium text-muted-foreground">
+                      in {term.category}
+                    </span>
+                  )}
+                </div>
+                <p itemProp="description" className="text-foreground leading-relaxed text-base">
+                  <strong className="font-semibold text-foreground">{firstSentence}</strong>
+                  {rest ? <span className="text-muted-foreground"> {rest}</span> : null}
+                </p>
+                <FreshnessBadge
+                  updatedAt={(term as any).updated_at}
+                  contentForReadingTime={`${term.definition || ""} ${(term as any).extended_description || ""}`}
+                />
+              </article>
+            );
+          })()}
 
           <FactsTable
             title="Key facts"
