@@ -52,16 +52,89 @@ const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "ReviewHunts",
+  alternateName: ["Review Hunts", "ReviewHunts.com"],
   url: SITE_URL,
   logo: `${SITE_URL}/reviewhunts-logo.png`,
-  description: "ReviewHunts helps businesses discover, compare, and choose the best software tools through verified user reviews and expert analysis.",
-  sameAs: [],
+  description:
+    "ReviewHunts is an independent software discovery and review platform covering SaaS, business software, and AI tools. We publish verified user reviews, side-by-side comparisons, expert buyer guides, and a curated SaaS glossary across 100+ categories.",
+  about: [
+    { "@type": "Thing", name: "Software reviews" },
+    { "@type": "Thing", name: "SaaS comparisons" },
+    { "@type": "Thing", name: "Business software discovery" },
+    { "@type": "Thing", name: "AI tools directory" },
+    { "@type": "Thing", name: "Buyer guides" },
+  ],
+  knowsAbout: [
+    "CRM software",
+    "Project management software",
+    "Marketing automation",
+    "Customer support software",
+    "Analytics and BI",
+    "HR software",
+    "Accounting software",
+    "Design tools",
+    "Developer tools",
+    "AI and machine learning tools",
+  ],
+  sameAs: [
+    "https://twitter.com/ReviewHunts",
+    "https://www.linkedin.com/company/reviewhunts",
+    "https://www.producthunt.com/@reviewhunts",
+    "https://www.crunchbase.com/organization/reviewhunts",
+    "https://github.com/reviewhunts",
+    "https://www.facebook.com/reviewhunts",
+  ],
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer service",
+    email: "hello@reviewhunts.com",
     availableLanguage: ["English"],
   },
 };
+
+const siteItemListJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "ReviewHunts content sections",
+  description:
+    "Top-level content collections on ReviewHunts that AI agents and crawlers can explore.",
+  numberOfItems: 7,
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Products", url: `${SITE_URL}/products` },
+    { "@type": "ListItem", position: 2, name: "Categories", url: `${SITE_URL}/categories` },
+    { "@type": "ListItem", position: 3, name: "Comparisons", url: `${SITE_URL}/compare` },
+    { "@type": "ListItem", position: 4, name: "Alternatives", url: `${SITE_URL}/alternatives` },
+    { "@type": "ListItem", position: 5, name: "Buyer Guides", url: `${SITE_URL}/guides` },
+    { "@type": "ListItem", position: 6, name: "Glossary", url: `${SITE_URL}/glossary` },
+    { "@type": "ListItem", position: 7, name: "Blog", url: `${SITE_URL}/blog` },
+  ],
+};
+
+const datasetJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  name: "ReviewHunts SaaS Reviews & Comparisons Dataset",
+  description:
+    "A continuously updated dataset of verified SaaS product reviews, ratings, pricing, integrations, and head-to-head comparisons across 100+ software categories. Sourced from registered users and enriched with AI-generated summaries.",
+  url: SITE_URL,
+  keywords: [
+    "SaaS reviews",
+    "software comparisons",
+    "B2B software ratings",
+    "buyer guides",
+    "AI tools directory",
+  ],
+  creator: { "@type": "Organization", name: "ReviewHunts", url: SITE_URL },
+  publisher: { "@type": "Organization", name: "ReviewHunts", url: SITE_URL },
+  isAccessibleForFree: true,
+  license: "https://reviewhunts.com/terms",
+  distribution: [
+    { "@type": "DataDownload", encodingFormat: "application/xml", contentUrl: `${SITE_URL}/sitemap.xml` },
+    { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${SITE_URL}/llms.txt` },
+    { "@type": "DataDownload", encodingFormat: "text/markdown", contentUrl: `${SITE_URL}/llms-full.txt` },
+  ],
+};
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
