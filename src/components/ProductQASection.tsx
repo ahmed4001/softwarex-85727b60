@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProductQA } from "@/hooks/useProductQA";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, MessageCircle, Send, Trash2, Store, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ThumbsUp, MessageCircle, Send, Trash2, Store, ChevronDown, ChevronUp, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
