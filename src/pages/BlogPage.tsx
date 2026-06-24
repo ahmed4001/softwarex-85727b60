@@ -62,14 +62,28 @@ export default function BlogPage() {
   const debouncedTag = useDebounce(tag, 200);
   const debouncedCategory = useDebounce(category, 200);
 
-  // Keep URL in sync with debounced filter values
+  // Keep URL in sync with debounced filter values. Push (not replace) so
+  // back/forward navigation walks through filter history. The 200ms debounce
+  // coalesces rapid taps into a single history entry.
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
     if (debouncedTag) params.set("tag", debouncedTag); else params.delete("tag");
     if (debouncedCategory) params.set("category", debouncedCategory); else params.delete("category");
-    setSearchParams(params, { replace: true });
+    // Only write if the URL would actually change, otherwise we'd push an
+    // empty history entry on every mount.
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedTag, debouncedCategory]);
+
+  // Sync local state back when the URL changes (browser back/forward).
+  useEffect(() => {
+    if (urlTag !== tag) setTag(urlTag);
+    if (urlCategory !== category) setCategory(urlCategory);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTag, urlCategory]);
+
 
   useEffect(() => {
     trackEvent("blog_view", { variant: filterVariant, is_mobile: isMobile });
