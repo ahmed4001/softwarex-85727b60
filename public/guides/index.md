@@ -1,6 +1,6 @@
 # ReviewHunts — Buyer Guide Markdown Index
 
-Updated: 2026-06-24T08:03:37.589Z
+Updated: 2026-06-24T08:04:14.392Z
 Total: 2 guides
 
 Each entry is a canonical Markdown rendering of the corresponding HTML page.
