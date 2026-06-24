@@ -325,15 +325,27 @@ export default function ProductDetailPage() {
             "@context": "https://schema.org",
             "@type": ["Product", "SoftwareApplication"],
             "name": product.name,
-            "description": product.tagline || product.description?.substring(0, 160),
+            "description": product.description || product.tagline || `${product.name} — software review on ReviewHunts.`,
             "url": `https://reviewhunts.com/product/${product.slug}`,
             "applicationCategory": (product.categories as any)?.name || "BusinessApplication",
             "operatingSystem": "Web",
             ...(product.logo_url && { "image": product.logo_url }),
-            ...(product.website_url && { "installUrl": product.website_url }),
-            ...((product as any).created_at && { "datePublished": new Date((product as any).created_at).toISOString().split("T")[0] }),
-            ...((product as any).updated_at && { "dateModified": new Date((product as any).updated_at).toISOString().split("T")[0] }),
-            "author": { "@type": "Organization", "name": "ReviewHunts" },
+            ...(product.website_url && { "installUrl": product.website_url, "sameAs": [product.website_url] }),
+            "about": {
+              "@type": "Thing",
+              "name": (product.categories as any)?.name || "Software",
+              ...((product.categories as any)?.slug && {
+                "url": `https://reviewhunts.com/category/${(product.categories as any).slug}`,
+              }),
+            },
+            "speakable": {
+              "@type": "SpeakableSpecification",
+              "cssSelector": ["#product-overview", "#product-tagline", ".product-summary"],
+              "xpath": ["/html/head/title", "/html/head/meta[@name='description']/@content"],
+            },
+            "datePublished": new Date((product as any).created_at ?? Date.now()).toISOString().split("T")[0],
+            "dateModified": new Date((product as any).updated_at ?? (product as any).created_at ?? Date.now()).toISOString().split("T")[0],
+            "author": { "@type": "Organization", "name": "ReviewHunts", "url": "https://reviewhunts.com" },
             "publisher": { "@type": "Organization", "name": "ReviewHunts", "url": "https://reviewhunts.com" },
             ...(product.avg_rating && product.total_reviews > 0 && {
               "aggregateRating": {
@@ -349,7 +361,11 @@ export default function ProductDetailPage() {
               "offers": {
                 "@type": "Offer",
                 "price": product.starting_price || 0,
-                "priceCurrency": "USD"
+                "priceCurrency": "USD",
+                "availability": (product as any).is_active === false ? "https://schema.org/Discontinued" : "https://schema.org/InStock",
+                "url": product.website_url || `https://reviewhunts.com/product/${product.slug}`,
+                "priceValidUntil": new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
+                "seller": { "@type": "Organization", "name": product.name, ...(product.website_url && { "url": product.website_url }) }
               }
             }),
             ...((reviews && reviews.length > 0) && {
@@ -359,7 +375,7 @@ export default function ProductDetailPage() {
                 "author": { "@type": "Person", "name": r.profiles?.name || r.author_name || "Verified User" },
                 "datePublished": r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : undefined,
                 "name": r.title || `Review of ${product.name}`,
-                "reviewBody": (r.body || "").slice(0, 500)
+                "reviewBody": r.body || ""
               }))
             })
           },
