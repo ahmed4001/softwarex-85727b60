@@ -155,7 +155,60 @@ export default function CategoryPage() {
             "name": category?.name || t("categories.title"),
             "description": category?.description || t("categories.subtitle"),
             "url": `https://reviewhunts.com/category/${slug}`,
-            ...(totalCount && { "numberOfItems": totalCount })
+            "numberOfItems": totalCount ?? (products?.length ?? 0),
+            ...(category && (category as any).updated_at && {
+              "dateModified": new Date((category as any).updated_at).toISOString().split("T")[0],
+            }),
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "ReviewHunts",
+              "url": "https://reviewhunts.com",
+            },
+            "about": {
+              "@type": "Thing",
+              "name": category?.name ? `${category.name} software` : "Business software",
+            },
+            ...(products && products.length > 0 && {
+              "mainEntity": {
+                "@type": "ItemList",
+                "name": category?.name ? `Best ${category.name} software` : "Top software",
+                "numberOfItems": products.length,
+                "itemListOrder": "https://schema.org/ItemListOrderDescending",
+                "itemListElement": products.map((p: any, idx: number) => ({
+                  "@type": "ListItem",
+                  "position": idx + 1,
+                  "url": `https://reviewhunts.com/product/${p.slug}`,
+                  "item": {
+                    "@type": ["Product", "SoftwareApplication"],
+                    "name": p.name,
+                    "url": `https://reviewhunts.com/product/${p.slug}`,
+                    "applicationCategory": (p.categories as any)?.name || category?.name || "BusinessApplication",
+                    "operatingSystem": "Web",
+                    ...(p.logo_url && { "image": p.logo_url }),
+                    ...(p.tagline && { "description": p.tagline }),
+                    ...(p.avg_rating && p.total_reviews > 0 && {
+                      "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": Number(p.avg_rating).toFixed(1),
+                        "bestRating": "5",
+                        "worstRating": "1",
+                        "ratingCount": p.total_reviews,
+                        "reviewCount": p.total_reviews,
+                      },
+                    }),
+                    ...(p.starting_price !== null && p.starting_price !== undefined && {
+                      "offers": {
+                        "@type": "Offer",
+                        "price": p.starting_price || 0,
+                        "priceCurrency": "USD",
+                        "availability": "https://schema.org/InStock",
+                        "url": `https://reviewhunts.com/product/${p.slug}`,
+                      },
+                    }),
+                  },
+                })),
+              },
+            }),
           },
           {
             "@context": "https://schema.org",
