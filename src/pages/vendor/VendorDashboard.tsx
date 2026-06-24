@@ -4,13 +4,31 @@ import { useAuth } from "@/hooks/useAuth";
 import { SeoHead } from "@/components/SeoHead";
 import { StatCard } from "@/components/StatCard";
 import { motion } from "framer-motion";
-import { Package, Star, Eye, MessageSquare, TrendingUp, Pencil } from "lucide-react";
+import { Package, Star, Eye, MessageSquare, TrendingUp, Pencil, BarChart3, Users, LayoutGrid, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
 import { VendorResponseMetrics } from "@/components/vendor/VendorResponseMetrics";
 import { VendorCompetitorBenchmark } from "@/components/vendor/VendorCompetitorBenchmark";
+
+function SectionHeader({ icon: Icon, title, description, action }: { icon: any; title: string; description?: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="flex items-start gap-3 min-w-0">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-base md:text-lg font-display font-bold text-foreground leading-tight">{title}</h2>
+          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
 
 function VendorDashboardSkeleton() {
   return (
