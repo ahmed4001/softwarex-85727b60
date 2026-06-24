@@ -177,6 +177,59 @@ function renderMarkdown(p: ProductRow): string {
     lines.push("");
   }
 
+  // JSON-LD excerpt — fenced code block keeps it valid Markdown while making
+  // structured data trivially extractable for AI agents that ingest .md.
+  const jsonLd: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": ["Product", "SoftwareApplication"],
+    name: p.name,
+    url,
+    applicationCategory: category,
+    operatingSystem: "Web",
+  };
+  if (p.tagline) jsonLd.slogan = p.tagline;
+  if (description) jsonLd.description = description.slice(0, 500);
+  if (p.website_url) jsonLd.sameAs = [p.website_url];
+  if (p.founded_year) jsonLd.dateCreated = String(p.founded_year);
+  if (p.avg_rating != null && p.total_reviews) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: p.avg_rating,
+      reviewCount: p.total_reviews,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+  if (p.starting_price != null || p.pricing_model) {
+    jsonLd.offers = {
+      "@type": "Offer",
+      ...(p.starting_price != null && {
+        price: p.starting_price,
+        priceCurrency: "USD",
+      }),
+      ...(p.pricing_model && { category: p.pricing_model }),
+      url: p.website_url || url,
+    };
+  }
+  if (p.categories?.slug) {
+    jsonLd.about = {
+      "@type": "Thing",
+      name: category,
+      url: `${BASE_URL}/category/${p.categories.slug}`,
+    };
+  }
+
+  lines.push("## Structured Data (JSON-LD)");
+  lines.push("");
+  lines.push(
+    "Canonical machine-readable summary for AI extraction. Mirrors the JSON-LD embedded in the HTML page."
+  );
+  lines.push("");
+  lines.push("```json");
+  lines.push(JSON.stringify(jsonLd, null, 2));
+  lines.push("```");
+  lines.push("");
+
   lines.push("---");
   lines.push("");
   lines.push(
