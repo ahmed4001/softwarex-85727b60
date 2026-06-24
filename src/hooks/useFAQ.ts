@@ -24,6 +24,12 @@ interface UseFAQResult {
   loading: boolean;
   error: string | null;
   cached: boolean;
+  /** "ai" | "manual" — drives E-E-A-T signals in FAQPage JSON-LD. */
+  source: string | null;
+  /** True if an admin edited this cache row. */
+  isEdited: boolean;
+  /** Display name of the editor (if exposed by the row). */
+  editedByName: string | null;
 }
 
 /**
@@ -35,6 +41,9 @@ export function useFAQ({ entityType, entitySlug, context, enabled = true }: UseF
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
+  const [source, setSource] = useState<string | null>(null);
+  const [isEdited, setIsEdited] = useState(false);
+  const [editedByName, setEditedByName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!enabled || !entitySlug || !context?.name) return;
@@ -47,13 +56,16 @@ export function useFAQ({ entityType, entitySlug, context, enabled = true }: UseF
         // 1. Cheap direct cache read
         const { data: row } = await (supabase
           .from("faq_cache" as any)
-          .select("items, source")
+          .select("items, source, is_edited, edited_by")
           .eq("entity_type", entityType)
           .eq("entity_slug", entitySlug)
           .maybeSingle() as any);
 
         if (!cancelled && row?.items && Array.isArray(row.items) && row.items.length > 0) {
           setItems(row.items as FAQItem[]);
+          setSource(row.source ?? null);
+          setIsEdited(Boolean(row.is_edited));
+          setEditedByName(row.edited_by ?? null);
           setCached(true);
           setLoading(false);
           return;
@@ -74,6 +86,9 @@ export function useFAQ({ entityType, entitySlug, context, enabled = true }: UseF
 
         const generated = (data?.items ?? []) as FAQItem[];
         setItems(generated);
+        setSource(data?.source ?? "ai");
+        setIsEdited(Boolean(data?.is_edited));
+        setEditedByName(data?.edited_by ?? null);
         setCached(Boolean(data?.cached));
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
@@ -88,5 +103,5 @@ export function useFAQ({ entityType, entitySlug, context, enabled = true }: UseF
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, entityType, entitySlug, context?.name]);
 
-  return { items, loading, error, cached };
+  return { items, loading, error, cached, source, isEdited, editedByName };
 }
