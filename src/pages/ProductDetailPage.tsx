@@ -31,6 +31,10 @@ import { ProductWatchButton } from "@/components/ProductWatchButton";
 import { ProductAIChatbot } from "@/components/ProductAIChatbot";
 import { IntegrationGraph } from "@/components/IntegrationGraph";
 import { ProductChangelog } from "@/components/ProductChangelog";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]; productName: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
