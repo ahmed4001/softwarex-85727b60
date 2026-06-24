@@ -31,9 +31,11 @@ export default function CategoryPage() {
   const isAll = slug === "all";
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  // A/B test: legacy (A) vs new mobile-first filter UI (B). Desktop always uses full layout.
+  // Mobile-first filter drawer is the only mobile layout — A/B flag retained
+  // for analytics tagging on existing dashboards but always resolves to B.
   const [filterVariant] = useAbVariant("mobile_filter_v1", ["A", "B"]);
-  const useNewMobileFilters = isMobile && filterVariant === "B";
+  const useNewMobileFilters = isMobile;
+
 
   // Debounce filter inputs so users tapping multiple chips don't fire 5 separate queries.
   const debouncedSort = useDebounce(sort, 200);
@@ -361,29 +363,8 @@ export default function CategoryPage() {
               </div>
             )}
 
-            {/* Mobile filter bar — Variant A (legacy: two compact Selects) */}
-            {isMobile && !useNewMobileFilters && (
-              <div className="lg:hidden flex items-center gap-2 mb-4" data-ab-variant="A">
-                <Select value={tierFilter} onValueChange={handleTierFilterChange}>
-                  <SelectTrigger className="flex-1 rounded-xl h-10 text-sm"><SelectValue placeholder="Sponsor Tier" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    <SelectItem value="gold">🥇 Gold Sponsors</SelectItem>
-                    <SelectItem value="silver">🥈 Silver Sponsors</SelectItem>
-                    <SelectItem value="bronze">🥉 Bronze Sponsors</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sort} onValueChange={handleSortChange}>
-                  <SelectTrigger className="flex-1 rounded-xl h-10 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rating">{t("categoryPage.topRated")}</SelectItem>
-                    <SelectItem value="reviews">{t("categoryPage.mostReviews")}</SelectItem>
-                    <SelectItem value="newest">{t("categoryPage.newest")}</SelectItem>
-                    <SelectItem value="name">{t("categoryPage.az")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* (Mobile filter bar handled above via the drawer; no legacy variant on mobile.) */}
+
 
             {/* Desktop filter row */}
             <div className="hidden lg:flex items-center justify-end gap-2 mb-6">
