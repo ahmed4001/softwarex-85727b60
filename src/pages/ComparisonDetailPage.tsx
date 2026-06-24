@@ -434,6 +434,7 @@ export default function ComparisonDetailPage() {
             category: (productA as any).categories?.name,
           }}
           title="Frequently asked questions"
+          pageUrl={`https://reviewhunts.com/compare/${slug}`}
         />
         <HelpfulVote pagePath={`/compare/${slug}`} />
       </div>
