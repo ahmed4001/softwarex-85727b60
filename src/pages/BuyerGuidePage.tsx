@@ -10,6 +10,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductLogo } from "@/components/ProductLogo";
 import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function BuyerGuidePage() {
   const { slug } = useParams<{ slug: string }>();
