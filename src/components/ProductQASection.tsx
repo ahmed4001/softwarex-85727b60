@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, MessageCircle, Send, Trash2, Store, ChevronDown, ChevronUp, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import { ThumbsUp, MessageCircle, Send, Trash2, Store, ChevronDown, ChevronUp, Loader2, Sparkles, CheckCircle2, Link2, Check } from "lucide-react";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -21,6 +22,7 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
   const [questionText, setQuestionText] = useState("");
   const [answeringId, setAnsweringId] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedQ, setExpandedQ] = useState<Set<string>>(new Set());
 
   // The hook orders questions by upvote_count desc, so questions[0] is the
@@ -74,6 +76,41 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
     postAnswer.mutate({ questionId, body: answerText, isVendor });
     setAnswerText("");
     setAnsweringId(null);
+  };
+
+  // Build a shareable URL using the same `#qa-<id>` anchor that the QAPage
+  // JSON-LD references and that the hash-watcher above expands/scrolls to.
+  const copyLink = async (questionId: string) => {
+    const base =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${window.location.pathname}`
+        : "";
+    const link = `${base}#qa-${questionId}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      // Reflect the new hash so a reload from here also auto-expands/scrolls.
+      if (typeof window !== "undefined" && window.history?.replaceState) {
+        window.history.replaceState(null, "", `#qa-${questionId}`);
+      }
+      setCopiedId(questionId);
+      toast.success("Link copied", {
+        description: "Reopen it to jump straight to this question.",
+      });
+      setTimeout(() => setCopiedId((c) => (c === questionId ? null : c)), 1800);
+    } catch {
+      toast.error("Could not copy link", { description: link });
+    }
   };
 
   if (isLoading) {
@@ -192,6 +229,26 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                     Answer
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyLink(q.id)}
+                  className="text-xs gap-1.5 rounded-lg ml-auto"
+                  aria-label="Copy link to this question"
+                  title="Copy link to this question"
+                >
+                  {copiedId === q.id ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-3.5 w-3.5" />
+                      Copy link
+                    </>
+                  )}
+                </Button>
               </div>
 
               {/* Answers list */}
