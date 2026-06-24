@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { FeatureMatrix } from "@/components/FeatureMatrix";
 import { TCOCalculator } from "@/components/TCOCalculator";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function ComparisonDetailPage() {
   const { slug } = useParams();
@@ -178,18 +183,23 @@ export default function ComparisonDetailPage() {
       />
 
       <div className="container py-8 max-w-5xl">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-          <Link to="/" className="hover:text-foreground transition-colors">{t("nav.home")}</Link>
-          <span className="opacity-30">/</span>
-          <Link to="/compare" className="hover:text-foreground transition-colors">{t("nav.compare")}</Link>
-          <span className="opacity-30">/</span>
-          <span className="text-foreground font-medium">{productA.name} {t("comparison.vs")} {productB.name}</span>
-        </div>
+        <Breadcrumbs
+          items={[
+            { label: t("nav.compare"), href: "/compare" },
+            { label: `${productA.name} ${t("comparison.vs")} ${productB.name}` },
+          ]}
+        />
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8 mb-8">
-          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground text-center mb-8">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground text-center mb-2">
             {productA.name} {t("comparison.vs")} {productB.name}
           </h1>
+          <FreshnessBadge
+            updatedAt={(comparison as any).updated_at}
+            contentForReadingTime={comparison.summary || comparison.winner_verdict || ""}
+            className="flex items-center justify-center gap-3 text-xs text-muted-foreground mb-6"
+          />
+
 
           <div className="grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
             <div className="text-center">
@@ -396,7 +406,20 @@ export default function ComparisonDetailPage() {
             </Button>
           </Link>
         </div>
+
+        <AIFaqBlock
+          entityType="comparison"
+          entitySlug={slug}
+          context={{
+            name: `${productA.name} vs ${productB.name}`,
+            description: comparison.summary || comparison.winner_verdict || undefined,
+            category: (productA as any).categories?.name,
+          }}
+          title="Frequently asked questions"
+        />
+        <HelpfulVote pagePath={`/compare/${slug}`} />
       </div>
+
     </>
   );
 }

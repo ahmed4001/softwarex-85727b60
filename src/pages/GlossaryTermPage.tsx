@@ -5,6 +5,11 @@ import { SeoHead } from "@/components/SeoHead";
 import { motion } from "framer-motion";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function GlossaryTermPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -62,12 +67,15 @@ export default function GlossaryTermPage() {
       />
       <main className="container py-10 max-w-3xl">
         <Link to="/glossary">
-          <Button variant="ghost" size="sm" className="gap-1.5 mb-6 text-muted-foreground">
+          <Button variant="ghost" size="sm" className="gap-1.5 mb-3 text-muted-foreground">
             <ArrowLeft className="h-4 w-4" /> Back to Glossary
           </Button>
         </Link>
 
+        <Breadcrumbs items={[{ label: "Glossary", href: "/glossary" }, { label: term.term }]} />
+
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+
           <div className="flex items-center gap-3 mb-4">
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <BookOpen className="h-6 w-6 text-primary" />
@@ -81,11 +89,13 @@ export default function GlossaryTermPage() {
           <div className="glass-card p-6 mb-6">
             <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Definition</h2>
             <p className="text-foreground leading-relaxed">{term.definition}</p>
+            <FreshnessBadge updatedAt={(term as any).updated_at} contentForReadingTime={`${term.definition || ""} ${(term as any).extended_description || ""}`} />
           </div>
 
           {term.extended_description && (
             <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: term.extended_description }} />
           )}
+
 
           {relatedTerms.length > 0 && (
             <div>
@@ -99,8 +109,17 @@ export default function GlossaryTermPage() {
               </div>
             </div>
           )}
+
+          <AIFaqBlock
+            entityType="glossary"
+            entitySlug={slug}
+            context={{ name: term.term, description: term.definition, category: term.category || undefined }}
+            title={`FAQs about ${term.term}`}
+          />
+          <HelpfulVote pagePath={`/glossary/${slug}`} />
         </motion.div>
       </main>
+
     </>
   );
 }

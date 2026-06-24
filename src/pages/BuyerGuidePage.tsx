@@ -10,6 +10,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductLogo } from "@/components/ProductLogo";
 import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function BuyerGuidePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -75,6 +80,15 @@ export default function BuyerGuidePage() {
     <>
       <SeoHead title={guide.title} description={guide.description || "Interactive buyer guide"} />
       <main className="container py-8 md:py-12 max-w-2xl">
+        <Breadcrumbs
+          items={[
+            { label: "Buyer Guides", href: "/guides" },
+            ...((guide as any)?.categories?.name
+              ? [{ label: (guide as any).categories.name, href: `/category/${(guide as any).categories.slug}` }]
+              : []),
+            { label: guide.title },
+          ]}
+        />
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-8">
             <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -82,7 +96,9 @@ export default function BuyerGuidePage() {
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">{guide.title}</h1>
             {guide.description && <p className="text-muted-foreground mt-2">{guide.description}</p>}
+            <FreshnessBadge updatedAt={(guide as any).updated_at} contentForReadingTime={guide.description || ""} className="flex items-center justify-center gap-3 text-xs text-muted-foreground mt-3" />
           </div>
+
 
           {/* Progress */}
           {!completed && (
@@ -156,8 +172,21 @@ export default function BuyerGuidePage() {
             excludeGuideSlug={slug}
             title="More guides and resources"
           />
+
+          <AIFaqBlock
+            entityType="guide"
+            entitySlug={slug}
+            context={{
+              name: guide.title,
+              description: guide.description || undefined,
+              category: (guide as any)?.categories?.name,
+            }}
+            title="Frequently asked questions"
+          />
+          <HelpfulVote pagePath={`/guides/${slug}`} />
         </motion.div>
       </main>
+
     </>
   );
 }

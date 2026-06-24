@@ -31,6 +31,10 @@ import { ProductWatchButton } from "@/components/ProductWatchButton";
 import { ProductAIChatbot } from "@/components/ProductAIChatbot";
 import { IntegrationGraph } from "@/components/IntegrationGraph";
 import { ProductChangelog } from "@/components/ProductChangelog";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]; productName: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -387,6 +391,12 @@ export default function ProductDetailPage() {
           <span className="text-foreground font-medium truncate">{product.name}</span>
         </motion.div>
 
+        <FreshnessBadge
+          updatedAt={(product as any).updated_at}
+          contentForReadingTime={(product as any).description || (product as any).tagline || ""}
+        />
+
+
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -729,7 +739,20 @@ export default function ProductDetailPage() {
           excludeProductId={product.id}
           title={`More ${(product as any).categories?.name || "software"} resources`}
         />
+
+        <AIFaqBlock
+          entityType="product"
+          entitySlug={product.slug}
+          context={{
+            name: product.name,
+            description: (product as any).tagline || (product as any).description,
+            category: (product as any).categories?.name,
+          }}
+          title={`Frequently asked questions about ${product.name}`}
+        />
+        <HelpfulVote pagePath={`/product/${product.slug}`} />
       </div>
+
 
 
       {/* Sticky mobile CTA bar */}

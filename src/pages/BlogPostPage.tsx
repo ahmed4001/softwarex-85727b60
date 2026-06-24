@@ -13,6 +13,10 @@ import { Breadcrumbs } from "@/components/blog/Breadcrumbs";
 import { RelatedPosts } from "@/components/blog/RelatedPosts";
 import { PostComments } from "@/components/blog/PostComments";
 import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -214,7 +218,21 @@ export default function BlogPostPage() {
               excludeBlogId={post.id}
               title="Related products & resources"
             />
+
+            <AIFaqBlock
+              entityType="blog"
+              entitySlug={slug}
+              context={{
+                name: post.title,
+                description: post.excerpt || post.seo_description || undefined,
+                category: post.category || undefined,
+              }}
+              title="Frequently asked questions"
+            />
+            <HelpfulVote pagePath={`/blog/${slug}`} />
             <PostComments postId={post.id} />
+
+
 
           </article>
 
