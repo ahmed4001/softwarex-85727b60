@@ -120,9 +120,17 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
           const qAnswers = answers(q.id);
           const isExpanded = expandedQ.has(q.id);
           const hasVoted = userVotes.includes(q.id);
+          const isTopQuestion = q.id === topQuestionId && qAnswers.length > 0;
 
           return (
-            <div key={q.id} className="glass-card p-6 space-y-4">
+            <div
+              key={q.id}
+              id={`qa-${q.id}`}
+              className={cn(
+                "glass-card p-6 space-y-4 scroll-mt-24",
+                isTopQuestion && "ring-1 ring-primary/30"
+              )}
+            >
               {/* Question header */}
               <div className="flex items-start gap-3">
                 <Button
@@ -139,6 +147,14 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                   <span className="text-xs font-bold">{q.upvote_count}</span>
                 </Button>
                 <div className="flex-1 min-w-0">
+                  {isTopQuestion && (
+                    <Badge
+                      className="mb-2 bg-primary/10 text-primary border-0 text-[10px] px-2 py-0.5 gap-1"
+                      title="Highest-voted question — featured in this page's QAPage structured data."
+                    >
+                      <Sparkles className="h-2.5 w-2.5" /> Top question
+                    </Badge>
+                  )}
                   <p className="text-foreground font-medium leading-relaxed">{q.body}</p>
                   <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                     <span className="font-semibold text-foreground">{q.profiles?.name || "User"}</span>
@@ -152,6 +168,7 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                   </div>
                 </div>
               </div>
+
 
               {/* Answers toggle */}
               <div className="flex items-center gap-2">
