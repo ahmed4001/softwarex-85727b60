@@ -229,6 +229,26 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
                     Answer
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyLink(q.id)}
+                  className="text-xs gap-1.5 rounded-lg ml-auto"
+                  aria-label="Copy link to this question"
+                  title="Copy link to this question"
+                >
+                  {copiedId === q.id ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-3.5 w-3.5" />
+                      Copy link
+                    </>
+                  )}
+                </Button>
               </div>
 
               {/* Answers list */}
