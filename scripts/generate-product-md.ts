@@ -393,13 +393,14 @@ async function fetchTopQA(productIds: string[]): Promise<Map<string, QAThread>> 
   for (const q of topByProduct.values()) if (q.user_id) userIds.add(q.user_id);
   for (const arr of answersByQ.values()) for (const a of arr) if (a.user_id) userIds.add(a.user_id);
   const nameMap = new Map<string, string>();
-  if (userIds.size) {
-    const url = `${SUPABASE_URL}/rest/v1/profiles?select=user_id,name&user_id=in.(${[...userIds].join(",")})&limit=5000`;
+  const uidArr = [...userIds];
+  for (let i = 0; i < uidArr.length; i += CHUNK) {
+    const ids = uidArr.slice(i, i + CHUNK).join(",");
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=user_id,name&user_id=in.(${ids})&limit=5000`;
     const res = await fetch(url, { headers });
-    if (res.ok) {
-      const rows = (await res.json()) as Array<{ user_id: string; name: string | null }>;
-      for (const r of rows) if (r.name) nameMap.set(r.user_id, r.name);
-    }
+    if (!res.ok) continue;
+    const rows = (await res.json()) as Array<{ user_id: string; name: string | null }>;
+    for (const r of rows) if (r.name) nameMap.set(r.user_id, r.name);
   }
 
   for (const [productId, q] of topByProduct) {
