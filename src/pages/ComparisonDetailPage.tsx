@@ -73,6 +73,8 @@ export default function ComparisonDetailPage() {
   );
 
   // Build JSON-LD structured data for SEO
+  const comparisonUpdatedAtIso = (comparison as any).updated_at ? new Date((comparison as any).updated_at).toISOString() : undefined;
+  const comparisonCreatedAtIso = (comparison as any).created_at ? new Date((comparison as any).created_at).toISOString() : undefined;
   const comparisonJsonLd = productA && productB ? [
     {
       "@context": "https://schema.org",
@@ -80,6 +82,8 @@ export default function ComparisonDetailPage() {
       "name": comparison.seo_title || comparison.title || `${productA.name} vs ${productB.name}`,
       "description": comparison.seo_description || comparison.summary?.substring(0, 160) || `Compare ${productA.name} and ${productB.name}`,
       "url": `https://reviewhunts.com/compare/${slug}`,
+      ...(comparisonCreatedAtIso && { "datePublished": comparisonCreatedAtIso }),
+      ...(comparisonUpdatedAtIso && { "dateModified": comparisonUpdatedAtIso }),
       "mainEntity": {
         "@type": "ItemList",
         "numberOfItems": 2,
