@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProductQA } from "@/hooks/useProductQA";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,14 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ln as trackEvent } from "@/lib/analytics";
+
+// Derive `<slug>` from a `/product/<slug>` pathname for analytics tagging.
+function getProductSlugFromPath(): string {
+  if (typeof window === "undefined") return "";
+  const m = window.location.pathname.match(/\/product\/([^/?#]+)/);
+  return m?.[1] ?? "";
+}
 
 interface ProductQASectionProps {
   productId: string;
