@@ -1421,6 +1421,48 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_cache: {
+        Row: {
+          created_at: string
+          edited_by: string | null
+          entity_slug: string
+          entity_type: string
+          generated_at: string
+          id: string
+          is_edited: boolean
+          items: Json
+          model: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          edited_by?: string | null
+          entity_slug: string
+          entity_type: string
+          generated_at?: string
+          id?: string
+          is_edited?: boolean
+          items?: Json
+          model?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          edited_by?: string | null
+          entity_slug?: string
+          entity_type?: string
+          generated_at?: string
+          id?: string
+          is_edited?: boolean
+          items?: Json
+          model?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       glossary_terms: {
         Row: {
           category: string | null
