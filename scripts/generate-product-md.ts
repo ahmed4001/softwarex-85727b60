@@ -337,9 +337,14 @@ async function fetchTopQA(productIds: string[]): Promise<Map<string, QAThread>> 
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
   // Top-level questions across all products, ordered by upvotes desc.
+  const productSet = new Set(productIds);
+
+  // Fetch all active top-level questions globally (filtering by 600+ product
+  // IDs would overflow URL/header limits). We filter to our product set in
+  // memory afterwards.
   const all: QARow[] = [];
   for (let offset = 0; ; offset += PAGE) {
-    const url = `${SUPABASE_URL}/rest/v1/review_qa?select=id,product_id,parent_id,body,upvote_count,created_at,user_id&parent_id=is.null&status=eq.active&product_id=in.(${productIds.join(",")})&order=upvote_count.desc.nullslast&limit=${PAGE}&offset=${offset}`;
+    const url = `${SUPABASE_URL}/rest/v1/review_qa?select=id,product_id,parent_id,body,upvote_count,created_at,user_id&parent_id=is.null&status=eq.active&order=upvote_count.desc.nullslast&limit=${PAGE}&offset=${offset}`;
     const res = await fetch(url, { headers });
     if (!res.ok) {
       console.warn(`[product-md] QA questions fetch failed: ${res.status}`);
@@ -352,6 +357,7 @@ async function fetchTopQA(productIds: string[]): Promise<Map<string, QAThread>> 
 
   const topByProduct = new Map<string, QARow>();
   for (const q of all) {
+    if (!productSet.has(q.product_id)) continue;
     if (!topByProduct.has(q.product_id)) topByProduct.set(q.product_id, q);
   }
   const topQuestionIds = [...topByProduct.values()].map((q) => q.id);
