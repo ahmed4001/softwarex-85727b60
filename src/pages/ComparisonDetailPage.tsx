@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { FeatureMatrix } from "@/components/FeatureMatrix";
 import { TCOCalculator } from "@/components/TCOCalculator";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function ComparisonDetailPage() {
   const { slug } = useParams();
