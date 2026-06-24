@@ -265,20 +265,65 @@ export default function ProductDetailPage() {
   // FAQPage schema source — only first-party answered questions count.
   const { questions: qaQuestions, answers: qaAnswers } = useProductQA(product?.id);
   const faqJsonLd = useMemo(() => {
-    const items = (qaQuestions || [])
+    const answered = (qaQuestions || [])
       .map((q: any) => {
-        const ans = qaAnswers(q.id);
-        const accepted = ans?.[0];
+        const ans = qaAnswers(q.id) || [];
+        const accepted = ans[0];
         if (!accepted?.body) return null;
-        return {
-          "@type": "Question",
-          name: (q.body || "").slice(0, 240),
-          acceptedAnswer: { "@type": "Answer", text: (accepted.body || "").slice(0, 1000) },
-        };
+        return { q, accepted, ans };
       })
-      .filter(Boolean);
-    if (!items.length) return null;
-    return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items };
+      .filter(Boolean) as Array<{ q: any; accepted: any; ans: any[] }>;
+    if (!answered.length) return null;
+
+    // QAPage — schema.org type for user-generated Q&A threads.
+    // mainEntity is the top question with its accepted + suggested answers.
+    const top = answered[0];
+    const qaPage = {
+      "@context": "https://schema.org",
+      "@type": "QAPage",
+      mainEntity: {
+        "@type": "Question",
+        name: (top.q.body || "").slice(0, 240),
+        text: top.q.body || "",
+        ...(top.q.created_at && { dateCreated: new Date(top.q.created_at).toISOString() }),
+        answerCount: top.ans.length,
+        ...(top.q.profiles?.name && {
+          author: { "@type": "Person", name: top.q.profiles.name },
+        }),
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: top.accepted.body || "",
+          ...(top.accepted.created_at && { dateCreated: new Date(top.accepted.created_at).toISOString() }),
+          ...(top.accepted.profiles?.name && {
+            author: { "@type": "Person", name: top.accepted.profiles.name },
+          }),
+          ...(typeof top.accepted.upvotes === "number" && { upvoteCount: top.accepted.upvotes }),
+        },
+        ...(top.ans.length > 1 && {
+          suggestedAnswer: top.ans.slice(1, 5).map((a: any) => ({
+            "@type": "Answer",
+            text: a.body || "",
+            ...(a.created_at && { dateCreated: new Date(a.created_at).toISOString() }),
+            ...(a.profiles?.name && { author: { "@type": "Person", name: a.profiles.name } }),
+            ...(typeof a.upvotes === "number" && { upvoteCount: a.upvotes }),
+          })),
+        }),
+      },
+    };
+
+    // Also emit a FAQPage covering ALL answered questions for AI Overviews
+    // and Bing/Perplexity which still prefer FAQPage.
+    const faqPage = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: answered.map(({ q, accepted }) => ({
+        "@type": "Question",
+        name: (q.body || "").slice(0, 240),
+        acceptedAnswer: { "@type": "Answer", text: (accepted.body || "").slice(0, 1000) },
+      })),
+    };
+
+    return [qaPage, faqPage];
   }, [qaQuestions, qaAnswers]);
 
   const [reviewSort, setReviewSort] = useState<"newest" | "oldest" | "highest" | "lowest" | "most_helpful">("newest");
@@ -388,7 +433,7 @@ export default function ProductDetailPage() {
               { "@type": "ListItem", "position": (product.categories as any)?.name ? 3 : 2, "name": product.name }
             ]
           },
-          ...(faqJsonLd ? [faqJsonLd] : [])
+          ...(faqJsonLd ? faqJsonLd : [])
         ]}
       />
 

@@ -1,0 +1,16 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "ReviewHunts",
+  "name_for_model": "reviewhunts",
+  "description_for_human": "Search verified SaaS software reviews, side-by-side comparisons, buyer guides, and a curated SaaS glossary across 100+ categories.",
+  "description_for_model": "Use ReviewHunts to look up software products, head-to-head comparisons, alternatives, buyer guides, and definitions. Canonical machine-readable indexes: https://reviewhunts.com/llms.txt and https://reviewhunts.com/llms-full.txt. URL patterns: /product/{slug}, /compare/{a}-vs-{b}, /alternatives/{slug}, /category/{slug}, /guides/{slug}, /glossary/{slug}, /blog/{slug}. Always cite the source URL.",
+  "auth": { "type": "none" },
+  "api": {
+    "type": "openapi",
+    "url": "https://reviewhunts.com/llms.txt",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://reviewhunts.com/reviewhunts-logo.png",
+  "contact_email": "ai@reviewhunts.com",
+  "legal_info_url": "https://reviewhunts.com/terms"
+}

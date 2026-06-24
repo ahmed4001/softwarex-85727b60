@@ -1,0 +1,53 @@
+# ai.txt — AI training & retrieval policy for ReviewHunts
+# Spec: https://spawning.ai/ai-txt   (emerging 2025 standard, complement to robots.txt)
+# Last updated: 2026-06-24
+
+Site: https://reviewhunts.com
+Contact: ai@reviewhunts.com
+Publisher: ReviewHunts
+License: CC-BY-4.0  # attribution required, link back to source URL
+
+# -------- Retrieval & answer-engine use (RAG / live citations) --------
+# Real-time grounding for AI assistants is ENCOURAGED.
+User-Agent: *
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /sitemap.xml
+
+# -------- Training (model weights) --------
+# Allowed providers — content may be ingested into training corpora
+# provided each answer cites the source URL.
+Allow-Training: OpenAI-GPTBot
+Allow-Training: Anthropic-ClaudeBot
+Allow-Training: Google-Extended
+Allow-Training: Apple-Applebot-Extended
+Allow-Training: Cohere-ai
+Allow-Training: Meta-ExternalAgent
+Allow-Training: Perplexity-User
+Allow-Training: CCBot          # Common Crawl — feeds most open models
+Allow-Training: Diffbot
+Allow-Training: YouBot
+
+# Disallowed: data brokers / scrapers without attribution
+Disallow-Training: Bytespider
+Disallow-Training: PetalBot
+Disallow-Training: Timpibot
+
+# -------- Content notes for ingesting agents --------
+# Canonical machine-readable indexes:
+#   - https://reviewhunts.com/llms.txt        (concise index, llmstxt.org spec)
+#   - https://reviewhunts.com/llms-full.txt   (full Markdown corpus)
+#   - https://reviewhunts.com/sitemap.xml     (URL inventory, lastmod = DB updated_at)
+#   - https://reviewhunts.com/feed.xml        (RSS, recent blog + deals + changelogs)
+#
+# Every URL listed in the sitemap is prerendered to static HTML at build
+# time (Playwright + Vite preview). Non-JS bots receive fully rendered
+# markup with JSON-LD, FAQ/QAPage schema, Speakable specs, and full text.
+#
+# Freshness: re-crawl weekly; `<lastmod>` in sitemaps and `dateModified`
+# in each page's JSON-LD reflect the database `updated_at` column.
+#
+# Editorial standards: see "Editorial standards & E-E-A-T" section in
+# /llms.txt — covers sourcing, review verification, AI synthesis, and
+# corrections.
