@@ -1,6 +1,6 @@
 {
   "$schema": "./perf-thresholds.schema.json",
-  "_comment": "Per-environment thresholds for the db-perf-smoke runner. Edit values here; no code changes needed. Select an env with PERF_ENV=<key>. Falls back to 'default'. Each env block may include a `queries` array of per-query overrides matched by case-insensitive substring against the normalized SQL text (first match wins).",
+  "_comment": "Per-environment thresholds for the db-perf-smoke runner. CI fails only when a hot query exceeds a configured limit. Latency limits (mean_ms / max_ms) are required per env. Row-count limits (mean_rows / max_rows) are optional — when omitted, the runner skips row-count checks for that env, preserving prior behavior. Each `queries` entry may override any of these four fields. Select an env with PERF_ENV=<key>; falls back to 'default'. Matching is case-insensitive substring against the normalized SQL text; first match wins.",
 
   "default": {
     "mean_ms": 200,
@@ -17,24 +17,31 @@
   "staging": {
     "mean_ms": 200,
     "max_ms": 800,
+    "mean_rows": 5000,
+    "max_rows": 50000,
     "queries": []
   },
 
   "production": {
     "mean_ms": 150,
     "max_ms": 600,
+    "mean_rows": 2000,
+    "max_rows": 20000,
     "queries": [
       {
         "label": "product-by-slug",
         "match": "from products where slug =",
         "mean_ms": 50,
-        "max_ms": 150
+        "max_ms": 150,
+        "max_rows": 1
       },
       {
         "label": "reviews-by-product",
         "match": "from reviews where product_id",
         "mean_ms": 120,
-        "max_ms": 400
+        "max_ms": 400,
+        "mean_rows": 200,
+        "max_rows": 1000
       }
     ]
   },

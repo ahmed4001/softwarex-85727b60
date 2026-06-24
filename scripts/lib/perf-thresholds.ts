@@ -15,15 +15,27 @@ export const QueryRuleSchema = z
     match: z.string().min(1, "`match` must be a non-empty string"),
     mean_ms: z.number().positive().optional(),
     max_ms: z.number().positive().optional(),
+    mean_rows: z.number().nonnegative().optional(),
+    max_rows: z.number().nonnegative().optional(),
     label: z.string().min(1).optional(),
   })
-  .refine((r) => r.mean_ms !== undefined || r.max_ms !== undefined, {
-    message: "each query rule must set at least one of `mean_ms` or `max_ms`",
-  });
+  .refine(
+    (r) =>
+      r.mean_ms !== undefined ||
+      r.max_ms !== undefined ||
+      r.mean_rows !== undefined ||
+      r.max_rows !== undefined,
+    {
+      message:
+        "each query rule must set at least one of `mean_ms`, `max_ms`, `mean_rows`, or `max_rows`",
+    },
+  );
 
 export const EnvBlockSchema = z.object({
   mean_ms: z.number().positive(),
   max_ms: z.number().positive(),
+  mean_rows: z.number().nonnegative().optional(),
+  max_rows: z.number().nonnegative().optional(),
   queries: z.array(QueryRuleSchema).optional().default([]),
 });
 
@@ -31,6 +43,8 @@ export const EnvBlockSchema = z.object({
 export const PartialEnvBlockSchema = z.object({
   mean_ms: z.number().positive().optional(),
   max_ms: z.number().positive().optional(),
+  mean_rows: z.number().nonnegative().optional(),
+  max_rows: z.number().nonnegative().optional(),
   queries: z.array(QueryRuleSchema).optional().default([]),
 });
 
@@ -58,6 +72,9 @@ export interface ResolvedThresholds {
   envKey: string;
   mean_ms: number;
   max_ms: number;
+  /** Optional row-count thresholds. When undefined the runner skips row checks. */
+  mean_rows?: number;
+  max_rows?: number;
   queries: QueryRule[];
   thresholdsPath: string;
   raw: ThresholdsFile;
@@ -147,6 +164,8 @@ export function loadLayeredThresholds(
 
   let mean_ms: number | undefined;
   let max_ms: number | undefined;
+  let mean_rows: number | undefined;
+  let max_rows: number | undefined;
   const queryMap = new Map<string, QueryRule>();
   const keyOf = (q: QueryRule) => q.label ?? q.match;
 
@@ -155,6 +174,8 @@ export function loadLayeredThresholds(
     if (!block) continue;
     if (typeof block.mean_ms === "number") mean_ms = block.mean_ms;
     if (typeof block.max_ms === "number") max_ms = block.max_ms;
+    if (typeof (block as any).mean_rows === "number") mean_rows = (block as any).mean_rows;
+    if (typeof (block as any).max_rows === "number") max_rows = (block as any).max_rows;
     for (const q of block.queries ?? []) queryMap.set(keyOf(q), q);
   }
 
@@ -168,6 +189,8 @@ export function loadLayeredThresholds(
     envKey: effectiveKey,
     mean_ms,
     max_ms,
+    mean_rows,
+    max_rows,
     queries: Array.from(queryMap.values()),
     thresholdsPath: resolvedPaths[0],
     raw: layers[layers.length - 1].data,
