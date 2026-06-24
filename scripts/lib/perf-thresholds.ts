@@ -15,15 +15,27 @@ export const QueryRuleSchema = z
     match: z.string().min(1, "`match` must be a non-empty string"),
     mean_ms: z.number().positive().optional(),
     max_ms: z.number().positive().optional(),
+    mean_rows: z.number().nonnegative().optional(),
+    max_rows: z.number().nonnegative().optional(),
     label: z.string().min(1).optional(),
   })
-  .refine((r) => r.mean_ms !== undefined || r.max_ms !== undefined, {
-    message: "each query rule must set at least one of `mean_ms` or `max_ms`",
-  });
+  .refine(
+    (r) =>
+      r.mean_ms !== undefined ||
+      r.max_ms !== undefined ||
+      r.mean_rows !== undefined ||
+      r.max_rows !== undefined,
+    {
+      message:
+        "each query rule must set at least one of `mean_ms`, `max_ms`, `mean_rows`, or `max_rows`",
+    },
+  );
 
 export const EnvBlockSchema = z.object({
   mean_ms: z.number().positive(),
   max_ms: z.number().positive(),
+  mean_rows: z.number().nonnegative().optional(),
+  max_rows: z.number().nonnegative().optional(),
   queries: z.array(QueryRuleSchema).optional().default([]),
 });
 
@@ -31,6 +43,8 @@ export const EnvBlockSchema = z.object({
 export const PartialEnvBlockSchema = z.object({
   mean_ms: z.number().positive().optional(),
   max_ms: z.number().positive().optional(),
+  mean_rows: z.number().nonnegative().optional(),
+  max_rows: z.number().nonnegative().optional(),
   queries: z.array(QueryRuleSchema).optional().default([]),
 });
 
