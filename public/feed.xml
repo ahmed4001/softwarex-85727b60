@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>ReviewHunts — Latest Articles</title>
+    <link>https://reviewhunts.com/blog</link>
+    <atom:link href="https://reviewhunts.com/feed.xml" rel="self" type="application/rss+xml" />
+    <description>The latest software reviews, comparisons, buyer guides, and deals from ReviewHunts.</description>
+    <language>en</language>
+    <lastBuildDate>Wed, 24 Jun 2026 06:02:21 GMT</lastBuildDate>
+    <generator>ReviewHunts feed generator</generator>
+    <image>
+      <url>https://reviewhunts.com/reviewhunts-logo.png</url>
+      <title>ReviewHunts</title>
+      <link>https://reviewhunts.com</link>
+    </image>
+    <item>
+      <title><![CDATA[Best iGaming Software Providers in 2026: Platforms, Features & How to Choose]]></title>
+      <link>https://reviewhunts.com/blog/best-igaming-software-providers</link>
+      <guid isPermaLink="true">https://reviewhunts.com/blog/best-igaming-software-providers</guid>
+      <pubDate>Wed, 24 Jun 2026 06:02:21 GMT</pubDate>
+      <category><![CDATA[guides]]></category>
+      
+      <description><![CDATA[A buyer-focused guide to the top iGaming software providers — casino, sportsbook, and platform vendors compared on licensing, game catalog, integrations, and pricing.]]></description>
+    </item>
+  </channel>
+</rss>
