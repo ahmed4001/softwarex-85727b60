@@ -42,7 +42,10 @@ import path from "node:path";
 const PORT = 4321;
 const BASE = `http://127.0.0.1:${PORT}`;
 const NAV_TIMEOUT = 30_000;
-const SETTLE_MS = 600;
+// Bumped from 600ms to 1500ms so async content (AI FAQ block, freshness, helpful-vote)
+// has time to hydrate after `networkidle`. Critical for AEO — without it, AI crawlers
+// receive an empty FAQ section on the first cold-path build.
+const SETTLE_MS = 1500;
 
 const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reviewhunts.com").replace(/\/+$/, "");
 const SUPABASE_URL =

@@ -14,6 +14,9 @@ import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
 import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+import { AnswerBlock } from "@/components/seo/AnswerBlock";
+import { FactsTable } from "@/components/seo/FactsTable";
+import { Helmet } from "react-helmet-async";
 
 
 export default function BuyerGuidePage() {
@@ -76,9 +79,32 @@ export default function BuyerGuidePage() {
     return <div className="container py-12 text-center"><h2 className="text-xl font-bold">Guide not found</h2></div>;
   }
 
+  // HowTo JSON-LD — buyer guides are stepwise decision flows, exactly what AI Overviews quote.
+  const howToJsonLd = steps.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: guide.title,
+    description: guide.description || `Interactive buyer guide: ${guide.title}`,
+    ...(((guide as any).updated_at) && { dateModified: (guide as any).updated_at }),
+    step: steps.map((s: any, i: number) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.question || `Step ${i + 1}`,
+      text: s.question || "",
+      ...(Array.isArray(s.options) && s.options.length > 0 && {
+        itemListElement: s.options.map((opt: any) => ({ "@type": "HowToDirection", text: opt.label })),
+      }),
+    })),
+  } : null;
+
   return (
     <>
       <SeoHead title={guide.title} description={guide.description || "Interactive buyer guide"} />
+      {howToJsonLd && (
+        <Helmet>
+          <script type="application/ld+json">{JSON.stringify(howToJsonLd)}</script>
+        </Helmet>
+      )}
       <main className="container py-8 md:py-12 max-w-2xl">
         <Breadcrumbs
           items={[
@@ -98,6 +124,21 @@ export default function BuyerGuidePage() {
             {guide.description && <p className="text-muted-foreground mt-2">{guide.description}</p>}
             <FreshnessBadge updatedAt={(guide as any).updated_at} contentForReadingTime={guide.description || ""} className="flex items-center justify-center gap-3 text-xs text-muted-foreground mt-3" />
           </div>
+
+          {guide.description && (
+            <AnswerBlock label="TL;DR">{guide.description}</AnswerBlock>
+          )}
+
+          <FactsTable
+            title="Guide facts"
+            rows={[
+              { label: "Category", value: (guide as any)?.categories?.name || undefined },
+              { label: "Steps", value: steps.length || undefined },
+              { label: "Recommended tools", value: resultProductIds.length || undefined },
+              { label: "Last updated", value: (guide as any).updated_at ? new Date((guide as any).updated_at).toLocaleDateString() : undefined },
+            ]}
+          />
+
 
 
           {/* Progress */}
@@ -182,6 +223,7 @@ export default function BuyerGuidePage() {
               category: (guide as any)?.categories?.name,
             }}
             title="Frequently asked questions"
+            pageUrl={`https://reviewhunts.com/guides/${slug}`}
           />
           <HelpfulVote pagePath={`/guides/${slug}`} />
         </motion.div>

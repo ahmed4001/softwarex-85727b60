@@ -15,6 +15,8 @@ import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
 import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+import { AnswerBlock } from "@/components/seo/AnswerBlock";
+import { FactsTable } from "@/components/seo/FactsTable";
 
 
 export default function ComparisonDetailPage() {
@@ -241,6 +243,22 @@ export default function ComparisonDetailPage() {
         </motion.div>
 
         {comparison.winner_verdict && (
+          <AnswerBlock label="Quick verdict">{comparison.winner_verdict}</AnswerBlock>
+        )}
+
+        <FactsTable
+          title="Comparison facts"
+          rows={[
+            { label: "Winner", value: isWinnerA ? productA.name : (comparison.winner_product_id ? productB.name : "—") },
+            { label: `${productA.name} score`, value: comparison.product_a_score > 0 ? `${Number(comparison.product_a_score).toFixed(1)}/10` : undefined },
+            { label: `${productB.name} score`, value: comparison.product_b_score > 0 ? `${Number(comparison.product_b_score).toFixed(1)}/10` : undefined },
+            { label: `${productA.name} best for`, value: comparison.best_for_a || undefined },
+            { label: `${productB.name} best for`, value: comparison.best_for_b || undefined },
+            { label: "Last updated", value: (comparison as any).updated_at ? new Date((comparison as any).updated_at).toLocaleDateString() : undefined },
+          ]}
+        />
+
+        {comparison.winner_verdict && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6 mb-8 border-l-4 border-l-primary">
             <div className="flex items-start gap-3">
               <Trophy className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
@@ -416,6 +434,7 @@ export default function ComparisonDetailPage() {
             category: (productA as any).categories?.name,
           }}
           title="Frequently asked questions"
+          pageUrl={`https://reviewhunts.com/compare/${slug}`}
         />
         <HelpfulVote pagePath={`/compare/${slug}`} />
       </div>

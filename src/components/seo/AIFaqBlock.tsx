@@ -13,14 +13,16 @@ interface AIFaqBlockProps {
   };
   title?: string;
   className?: string;
+  /** Canonical page URL — used to anchor-cite individual Q's in JSON-LD. */
+  pageUrl?: string;
 }
 
 /**
  * Drop-in: AI-generated, cached, editable FAQs for any page.
  * Renders nothing on error so it never breaks pages.
  */
-export function AIFaqBlock({ entityType, entitySlug, context, title, className }: AIFaqBlockProps) {
-  const { items, loading, error } = useFAQ({ entityType, entitySlug, context });
+export function AIFaqBlock({ entityType, entitySlug, context, title, className, pageUrl }: AIFaqBlockProps) {
+  const { items, loading, error, isEdited, editedByName } = useFAQ({ entityType, entitySlug, context });
 
   if (loading) {
     return (
@@ -37,5 +39,14 @@ export function AIFaqBlock({ entityType, entitySlug, context, title, className }
 
   if (error || items.length === 0) return null;
 
-  return <FAQSection items={items} title={title} className={className} />;
+  return (
+    <FAQSection
+      items={items}
+      title={title}
+      className={className}
+      isEdited={isEdited}
+      editedByName={editedByName ?? undefined}
+      pageUrl={pageUrl}
+    />
+  );
 }

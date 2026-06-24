@@ -228,6 +228,7 @@ export default function BlogPostPage() {
                 category: post.category || undefined,
               }}
               title="Frequently asked questions"
+              pageUrl={`https://reviewhunts.com/blog/${slug}`}
             />
             <HelpfulVote pagePath={`/blog/${slug}`} />
             <PostComments postId={post.id} />
