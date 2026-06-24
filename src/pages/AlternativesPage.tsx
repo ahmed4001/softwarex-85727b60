@@ -78,7 +78,53 @@ export default function AlternativesPage() {
             "name": page.title,
             "description": page.meta_description || `Top alternatives to ${product?.name}`,
             "url": `https://reviewhunts.com/alternatives/${slug}`,
-            "numberOfItems": alternatives.length
+            "numberOfItems": alternatives.length,
+            ...((page as any).updated_at && {
+              "dateModified": new Date((page as any).updated_at).toISOString().split("T")[0],
+            }),
+            "isPartOf": { "@type": "WebSite", "name": "ReviewHunts", "url": "https://reviewhunts.com" },
+            ...(product && {
+              "about": {
+                "@type": "SoftwareApplication",
+                "name": product.name,
+                "url": `https://reviewhunts.com/product/${product.slug}`,
+              },
+            }),
+            "mainEntity": {
+              "@type": "ItemList",
+              "name": `Alternatives to ${product?.name || page.title}`,
+              "numberOfItems": alternatives.length,
+              "itemListOrder": "https://schema.org/ItemListOrderDescending",
+              "itemListElement": alternatives.map((a: any, idx: number) => {
+                const alt = a.alternative || {};
+                return {
+                  "@type": "ListItem",
+                  "position": idx + 1,
+                  "url": `https://reviewhunts.com/product/${alt.slug}`,
+                  "item": {
+                    "@type": ["Product", "SoftwareApplication"],
+                    "name": alt.name,
+                    "url": `https://reviewhunts.com/product/${alt.slug}`,
+                    "applicationCategory": (alt.categories as any)?.name || "BusinessApplication",
+                    "operatingSystem": "Web",
+                    ...(alt.logo_url && { "image": alt.logo_url }),
+                    ...((alt.short_description || alt.description) && {
+                      "description": alt.short_description || alt.description,
+                    }),
+                    ...(alt.avg_rating && alt.total_reviews > 0 && {
+                      "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": Number(alt.avg_rating).toFixed(1),
+                        "bestRating": "5",
+                        "worstRating": "1",
+                        "ratingCount": alt.total_reviews,
+                        "reviewCount": alt.total_reviews,
+                      },
+                    }),
+                  },
+                };
+              }),
+            },
           },
           ...(faqSchema.length > 0 ? [{
             "@context": "https://schema.org",
