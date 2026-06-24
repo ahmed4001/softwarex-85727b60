@@ -1,30 +1,62 @@
 # ReviewHunts
 
-> Discover, compare, and review the best software. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories.
+> ReviewHunts is a software discovery and review platform. Real user reviews, AI-powered insights, side-by-side comparisons, expert buyer guides, and a curated glossary across 100+ SaaS categories.
 
-ReviewHunts helps buyers find the right SaaS tools through verified user reviews, side-by-side comparisons, pricing breakdowns, AI-summarized review digests, and editorial buyer guides.
+This file follows the [llms.txt](https://llmstxt.org) standard to help AI systems (ChatGPT, Claude, Perplexity, Gemini, Copilot) find and cite the most useful pages on this site.
 
-## Pages
+- Site: https://reviewhunts.com
+- Sitemap: https://reviewhunts.com/sitemap.xml
+- License: Content may be cited with attribution to ReviewHunts and a link to the source page.
 
-- [Home](/): Featured software, trending categories, and editor picks.
-- [Categories](/categories): Browse all software categories.
-- [Search](/search): Search across products, categories, and guides.
-- [Compare](/compare): Build side-by-side product comparisons.
-- [Compare pricing](/compare-pricing): Pricing matrix across vendors with TCO.
-- [Pricing](/pricing): ReviewHunts vendor plans.
-- [Leaderboard](/leaderboard): Top-rated and most-reviewed products.
-- [Awards](/awards): Annual community-voted software awards.
-- [Lists](/lists): User-curated product lists.
-- [Tech stacks](/stacks): Community tech stacks.
-- [Buyer guides](/guides): Long-form purchasing guides.
-- [Glossary](/glossary): SaaS terms and definitions.
-- [Discussions](/discussions): Community Q&A and threads.
-- [Activity](/activity): Latest reviews, lists, and discussions.
-- [Blog](/blog): Articles, comparisons, and industry analysis.
-- [Deals](/deals): Active software discounts and promotions.
-- [Partners](/partners): Partner directory and link exchanges.
-- [Submit a product](/submit-product): Vendors list a new product.
+## Categories
 
-## Optional
-
-- [Choose a plan](/choose-plan): Vendor plan selection.
+- [Accounting Software](https://reviewhunts.com/category/accounting): Manage finances, bookkeeping, and financial reporting
+- [AI Image Generators](https://reviewhunts.com/category/ai-image-generators): Create images and visual content using artificial intelligence
+- [AI Chatbots](https://reviewhunts.com/category/ai-chatbots): Intelligent conversational AI for customer and internal use
+- [AI Code Assistants](https://reviewhunts.com/category/ai-code): AI tools that help developers write, review, and debug code
+- [AI Writing Assistants](https://reviewhunts.com/category/ai-writing): AI-powered tools for content creation, editing, and copywriting
+- [Cloud Hosting](https://reviewhunts.com/category/cloud-hosting): Scalable cloud infrastructure and web hosting platforms
+- [API Management](https://reviewhunts.com/category/api-management): Design, deploy, and monitor APIs across your organization
+- [Backup Software](https://reviewhunts.com/category/backup): Automated data backup and disaster recovery solutions
+- [Contract Management](https://reviewhunts.com/category/contract-management): Create, negotiate, and manage contracts digitally
+- [Antivirus Software](https://reviewhunts.com/category/antivirus): Protect devices from malware, viruses, and cyber threats
+- [CI/CD Tools](https://reviewhunts.com/category/ci-cd): Automate software build, test, and deployment pipelines
+- [Affiliate Marketing](https://reviewhunts.com/category/affiliate-marketing): Platforms and tools for managing affiliate marketing programs
+- [Content Management System](https://reviewhunts.com/category/cms): Create, manage, and publish digital content on websites
+- [Analytics & BI](https://reviewhunts.com/category/analytics): Business intelligence and analytics tools
+- [Bug Tracking Software](https://reviewhunts.com/category/bug-tracking): Track, manage, and resolve software bugs and issues
+- [Communication](https://reviewhunts.com/category/communication): Team messaging and video conferencing
+- [Business Intelligence](https://reviewhunts.com/category/business-intelligence): Transform data into actionable insights with BI dashboards
+- [Collaboration Software](https://reviewhunts.com/category/collaboration): Enable team collaboration with shared workspaces and docs
+- [Chatbot Platforms](https://reviewhunts.com/category/chatbots): Build AI-powered chatbots for customer service automation
+- [Audio Editing](https://reviewhunts.com/category/audio-editing): Professional audio editing and production software
+- [Asset Management](https://reviewhunts.com/category/asset-management): Digital and physical asset tracking and management solutions
+- [Construction Management](https://reviewhunts.com/category/construction-management): Project management tools tailored for construction industry
+- [Billing & Invoicing](https://reviewhunts.com/category/billing-invoicing): Automated billing, invoicing, and payment collection platforms
+- [Content Creation](https://reviewhunts.com/category/content-creation): Tools for creating blog posts, social content, videos, and graphics
+- [Apple Apps](https://reviewhunts.com/category/apple-apps): Top-rated applications for macOS, iOS, iPadOS and the Apple ecosystem
+- [Commission Management](https://reviewhunts.com/category/commission-management): Tools for calculating and managing sales commissions
+- [Browser Extensions](https://reviewhunts.com/category/browser-extensions): Extensions for Firefox, Edge, Safari and other web browsers
+- [App Development](https://reviewhunts.com/category/app-development): Tools and platforms for building mobile and web applications
+- [Church Management](https://reviewhunts.com/category/church-management): Software for religious organizations to manage members and events
+- [Appointment Scheduling](https://reviewhunts.com/category/appointment-scheduling): Online booking and appointment scheduling software
+- [Clinical Trial Management](https://reviewhunts.com/category/clinical-trials): Software for managing clinical research and drug trials
+- [Conversational AI](https://reviewhunts.com/category/conversational-ai): AI-powered chatbots and virtual assistants for customer engagement
+- [Compliance Management](https://reviewhunts.com/category/compliance-management): Software for regulatory compliance tracking and reporting
+- [Cloud Security](https://reviewhunts.com/category/cloud-security): Security tools for cloud infrastructure and cloud-native applications
+- [Board Management](https://reviewhunts.com/category/board-management): Software for board meetings, governance, and director collaboration
+- [Business Phone Systems](https://reviewhunts.com/category/business-phone): VoIP and cloud-based phone systems for businesses
+- [CAD Software](https://reviewhunts.com/category/cad-software): Computer-aided design software for engineering and architecture
+- [Chrome Extensions](https://reviewhunts.com/category/chrome-extensions): Browser extensions for Google Chrome to enhance productivity, security, and browsing experience
+- [Employee Engagement](https://reviewhunts.com/category/employee-engagement): Boost team morale with surveys, recognition, and feedback tools
+- [Cybersecurity](https://reviewhunts.com/category/security): Protect your business from threats
+- [E-Commerce](https://reviewhunts.com/category/ecommerce): Online store and commerce platforms
+- [CRM Software](https://reviewhunts.com/category/crm): Customer relationship management tools
+- [Electronic Signature](https://reviewhunts.com/category/e-signature): Sign documents digitally with legally binding e-signatures
+- [Expense Management](https://reviewhunts.com/category/expense-management): Track, approve, and reimburse employee expenses
+- [Learning Management System](https://reviewhunts.com/category/lms): Create and deliver online courses and training programs
+- [Document Management](https://reviewhunts.com/category/document-management): Store, organize, and share documents securely
+- [Database Management](https://reviewhunts.com/category/database-management): Manage, monitor, and optimize database performance
+- [Customer Success Software](https://reviewhunts.com/category/customer-success): Reduce churn and improve customer retention with proactive tools
+- [Graphic Design Software](https://reviewhunts.com/category/graphic-design): Create stunning graphics, illustrations, and visual designs
+- [Inventory Management](https://reviewhunts.com/category/inventory-management): Track stock levels, orders, and warehouse operations
