@@ -208,6 +208,8 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
     envKey: thresholds.envKey,
     mean_ms: thresholds.mean_ms,
     max_ms: thresholds.max_ms,
+    mean_rows: thresholds.mean_rows,
+    max_rows: thresholds.max_rows,
     queries: Array.from(firedRules.values()),
     resolved_at: new Date().toISOString(),
   };
@@ -334,8 +336,12 @@ const endpoint = `${url}/functions/v1/db-perf-smoke`;
       const ruleLabel = q.matched_rule && q.matched_rule !== null
         ? (q.matched_rule.label ?? q.matched_rule.match)
         : "(env default)";
+      const rowsPart =
+        q.applied_mean_rows != null || q.applied_max_rows != null
+          ? ` rows: mean=${q.mean_rows ?? "?"} (≤${q.applied_mean_rows ?? "∞"}) max=${q.max_rows ?? "?"} (≤${q.applied_max_rows ?? "∞"})`
+          : "";
       console.error(
-        `\n  • [${q.query_id}] [${ruleLabel}] mean=${q.mean_ms}ms (≤${q.applied_mean_ms}) max=${q.max_ms}ms (≤${q.applied_max_ms}) calls=${q.calls}\n    ${q.query_preview}`,
+        `\n  • [${q.query_id}] [${ruleLabel}] mean=${q.mean_ms}ms (≤${q.applied_mean_ms}) max=${q.max_ms}ms (≤${q.applied_max_ms}) calls=${q.calls}${rowsPart}\n    ${q.query_preview}`,
       );
       if (q.explain) {
         const indented = String(q.explain).split("\n").map((l: string) => "      " + l).join("\n");
