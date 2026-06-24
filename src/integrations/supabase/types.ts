@@ -2122,6 +2122,39 @@ export type Database = {
         }
         Relationships: []
       }
+      page_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          is_helpful: boolean
+          page_path: string
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_helpful: boolean
+          page_path: string
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_helpful?: boolean
+          page_path?: string
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           body: string | null
@@ -4544,6 +4577,17 @@ export type Database = {
           verification_type?: string | null
           verified_at?: string | null
           verified_domain?: string | null
+        }
+        Relationships: []
+      }
+      page_feedback_stats: {
+        Row: {
+          helpful_count: number | null
+          helpful_pct: number | null
+          last_feedback_at: string | null
+          not_helpful_count: number | null
+          page_path: string | null
+          total_count: number | null
         }
         Relationships: []
       }
