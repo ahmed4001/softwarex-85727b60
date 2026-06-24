@@ -50,6 +50,8 @@ const sidebarItems = [
       { label: "SEO Route Audit", to: "/admin/seo-route-audit" },
       { label: "Buyer Guides", to: "/admin/buyer-guides" },
       { label: "Glossary", to: "/admin/glossary" },
+      { label: "FAQ Cache", to: "/admin/faq-cache" },
+
     ]
   },
   { label: "Media Library", icon: Image, to: "/admin/media" },
