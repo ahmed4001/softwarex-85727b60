@@ -391,6 +391,12 @@ export default function ProductDetailPage() {
           <span className="text-foreground font-medium truncate">{product.name}</span>
         </motion.div>
 
+        <FreshnessBadge
+          updatedAt={(product as any).updated_at}
+          contentForReadingTime={(product as any).description || (product as any).tagline || ""}
+        />
+
+
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
