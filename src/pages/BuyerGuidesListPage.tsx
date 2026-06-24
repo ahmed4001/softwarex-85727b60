@@ -79,9 +79,12 @@ export default function BuyerGuidesListPage() {
 
   const activeCount = (sort !== "popular" ? 1 : 0) + (category !== "all" ? 1 : 0);
   const clearAll = () => {
-    setSort("popular");
-    setCategory("all");
+    const next = new URLSearchParams(searchParams);
+    next.delete("sort");
+    next.delete("category");
+    setSearchParams(next);
   };
+
 
   const sortOptions: { value: Sort; label: string }[] = [
     { value: "popular", label: "Most popular" },
