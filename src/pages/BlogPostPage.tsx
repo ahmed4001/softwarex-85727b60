@@ -13,6 +13,10 @@ import { Breadcrumbs } from "@/components/blog/Breadcrumbs";
 import { RelatedPosts } from "@/components/blog/RelatedPosts";
 import { PostComments } from "@/components/blog/PostComments";
 import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
+import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
+import { HelpfulVote } from "@/components/seo/HelpfulVote";
+import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+
 
 export default function BlogPostPage() {
   const { slug } = useParams();
