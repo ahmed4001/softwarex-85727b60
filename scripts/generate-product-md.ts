@@ -90,7 +90,12 @@ function toList(v: any): string[] {
   return [];
 }
 
-function renderMarkdown(p: ProductRow): string {
+interface QAThread {
+  question: QARow;
+  answers: QARow[]; // ordered: highest upvotes first
+}
+
+function renderMarkdown(p: ProductRow, qa: QAThread | null): string {
   const url = `${BASE_URL}/product/${p.slug}`;
   const category = p.categories?.name || "Software";
   const lines: string[] = [];
