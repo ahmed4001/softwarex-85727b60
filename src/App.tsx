@@ -106,6 +106,8 @@ const VendorWarRoomPage = lazy(() => import("./pages/vendor/VendorWarRoomPage"))
 const AdminBuyerGuidesPage = lazy(() => import("./pages/admin/AdminBuyerGuidesPage"));
 const AdminModerationPage = lazy(() => import("./pages/admin/AdminModerationPage"));
 const AdminGlossaryPage = lazy(() => import("./pages/admin/AdminGlossaryPage"));
+const AdminFaqCachePage = lazy(() => import("./pages/admin/AdminFaqCachePage"));
+
 const AdminTrendReportsPage = lazy(() => import("./pages/admin/AdminTrendReportsPage"));
 const AdminCohortPage = lazy(() => import("./pages/admin/AdminCohortPage"));
 const AlternativesPage = lazy(() => import("./pages/AlternativesPage"));
