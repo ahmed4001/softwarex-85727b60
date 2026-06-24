@@ -72,6 +72,9 @@ export interface ResolvedThresholds {
   envKey: string;
   mean_ms: number;
   max_ms: number;
+  /** Optional row-count thresholds. When undefined the runner skips row checks. */
+  mean_rows?: number;
+  max_rows?: number;
   queries: QueryRule[];
   thresholdsPath: string;
   raw: ThresholdsFile;
@@ -161,6 +164,8 @@ export function loadLayeredThresholds(
 
   let mean_ms: number | undefined;
   let max_ms: number | undefined;
+  let mean_rows: number | undefined;
+  let max_rows: number | undefined;
   const queryMap = new Map<string, QueryRule>();
   const keyOf = (q: QueryRule) => q.label ?? q.match;
 
@@ -169,6 +174,8 @@ export function loadLayeredThresholds(
     if (!block) continue;
     if (typeof block.mean_ms === "number") mean_ms = block.mean_ms;
     if (typeof block.max_ms === "number") max_ms = block.max_ms;
+    if (typeof (block as any).mean_rows === "number") mean_rows = (block as any).mean_rows;
+    if (typeof (block as any).max_rows === "number") max_rows = (block as any).max_rows;
     for (const q of block.queries ?? []) queryMap.set(keyOf(q), q);
   }
 
@@ -182,6 +189,8 @@ export function loadLayeredThresholds(
     envKey: effectiveKey,
     mean_ms,
     max_ms,
+    mean_rows,
+    max_rows,
     queries: Array.from(queryMap.values()),
     thresholdsPath: resolvedPaths[0],
     raw: layers[layers.length - 1].data,
