@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "predev": "tsx scripts/generate-sitemap.ts || true && tsx scripts/generate-llms-txt.ts || true && tsx scripts/generate-feed.ts || true && tsx scripts/generate-product-md.ts || true",
-    "prebuild": "tsx scripts/generate-sitemap.ts || true && tsx scripts/generate-llms-txt.ts || true && tsx scripts/generate-feed.ts || true && tsx scripts/generate-product-md.ts || true",
+    "predev": "tsx scripts/generate-sitemap.ts || true && tsx scripts/generate-llms-txt.ts || true && tsx scripts/generate-feed.ts || true && tsx scripts/generate-product-md.ts || true && tsx scripts/generate-blog-md.ts || true && tsx scripts/generate-guide-md.ts || true",
+    "prebuild": "tsx scripts/generate-sitemap.ts || true && tsx scripts/generate-llms-txt.ts || true && tsx scripts/generate-feed.ts || true && tsx scripts/generate-product-md.ts || true && tsx scripts/generate-blog-md.ts || true && tsx scripts/generate-guide-md.ts || true",
     "build": "vite build && tsx scripts/prerender.ts",
     "build:dev": "vite build --mode development",
     "prerender": "tsx scripts/prerender.ts",
