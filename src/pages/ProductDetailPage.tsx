@@ -398,6 +398,27 @@ export default function ProductDetailPage() {
           contentForReadingTime={(product as any).description || (product as any).tagline || ""}
         />
 
+        {(product as any).tagline && (
+          <AnswerBlock label={`What is ${product.name}?`}>
+            {(product as any).tagline}
+            {(product as any).description ? ` ${String((product as any).description).split(/(?<=[.!?])\s/)[0]}` : ""}
+          </AnswerBlock>
+        )}
+
+        <FactsTable
+          title={`${product.name} at a glance`}
+          rows={[
+            { label: "Category", value: (product as any).categories?.name || undefined },
+            { label: "Starting price", value: product.starting_price ? `$${product.starting_price}/mo` : ((product as any).pricing_model === "free" ? "Free" : undefined) },
+            { label: "Free plan", value: (product as any).has_free_plan ? "Yes" : undefined },
+            { label: "Rating", value: Number(product.avg_rating) > 0 ? `${Number(product.avg_rating).toFixed(1)}/5 (${product.total_reviews || 0} reviews)` : undefined },
+            { label: "Website", value: product.website_url || undefined },
+            { label: "Founded", value: (product as any).founded_year || undefined },
+            { label: "Last updated", value: (product as any).updated_at ? new Date((product as any).updated_at).toLocaleDateString() : undefined },
+          ]}
+        />
+
+
 
         <motion.div
           initial={{ opacity: 0, y: 15 }}
