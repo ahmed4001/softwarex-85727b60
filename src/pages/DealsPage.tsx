@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { MobileFilterDrawer, FilterSection, FilterOptionList } from "@/components/MobileFilterDrawer";
+
 
 type Deal = {
   id: string;
@@ -354,9 +356,9 @@ export default function DealsPage() {
         </div>
       </section>
 
-      {/* Toolbar */}
+      {/* Toolbar — desktop inline; mobile uses the drawer below. */}
       <div className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30">
-        <div className="container py-3 flex items-center gap-3 flex-wrap">
+        <div className="container py-3 hidden md:flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 text-sm">
             <span className="font-semibold">{filtered.length}</span>
             <span className="text-muted-foreground">of {counts.all} deals</span>
@@ -420,6 +422,69 @@ export default function DealsPage() {
           )}
         </div>
 
+        {/* Mobile filter & sort drawer */}
+        <div className="container md:hidden">
+          <MobileFilterDrawer
+            activeCount={selectedCats.length + (sort !== "featured" ? 1 : 0) + (includeExpired ? 1 : 0)}
+            resultCount={filtered.length}
+            resultLabel="deals"
+            onClear={clearAll}
+            triggerLabel="Filter & Sort"
+          >
+            <FilterSection title="Sort by">
+              <FilterOptionList<SortKey>
+                value={sort}
+                onChange={(v) => setParam("sort", v === "featured" ? null : v)}
+                options={[
+                  { value: "featured", label: "Featured", hint: String(counts.featured) },
+                  { value: "popular", label: "Most popular" },
+                  { value: "newest", label: "Newest" },
+                  { value: "expiring", label: "Ending soon", hint: String(counts.expiring) },
+                  { value: "discount", label: "Biggest discount" },
+                ]}
+              />
+            </FilterSection>
+
+            {allCategories.length > 0 && (
+              <FilterSection title="Categories">
+                <div className="grid grid-cols-1 gap-1.5">
+                  {allCategories.map(([cat, count]) => {
+                    const active = selectedCats.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className={cn(
+                          "w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-between min-h-11",
+                          active
+                            ? "bg-primary/10 text-primary ring-1 ring-primary/40"
+                            : "bg-muted/50 text-foreground hover:bg-muted",
+                        )}
+                      >
+                        <span className="truncate">{cat}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </FilterSection>
+            )}
+
+            <FilterSection title="Other">
+              <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/50 cursor-pointer min-h-11">
+                <Checkbox
+                  checked={includeExpired}
+                  onCheckedChange={(v) => setIncludeExpired(!!v)}
+                />
+                <span className="text-sm font-medium">
+                  Include expired{counts.expired > 0 && ` (${counts.expired})`}
+                </span>
+              </label>
+            </FilterSection>
+          </MobileFilterDrawer>
+        </div>
+
         {/* Active filter chips */}
         {(selectedCats.length > 0 || search) && (
           <div className="container pb-3 flex items-center gap-2 flex-wrap">
@@ -438,6 +503,7 @@ export default function DealsPage() {
           </div>
         )}
       </div>
+
 
       <div className="container py-10">
         {isLoading && (
