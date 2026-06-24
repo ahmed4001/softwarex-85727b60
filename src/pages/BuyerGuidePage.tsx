@@ -183,7 +183,7 @@ export default function BuyerGuidePage() {
             }}
             title="Frequently asked questions"
           />
-          <HelpfulVote pagePath={`/buyer-guides/${slug}`} />
+          <HelpfulVote pagePath={`/guides/${slug}`} />
         </motion.div>
       </main>
 
