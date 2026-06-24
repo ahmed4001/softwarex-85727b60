@@ -143,11 +143,17 @@ export default function BlogPostPage() {
                 </Link>
               )}
               <h1
+                id="article-headline"
                 className="text-3xl md:text-[2.75rem] leading-tight font-bold text-foreground mt-3 mb-6"
                 style={{ fontFamily: "'Lora', 'EB Garamond', Georgia, serif" }}
               >
                 {post.title}
               </h1>
+              {post.excerpt && (
+                <p id="article-excerpt" className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
+                  {post.excerpt}
+                </p>
+              )}
 
               {/* Author + meta */}
               <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
