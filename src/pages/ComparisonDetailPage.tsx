@@ -406,7 +406,20 @@ export default function ComparisonDetailPage() {
             </Button>
           </Link>
         </div>
+
+        <AIFaqBlock
+          entityType="comparison"
+          entitySlug={slug}
+          context={{
+            name: `${productA.name} vs ${productB.name}`,
+            description: comparison.summary || comparison.winner_verdict || undefined,
+            category: (productA as any).categories?.name,
+          }}
+          title="Frequently asked questions"
+        />
+        <HelpfulVote pagePath={`/compare/${slug}`} />
       </div>
+
     </>
   );
 }
