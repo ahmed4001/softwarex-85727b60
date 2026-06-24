@@ -2,9 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { SeoHead } from "@/components/SeoHead";
-import { StatCard } from "@/components/StatCard";
 import { motion } from "framer-motion";
-import { Package, Star, Eye, MessageSquare, TrendingUp, Pencil, BarChart3, Users, LayoutGrid, ExternalLink } from "lucide-react";
+import { Package, Star, Eye, MessageSquare, TrendingUp, Pencil, BarChart3, Users, LayoutGrid, ExternalLink, Activity, Radio } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,16 +12,75 @@ import { useMemo } from "react";
 import { VendorResponseMetrics } from "@/components/vendor/VendorResponseMetrics";
 import { VendorCompetitorBenchmark } from "@/components/vendor/VendorCompetitorBenchmark";
 
+// ---------- Command Center primitives (scoped to this page) ----------
+const NAVY = "#0a0a1a";
+const PANEL = "#0f0f24";
+const PANEL_HI = "#141432";
+const BORDER = "#1e1e5a";
+const ACCENT = "#4f46e5";
+const ACCENT_GLOW = "#818cf8";
+
+function CommandPanel({ children, className = "", label }: { children: React.ReactNode; className?: string; label?: string }) {
+  return (
+    <div
+      className={`relative rounded-md border ${className}`}
+      style={{ background: PANEL, borderColor: BORDER }}
+    >
+      {label && (
+        <div
+          className="absolute -top-px left-3 px-2 text-[10px] font-mono uppercase tracking-[0.18em]"
+          style={{ background: PANEL, color: ACCENT_GLOW, transform: "translateY(-50%)" }}
+        >
+          {label}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function CommandStat({ title, value, icon: Icon, accent }: { title: string; value: React.ReactNode; icon: any; accent?: boolean }) {
+  return (
+    <div
+      className="relative p-4 md:p-5 rounded-md border overflow-hidden group"
+      style={{ background: PANEL, borderColor: BORDER }}
+    >
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.07] pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(${BORDER} 1px, transparent 1px), linear-gradient(90deg, ${BORDER} 1px, transparent 1px)`,
+          backgroundSize: "18px 18px",
+        }}
+      />
+      <div className="relative flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-indigo-300/70 mb-2">{title}</div>
+          <div className="font-mono text-2xl md:text-3xl font-semibold tabular-nums" style={{ color: accent ? ACCENT_GLOW : "#e8e8ff" }}>
+            {value}
+          </div>
+        </div>
+        <div
+          className="h-8 w-8 rounded-sm flex items-center justify-center border flex-shrink-0"
+          style={{ borderColor: BORDER, background: PANEL_HI, color: ACCENT_GLOW }}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SectionHeader({ icon: Icon, title, description, action }: { icon: any; title: string; description?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-4">
-      <div className="flex items-start gap-3 min-w-0">
-        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-          <Icon className="h-4 w-4" />
+    <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="h-6 w-6 rounded-sm flex items-center justify-center border" style={{ borderColor: BORDER, background: PANEL_HI, color: ACCENT_GLOW }}>
+          <Icon className="h-3 w-3" />
         </div>
-        <div className="min-w-0">
-          <h2 className="text-base md:text-lg font-display font-bold text-foreground leading-tight">{title}</h2>
-          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+        <div className="min-w-0 flex items-baseline gap-3 flex-wrap">
+          <h2 className="text-sm font-mono uppercase tracking-[0.22em] text-indigo-100">{title}</h2>
+          {description && <p className="text-[11px] text-indigo-300/60 font-mono">// {description}</p>}
         </div>
       </div>
       {action}
