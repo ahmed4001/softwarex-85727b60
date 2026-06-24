@@ -148,8 +148,21 @@ export function ProductQASection({ productId, isVendor }: ProductQASectionProps)
       toast.success("Link copied", {
         description: "Reopen it to jump straight to this question.",
       });
+      trackEvent("qa_copy_link", {
+        product_slug: getProductSlugFromPath(),
+        product_id: productId,
+        question_id: questionId,
+        is_top_question: questionId === topQuestionId,
+        link,
+      });
       setTimeout(() => setCopiedId((c) => (c === questionId ? null : c)), 1800);
-    } catch {
+    } catch (err) {
+      trackEvent("qa_copy_link_failed", {
+        product_slug: getProductSlugFromPath(),
+        product_id: productId,
+        question_id: questionId,
+        message: String((err as any)?.message || err || ""),
+      });
       toast.error("Could not copy link", { description: link });
     }
   };
