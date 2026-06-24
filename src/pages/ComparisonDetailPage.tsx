@@ -96,7 +96,7 @@ export default function ComparisonDetailPage() {
             "item": {
               "@type": "SoftwareApplication",
               "name": productA.name,
-              "description": productA.tagline || productA.description?.substring(0, 160),
+              "description": productA.description || productA.tagline || productA.name,
               "url": `https://reviewhunts.com/product/${productA.slug}`,
               ...(productA.logo_url && { "image": productA.logo_url }),
               ...(productA.avg_rating && {
