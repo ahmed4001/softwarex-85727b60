@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoHead } from "@/components/SeoHead";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,10 +16,26 @@ import {
 import { cn } from "@/lib/utils";
 
 type Sort = "popular" | "completed" | "alpha";
+const SORT_VALUES: Sort[] = ["popular", "completed", "alpha"];
 
 export default function BuyerGuidesListPage() {
-  const [sort, setSort] = useState<Sort>("popular");
-  const [category, setCategory] = useState<string>("all");
+  // URL is the source of truth so back/forward restores filter + sort.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawSort = searchParams.get("sort");
+  const sort: Sort = (SORT_VALUES as string[]).includes(rawSort || "")
+    ? (rawSort as Sort)
+    : "popular";
+  const category = searchParams.get("category") || "all";
+
+  const setParam = (key: string, value: string | null, defaultValue?: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (!value || value === defaultValue) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next);
+  };
+  const setSort = (next: Sort) => setParam("sort", next, "popular");
+  const setCategory = (next: string) => setParam("category", next, "all");
+
 
   const { data: guides = [], isLoading } = useQuery({
     queryKey: ["buyer-guides-list"],
