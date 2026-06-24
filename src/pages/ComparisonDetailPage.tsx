@@ -111,7 +111,10 @@ export default function ComparisonDetailPage() {
                 "offers": {
                   "@type": "Offer",
                   "price": productA.starting_price || 0,
-                  "priceCurrency": "USD"
+                  "priceCurrency": "USD",
+                  "availability": "https://schema.org/InStock",
+                  "priceValidUntil": new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
+                  "url": `https://reviewhunts.com/product/${productA.slug}`
                 }
               })
             }
@@ -137,7 +140,10 @@ export default function ComparisonDetailPage() {
                 "offers": {
                   "@type": "Offer",
                   "price": productB.starting_price || 0,
-                  "priceCurrency": "USD"
+                  "priceCurrency": "USD",
+                  "availability": "https://schema.org/InStock",
+                  "priceValidUntil": new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
+                  "url": `https://reviewhunts.com/product/${productB.slug}`
                 }
               })
             }

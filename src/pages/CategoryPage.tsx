@@ -202,6 +202,7 @@ export default function CategoryPage() {
                         "price": p.starting_price || 0,
                         "priceCurrency": "USD",
                         "availability": "https://schema.org/InStock",
+                        "priceValidUntil": new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
                         "url": `https://reviewhunts.com/product/${p.slug}`,
                       },
                     }),
