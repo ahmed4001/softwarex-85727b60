@@ -739,7 +739,20 @@ export default function ProductDetailPage() {
           excludeProductId={product.id}
           title={`More ${(product as any).categories?.name || "software"} resources`}
         />
+
+        <AIFaqBlock
+          entityType="product"
+          entitySlug={product.slug}
+          context={{
+            name: product.name,
+            description: (product as any).tagline || (product as any).description,
+            category: (product as any).categories?.name,
+          }}
+          title={`Frequently asked questions about ${product.name}`}
+        />
+        <HelpfulVote pagePath={`/product/${product.slug}`} />
       </div>
+
 
 
       {/* Sticky mobile CTA bar */}
