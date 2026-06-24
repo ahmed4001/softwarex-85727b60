@@ -218,7 +218,21 @@ export default function BlogPostPage() {
               excludeBlogId={post.id}
               title="Related products & resources"
             />
+
+            <AIFaqBlock
+              entityType="blog"
+              entitySlug={slug}
+              context={{
+                name: post.title,
+                description: post.excerpt || post.seo_description || undefined,
+                category: post.category || undefined,
+              }}
+              title="Frequently asked questions"
+            />
+            <HelpfulVote pagePath={`/blog/${slug}`} />
             <PostComments postId={post.id} />
+
+
 
           </article>
 
