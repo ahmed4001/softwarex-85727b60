@@ -6,12 +6,16 @@ const QueryRule = z.object({
   match: z.string().min(1),
   mean_ms: z.number().positive().optional(),
   max_ms: z.number().positive().optional(),
+  mean_rows: z.number().nonnegative().optional(),
+  max_rows: z.number().nonnegative().optional(),
   label: z.string().min(1).optional(),
 });
 
 const BodySchema = z.object({
   mean_ms: z.number().positive().optional(),
   max_ms: z.number().positive().optional(),
+  mean_rows: z.number().nonnegative().optional(),
+  max_rows: z.number().nonnegative().optional(),
   queries: z.array(QueryRule).optional(),
 });
 
@@ -23,6 +27,8 @@ Deno.serve(async (req) => {
   try {
     let mean_ms: number | undefined;
     let max_ms: number | undefined;
+    let mean_rows: number | undefined;
+    let max_rows: number | undefined;
     let queries: unknown[] = [];
 
     if (req.method === "POST") {
@@ -36,6 +42,8 @@ Deno.serve(async (req) => {
       }
       mean_ms = parsed.data.mean_ms;
       max_ms = parsed.data.max_ms;
+      mean_rows = parsed.data.mean_rows;
+      max_rows = parsed.data.max_rows;
       queries = parsed.data.queries ?? [];
     }
 
@@ -48,6 +56,8 @@ Deno.serve(async (req) => {
       _mean_ms: mean_ms ?? 200,
       _max_ms: max_ms ?? 800,
       _queries: queries,
+      _mean_rows: mean_rows ?? null,
+      _max_rows: max_rows ?? null,
     });
 
     if (error) {
