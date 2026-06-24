@@ -193,12 +193,20 @@ export default function DealsPage() {
     return c ? c.split(",").filter(Boolean) : [];
   }, [params]);
 
-  const setParam = (key: string, value: string | null) => {
+  // Filter/sort changes push a new history entry so back/forward walks
+  // through state. The free-text search input passes { replace: true } to
+  // avoid one history entry per keystroke.
+  const setParam = (
+    key: string,
+    value: string | null,
+    opts: { replace?: boolean } = {},
+  ) => {
     const next = new URLSearchParams(params);
     if (!value) next.delete(key);
     else next.set(key, value);
-    setParams(next, { replace: true });
+    setParams(next, opts);
   };
+
 
   const [email, setEmail] = useState("");
   const [tick, setTick] = useState(Date.now());
