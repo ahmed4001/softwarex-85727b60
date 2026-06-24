@@ -58,6 +58,12 @@ export default function BlogPostPage() {
 
   const tags = Array.isArray(post.tags) ? (post.tags as string[]) : [];
   const url = `https://reviewhunts.com/blog/${slug}`;
+  const plainText = String((post as any).content || post.body || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const wordCount = plainText ? plainText.split(" ").filter(Boolean).length : undefined;
+  const aboutEntities = [
+    ...(post.category ? [{ "@type": "Thing", name: post.category }] : []),
+    ...tags.map((t) => ({ "@type": "Thing", name: t })),
+  ];
 
   return (
     <>
@@ -80,10 +86,20 @@ export default function BlogPostPage() {
             datePublished: post.published_at,
             dateModified: post.updated_at || post.published_at,
             ...(post.reading_time && { timeRequired: `PT${post.reading_time}M` }),
+            ...(wordCount && { wordCount }),
+            ...(tags.length > 0 && { keywords: tags }),
+            articleSection: post.category || undefined,
+            inLanguage: "en",
+            ...(aboutEntities.length > 0 && { about: aboutEntities }),
+            speakable: {
+              "@type": "SpeakableSpecification",
+              cssSelector: ["#article-headline", "#article-excerpt", "article p:first-of-type"],
+              xpath: ["/html/head/title", "/html/head/meta[@name='description']/@content"],
+            },
             ...(author && {
               author: { "@type": "Person", name: (author as any).name || "Author" },
             }),
-            publisher: { "@type": "Organization", name: "ReviewHunts" },
+            publisher: { "@type": "Organization", name: "ReviewHunts", url: "https://reviewhunts.com", logo: { "@type": "ImageObject", url: "https://reviewhunts.com/reviewhunts-logo.png" } },
             mainEntityOfPage: { "@type": "WebPage", "@id": url },
           },
           {
@@ -127,11 +143,17 @@ export default function BlogPostPage() {
                 </Link>
               )}
               <h1
+                id="article-headline"
                 className="text-3xl md:text-[2.75rem] leading-tight font-bold text-foreground mt-3 mb-6"
                 style={{ fontFamily: "'Lora', 'EB Garamond', Georgia, serif" }}
               >
                 {post.title}
               </h1>
+              {post.excerpt && (
+                <p id="article-excerpt" className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
+                  {post.excerpt}
+                </p>
+              )}
 
               {/* Author + meta */}
               <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
