@@ -433,7 +433,7 @@ export default function ProductDetailPage() {
               { "@type": "ListItem", "position": (product.categories as any)?.name ? 3 : 2, "name": product.name }
             ]
           },
-          ...(faqJsonLd ? [faqJsonLd] : [])
+          ...(faqJsonLd ? faqJsonLd : [])
         ]}
       />
 
