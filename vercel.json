@@ -1,4 +1,5 @@
 {
+  "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run build:prerender; else npm run build; fi",
   "redirects": [
     { "source": "/the-lord-of-the-rings-the-rings-of-power", "destination": "/", "permanent": true },
     { "source": "/the-lord-of-the-rings-the-rings-of-power/", "destination": "/", "permanent": true },
