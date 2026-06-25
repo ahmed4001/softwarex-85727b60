@@ -8,7 +8,7 @@ This file follows the [llms.txt](https://llmstxt.org) standard to help AI system
 - Sitemap: https://reviewhunts.com/sitemap.xml
 - Companion (full content): https://reviewhunts.com/llms-full.txt
 - File generated: 2026-06-25
-- Most recent content update: 2026-06-24
+- Most recent content update: 2026-06-25
 
 ## Rendering & crawlability
 

@@ -8,7 +8,7 @@ This file follows the [llms.txt](https://llmstxt.org) standard to help AI system
 - Sitemap: https://reviewhunts.com/sitemap.xml
 - Companion (full content): https://reviewhunts.com/llms-full.txt
 - File generated: 2026-06-25
-- Most recent content update: 2026-06-24
+- Most recent content update: 2026-06-25
 
 ## About this file
 
@@ -202,6 +202,6 @@ Track stock levels, orders, and warehouse operations
 
 ## Recent Articles
 
-### [Best iGaming Software Providers in 2026: Platforms, Features & How to Choose](https://reviewhunts.com/blog/best-igaming-software-providers) _(updated 2026-06-24)_
+### [Best iGaming Software Providers in 2026: Platforms, Features & How to Choose](https://reviewhunts.com/blog/best-igaming-software-providers) _(updated 2026-06-25)_
 A buyer-focused guide to the top iGaming software providers — casino, sportsbook, and platform vendors compared on licensing, game catalog, integrations, and pricing.
 
