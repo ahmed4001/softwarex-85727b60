@@ -403,17 +403,15 @@ export default function ProductDetailPage() {
                 "reviewCount": product.total_reviews
               }
             }),
-            ...(product.starting_price !== null && product.starting_price !== undefined && {
-              "offers": {
-                "@type": "Offer",
-                "price": product.starting_price || 0,
-                "priceCurrency": "USD",
-                "availability": (product as any).is_active === false ? "https://schema.org/Discontinued" : "https://schema.org/InStock",
-                "url": product.website_url || `https://reviewhunts.com/product/${product.slug}`,
-                "priceValidUntil": new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
-                "seller": { "@type": "Organization", "name": product.name, ...(product.website_url && { "url": product.website_url }) }
-              }
-            }),
+            "offers": {
+              "@type": "Offer",
+              "price": product.starting_price ?? 0,
+              "priceCurrency": "USD",
+              "availability": (product as any).is_active === false ? "https://schema.org/Discontinued" : "https://schema.org/InStock",
+              "url": product.website_url || `https://reviewhunts.com/product/${product.slug}`,
+              "priceValidUntil": new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().split("T")[0],
+              "seller": { "@type": "Organization", "name": product.name, ...(product.website_url && { "url": product.website_url }) }
+            },
             ...((reviews && reviews.length > 0) && {
               "review": reviews.slice(0, 5).map((r: any) => ({
                 "@type": "Review",
