@@ -5,7 +5,7 @@ import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Compass, BookMarked } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
