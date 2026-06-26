@@ -336,8 +336,9 @@ export default function HomePage() {
           {/* 11. How It Works */}
           <HowItWorksSection />
 
-          {/* 11. Blog Preview + Vendor CTA */}
+          {/* 11. Blog Preview + Resources Hub + Vendor CTA */}
           <BlogPreviewSection />
+          <ResourcesHubSection />
           <VendorCTASection />
 
           {/* 12. FAQ + Newsletter */}
