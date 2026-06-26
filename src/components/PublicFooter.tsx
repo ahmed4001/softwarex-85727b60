@@ -72,11 +72,11 @@ export function PublicFooter() {
       title: t("footer.softwareHub"),
       links: [
         { to: "/categories", label: t("footer.browseSoftware") },
-        { to: "/blog", label: t("footer.learningHub") },
-        { to: "/categories", label: t("footer.softwareReviews") },
-        { to: "/search", label: t("footer.researchHub") },
+        { to: "/blog", label: t("footer.learningHub", "Blog & News") },
+        { to: "/guides", label: t("footer.buyerGuides", "Buyer Guides") },
+        { to: "/glossary", label: t("footer.glossary", "Glossary") },
         { to: "/compare", label: t("footer.compareSoftware") },
-        { to: "/categories", label: t("footer.bestCompanies") },
+        { to: "/search", label: t("footer.researchHub") },
       ],
     },
     {

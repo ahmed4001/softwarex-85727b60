@@ -5,7 +5,7 @@ import { SeoHead } from "@/components/SeoHead";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Compass, BookMarked } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -336,8 +336,9 @@ export default function HomePage() {
           {/* 11. How It Works */}
           <HowItWorksSection />
 
-          {/* 11. Blog Preview + Vendor CTA */}
+          {/* 11. Blog Preview + Resources Hub + Vendor CTA */}
           <BlogPreviewSection />
+          <ResourcesHubSection />
           <VendorCTASection />
 
           {/* 12. FAQ + Newsletter */}
@@ -380,5 +381,66 @@ function EmptyBlock({ icon, text, sub }: { icon: React.ReactNode; text: string; 
       <p className="text-muted-foreground font-medium text-sm">{text}</p>
       {sub && <p className="text-xs text-muted-foreground/60 mt-0.5">{sub}</p>}
     </div>
+  );
+}
+
+function ResourcesHubSection() {
+  const cards = [
+    {
+      to: "/blog",
+      icon: BookOpen,
+      eyebrow: "Editorial",
+      title: "Blog & News",
+      desc: "Trends, deep-dives, and product launches from our SaaS editors.",
+      cta: "Read the blog",
+    },
+    {
+      to: "/guides",
+      icon: Compass,
+      eyebrow: "Buyer Guides",
+      title: "How to Choose",
+      desc: "Step-by-step frameworks to pick the right software for your team.",
+      cta: "Browse guides",
+    },
+    {
+      to: "/glossary",
+      icon: BookMarked,
+      eyebrow: "Reference",
+      title: "SaaS Glossary",
+      desc: "Plain-English definitions for every term you'll see in vendor demos.",
+      cta: "Open glossary",
+    },
+  ];
+  return (
+    <section className="py-16 md:py-20" aria-labelledby="resources-hub-heading">
+      <div className="container">
+        <SectionHeader
+          id="resources-hub-heading"
+          label="Resources"
+          title="Learn, compare, decide"
+          subtitle="Editorial content, frameworks, and reference material to back every software decision."
+        />
+        <div className="grid md:grid-cols-3 gap-4">
+          {cards.map(({ to, icon: Icon, eyebrow, title, desc, cta }) => (
+            <Link
+              key={to}
+              to={to}
+              className="group rounded-2xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-md transition-all"
+            >
+              <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                <Icon className="h-5 w-5" />
+              </div>
+              <p className="t-eyebrow mb-1">{eyebrow}</p>
+              <h3 className="t-h4 mb-2">{title}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{desc}</p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                {cta}
+                <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
