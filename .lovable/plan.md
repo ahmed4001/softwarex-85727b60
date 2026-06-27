@@ -1,105 +1,64 @@
+# Auto-regenerate & resubmit blog/guides/glossary sitemaps
 
-# AEO + GEO Plan for ReviewHunts
+## Goal
+Whenever a blog post, buyer guide, or glossary term is created/updated/published, the corresponding sitemap is regenerated and resubmitted to Google Search Console — no redeploy required.
 
-**AEO** (Answer Engine Optimization) = getting cited by ChatGPT, Perplexity, Claude, Gemini, Bing Copilot.
-**GEO** (Generative Engine Optimization) = getting surfaced inside Google AI Overviews and SGE answer boxes.
+## Approach
+Move the three sitemaps from static `public/sitemap-*.xml` files to **dynamic edge functions** that read live from the database, then auto-ping GSC on content changes and on a daily cron.
 
-Both reward the same things: machine-readable facts, clear extractable answers, brand/entity authority, and crawler access. Below is what to add, in priority order.
+## Steps
 
----
+### 1. Dynamic sitemap edge function
+Create `supabase/functions/sitemap-dynamic/index.ts`:
+- Reads `type` from path/query (`blog`, `guides`, `glossary`).
+- Queries the matching table with the same filters our build-time generator uses (`status=published`, etc.).
+- Returns `application/xml` with proper `lastmod` from `updated_at`.
+- Public (`verify_jwt = false`), cached `Cache-Control: public, max-age=300`.
 
-## 1. Let AI crawlers in (blocker)
+### 2. Vercel rewrites
+In `vercel.json`, rewrite:
+- `/sitemap-blog.xml` → edge function `?type=blog`
+- `/sitemap-guides.xml` → `?type=guides`
+- `/sitemap-glossary.xml` → `?type=glossary`
 
-Update `public/robots.txt` to explicitly allow the major AI bots. Many sites accidentally block them via wildcard rules or CDN defaults.
+Static files in `public/` for those three are deleted so the rewrite wins. Other sitemaps (main/products/categories/comparisons) stay static.
 
-Allow: `GPTBot`, `OAI-SearchBot`, `ChatGPT-User`, `PerplexityBot`, `Perplexity-User`, `Google-Extended`, `Applebot-Extended`, `ClaudeBot`, `anthropic-ai`, `Bingbot`, `Amazonbot`, `meta-externalagent`, `CCBot`.
+### 3. Resubmit edge function
+Create `supabase/functions/resubmit-sitemaps/index.ts`:
+- Iterates the 3 sitemap URLs.
+- For each, calls `PUT https://connector-gateway.lovable.dev/google_search_console/webmasters/v3/sites/sc-domain%3Areviewhunts.com/sitemaps/<urlencoded>` with headers `Authorization: Bearer ${LOVABLE_API_KEY}` and `X-Connection-Api-Key: ${GOOGLE_SEARCH_CONSOLE_API_KEY}`.
+- Also pings IndexNow for the changed entity URL when provided in the body.
+- Logs each submission outcome.
 
-Add `llms.txt` at `public/llms.txt` — an emerging standard (Anthropic-led) that gives LLMs a curated map of your most citable URLs (top products, category hubs, comparisons, guides, glossary). Generate it the same way as sitemap.xml from the DB.
+### 4. Link GSC connector to project
+Use `standard_connectors--connect` for `google_search_console` so `GOOGLE_SEARCH_CONSOLE_API_KEY` is injected as an edge-function env var. `LOVABLE_API_KEY` is already provisioned.
 
-## 2. Structured data everywhere (biggest GEO lever)
+### 5. DB triggers → call edge function
+Migration adds AFTER INSERT/UPDATE triggers on:
+- `blog_posts` (when `status='published'`)
+- `buyer_guides`
+- `glossary_terms`
 
-Expand JSON-LD coverage. Most pages already have some — fill the gaps:
+Each trigger calls a SQL function `notify_sitemap_change(type text, slug text)` that uses `pg_net.http_post` to invoke `resubmit-sitemaps` with `{ type, slug }`. `pg_net` and `pg_cron` extensions are enabled if not already.
 
-- **Product pages** → `Product` + `AggregateRating` + `Review` + `Offer`. Critical for AI Overviews "best X" answers.
-- **Comparison pages** → `ItemList` of Products + `FAQPage` for the "X vs Y" Q&A.
-- **Blog/Guides** → `Article` + `Author` (with sameAs to LinkedIn) + `BreadcrumbList`.
-- **Glossary** → `DefinedTerm` inside a `DefinedTermSet`. Huge for "what is X" AI answers.
-- **Q&A threads** → `QAPage` with accepted answer.
-- **Homepage** → `Organization` + `WebSite` with `SearchAction` (sitelinks search box).
-- **Awards / leaderboards** → `ItemList` ranked.
+Trigger is debounced via a 60-second `pg_advisory_xact_lock` keyed by type so bulk updates don't fan out.
 
-## 3. Answer-first content blocks
+### 6. Daily cron fallback
+`pg_cron` job at 03:00 UTC calls `resubmit-sitemaps` with `{ type: 'all' }` so Google sees a fresh `lastSubmitted` even on quiet days.
 
-AI engines extract the first 2-3 sentences after an H2/H3 that look like a direct answer. Add to every product, comparison, and guide page:
+### 7. Admin trigger
+Add a "Resubmit sitemaps now" button on `AdminFaqCachePage`'s sibling SEO admin (or a small new page) that invokes the same function for manual re-pings.
 
-- A **TL;DR / Quick Answer** block at the top (1-3 sentences, plain text, no marketing fluff).
-- An **FAQ accordion** with `FAQPage` JSON-LD (5-8 real questions per page).
-- **Key facts table** — pricing, founded year, integrations count, free plan yes/no. Tables are heavily extracted.
+## Technical notes
+- Sitemap edge function uses `SUPABASE_URL` + `SUPABASE_ANON_KEY` to query (RLS-safe; only published rows are readable to anon).
+- Build-time `scripts/generate-sitemap.ts` keeps writing static files as a safety net; rewrites override them only for the three dynamic types.
+- All XML escaped via `xmlEscape` helper to match existing generator.
+- No schema changes beyond extension enablement + trigger functions.
 
-Add a reusable `<AnswerBlock>` and `<FactsTable>` component, render on Product/Comparison/Guide/Glossary routes.
-
-## 4. Entity & author authority
-
-AI engines weight E-E-A-T heavily for citations.
-
-- Add `Person` schema for review authors with `sameAs` linking LinkedIn/X profiles.
-- Author bio page per author (already have profiles — expose them at `/author/:username` with full schema).
-- Add `Organization` schema with `sameAs` for ReviewHunts' own social handles.
-- Show "Verified buyer / Verified vendor" badges in review markup (`Review.author.additionalType`).
-
-## 5. Citations & freshness signals
-
-- Every product/blog page renders a visible **"Last updated: <date>"** and matching `dateModified` in JSON-LD. Perplexity ranks fresh sources higher.
-- Add outbound citation links (`<a rel="cite">` to vendor docs, G2, official changelogs) on long-form content — generative engines copy citation graphs.
-- Add an `/api/data` or static JSON endpoint per product (`/p/<slug>.json`) so AI crawlers can grab structured facts without parsing HTML. Cheap; just serialize the product row.
-
-## 6. Tracking & measurement
-
-- Edge function `track-ai-referrer` logs traffic from `chat.openai.com`, `perplexity.ai`, `gemini.google.com`, `copilot.microsoft.com`, `claude.ai` referrers into a new `ai_referrals` table. Surface in Admin Analytics so you can see which pages get cited.
-- Weekly cron: query `pg_stat` for AI bot user-agents hitting the site (GPTBot, PerplexityBot, etc.) and log crawl volume per page.
-- Admin dashboard widget: "AI visibility" — pages cited, top referrer engines, crawl frequency.
-
-## 7. IndexNow + sitemap hygiene (already partly done)
-
-- `pingIndexNow()` is wired — call it from product approval, blog publish, comparison creation, deal updates. Bing/Yandex powers Copilot.
-- Submit `llms.txt` URL inside `robots.txt` alongside `Sitemap:` directive.
-
----
-
-## Technical sections
-
-**New files**
-- `public/llms.txt` (generator script, like sitemap)
-- `scripts/generate-llms-txt.ts` + `predev`/`prebuild` hook
-- `src/components/seo/AnswerBlock.tsx`, `FactsTable.tsx`, `FAQSection.tsx` (with JSON-LD)
-- `src/components/seo/ProductSchema.tsx`, `ComparisonSchema.tsx`, `GlossarySchema.tsx`, `QASchema.tsx`, `ArticleSchema.tsx`
-- `supabase/functions/track-ai-referrer/index.ts`
-- `src/pages/Author.tsx` at route `/author/:username`
-
-**Files to edit**
-- `public/robots.txt` — add AI bot allow blocks + `Sitemap` + `LLMs` directive
-- `index.html` — extend Organization schema with `sameAs`, add `WebSite` + `SearchAction`
-- Product, Comparison, Blog, Glossary, QA page components — inject AnswerBlock + FactsTable + FAQ + schemas
-- All publish-flow code paths (product approval edge function, blog publish handler, comparison creator) — call `pingIndexNow`
-
-**New DB**
-- `ai_referrals` table (id, session_id, referrer_engine, landing_path, user_agent, created_at) + RLS + GRANTs
-- `ai_crawl_log` table (id, bot_name, path, status, crawled_at) + RLS + GRANTs
-
-**Build order** — ship in this order so each step is measurable:
-1. robots.txt + llms.txt (instant crawler access)
-2. Expanded JSON-LD on Product/Comparison/Glossary (biggest GEO win)
-3. AnswerBlock + FAQ components site-wide
-4. AI referrer tracking + admin dashboard widget
-5. Author pages + entity authority schema
-6. Per-product `.json` endpoint
-
----
-
-## Out of scope (call out separately if you want)
-
-- Building actual links/citations from external sites (manual outreach, PR)
-- Multi-language AEO (separate plan if you want hreflang + translated answer blocks)
-- A "Submit my product to AI engines" vendor-facing feature
-
-Reply **"build"** to ship step 1+2, or pick specific steps.
+## Files touched
+- `supabase/functions/sitemap-dynamic/index.ts` (new)
+- `supabase/functions/resubmit-sitemaps/index.ts` (new)
+- `vercel.json` (rewrites)
+- `public/sitemap-blog.xml`, `sitemap-guides.xml`, `sitemap-glossary.xml` (delete)
+- `scripts/generate-sitemap.ts` (skip writing the three dynamic ones)
+- New migration: extensions, `notify_sitemap_change`, triggers, cron job
