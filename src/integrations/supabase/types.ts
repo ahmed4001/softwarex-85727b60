@@ -4681,6 +4681,10 @@ export type Database = {
         Args: { _from_path: string }
         Returns: undefined
       }
+      notify_sitemap_change: {
+        Args: { _slug?: string; _type: string }
+        Returns: undefined
+      }
       reset_brevo_daily_credits: { Args: never; Returns: undefined }
       slugify: { Args: { _input: string }; Returns: string }
     }
