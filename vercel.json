@@ -23,6 +23,9 @@
     { "source": "/yamaha-earbuds-review/", "destination": "/", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/sitemap-blog.xml", "destination": "https://ffeimjfunghzxgeqiwma.supabase.co/functions/v1/sitemap-dynamic?type=blog" },
+    { "source": "/sitemap-guides.xml", "destination": "https://ffeimjfunghzxgeqiwma.supabase.co/functions/v1/sitemap-dynamic?type=guides" },
+    { "source": "/sitemap-glossary.xml", "destination": "https://ffeimjfunghzxgeqiwma.supabase.co/functions/v1/sitemap-dynamic?type=glossary" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
