@@ -115,10 +115,13 @@ async function main() {
   add("sitemap-main.xml", [...staticEntries, ...pageEntries]);
   add("sitemap-products.xml", productEntries);
   add("sitemap-categories.xml", categoryEntries);
-  add("sitemap-blog.xml", blogEntries);
   add("sitemap-comparisons.xml", compareEntries);
-  add("sitemap-guides.xml", [...guideEntries, ...listEntries]);
-  add("sitemap-glossary.xml", glossaryEntries);
+  // NOTE: sitemap-blog.xml, sitemap-guides.xml, and sitemap-glossary.xml are
+  // served dynamically by the `sitemap-dynamic` edge function (via vercel.json
+  // rewrites) so they auto-refresh on content changes without a redeploy.
+  // We still list them in the index so Google discovers them.
+  childMaps.push("sitemap-blog.xml", "sitemap-guides.xml", "sitemap-glossary.xml");
+  if (listEntries.length) add("sitemap-lists.xml", listEntries);
   add("sitemap-landing.xml", landingEntries);
   add("sitemap-discussions.xml", discussionEntries);
 
