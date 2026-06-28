@@ -188,7 +188,7 @@ export default function BlogPostPage() {
 
             {post.featured_image && (
               <figure className="mb-10 -mx-4 md:mx-0">
-                <img decoding="async" loading="lazy" src={post.featured_image} alt={post.title} className="w-full rounded-xl" />
+                <img decoding="async" loading="eager" fetchPriority="high" src={post.featured_image} alt={post.title} className="w-full rounded-xl" />
               </figure>
             )}
 
