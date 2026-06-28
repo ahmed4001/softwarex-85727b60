@@ -62,7 +62,7 @@ export function TestimonialsSection() {
               </p>
 
               <div className="flex items-center gap-3 pt-4 border-t border-border">
-                <img src={t.avatar} alt={t.name} className="h-9 w-9 rounded-full object-cover" loading="lazy" />
+                <img decoding="async" src={t.avatar} alt={t.name} className="h-9 w-9 rounded-full object-cover" loading="lazy" />
                 <div>
                   <p className="font-semibold text-foreground text-sm">{t.name}</p>
                   <p className="text-xs text-muted-foreground">{t.role}</p>

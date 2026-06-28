@@ -228,7 +228,7 @@ export default function DealDetailPage() {
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6 flex-wrap">
                 {deal.logo_url ? (
-                  <img src={deal.logo_url} alt={`${deal.product_name} logo`} className="h-20 w-20 rounded-2xl object-contain bg-muted p-2" />
+                  <img decoding="async" loading="lazy" src={deal.logo_url} alt={`${deal.product_name} logo`} className="h-20 w-20 rounded-2xl object-contain bg-muted p-2" />
                 ) : (
                   <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
                     {deal.product_name[0]}
@@ -309,7 +309,7 @@ export default function DealDetailPage() {
                   <Card className="h-full hover:border-primary/40 hover:shadow-md transition">
                     <CardContent className="p-4 flex items-center gap-3">
                       {r.logo_url ? (
-                        <img src={r.logo_url} alt="" className="h-10 w-10 rounded-lg object-contain bg-muted p-1" />
+                        <img decoding="async" loading="lazy" src={r.logo_url} alt="" className="h-10 w-10 rounded-lg object-contain bg-muted p-1" />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold">
                           {r.product_name[0]}

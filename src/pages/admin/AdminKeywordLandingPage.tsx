@@ -580,7 +580,7 @@ export default function AdminKeywordLandingPage() {
               {/* Featured image (upload or URL) */}
               {form.featured_image ? (
                 <div className="relative rounded-xl overflow-hidden group border border-border">
-                  <img src={form.featured_image} alt="Feature" className="w-full h-auto" />
+                  <img decoding="async" loading="lazy" src={form.featured_image} alt="Feature" className="w-full h-auto" />
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, featured_image: "" })}

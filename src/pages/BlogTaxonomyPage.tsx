@@ -74,7 +74,7 @@ export default function BlogTaxonomyPage({ mode }: Props) {
                 </div>
                 {post.featured_image && (
                   <div className="w-32 h-24 md:w-40 md:h-28 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-                    <img src={post.featured_image} alt={post.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img decoding="async" loading="lazy" src={post.featured_image} alt={post.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                 )}
               </Link>

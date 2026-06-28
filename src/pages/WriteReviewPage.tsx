@@ -168,7 +168,7 @@ export default function WriteReviewPage() {
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center overflow-hidden ring-2 ring-border/30">
-              {product.logo_url ? <img src={product.logo_url} alt={product.name} className="h-full w-full object-cover" /> : <span className="text-xl font-bold text-primary">{product.name.charAt(0)}</span>}
+              {product.logo_url ? <img decoding="async" loading="lazy" src={product.logo_url} alt={product.name} className="h-full w-full object-cover" /> : <span className="text-xl font-bold text-primary">{product.name.charAt(0)}</span>}
             </div>
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">Review {product.name}</h1>
@@ -262,7 +262,7 @@ export default function WriteReviewPage() {
               <div className="flex flex-wrap gap-3">
                 {mediaPreviews.map((url, i) => (
                   <div key={i} className="relative h-20 w-20 rounded-xl overflow-hidden border border-border group">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <img decoding="async" loading="lazy" src={url} alt="" className="h-full w-full object-cover" />
                     <button onClick={() => removeMedia(i)} className="absolute top-1 right-1 h-5 w-5 rounded-full bg-destructive/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="h-3 w-3" />
                     </button>

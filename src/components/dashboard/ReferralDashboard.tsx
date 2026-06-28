@@ -119,7 +119,7 @@ export function ReferralDashboard({ userId }: { userId: string }) {
             <Card key={link.id} className="border-border/50">
               <CardContent className="p-3 flex items-center gap-3">
                 {link.products?.logo_url ? (
-                  <img src={link.products.logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
+                  <img decoding="async" loading="lazy" src={link.products.logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
                 ) : (
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Link2 className="h-4 w-4 text-primary" />

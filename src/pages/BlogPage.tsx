@@ -449,7 +449,7 @@ export default function BlogPage() {
               >
                 {heroPost.featured_image && (
                   <div className="aspect-[2/1] rounded-xl overflow-hidden mb-5 bg-muted">
-                    <img
+                    <img decoding="async"
                       src={heroPost.featured_image}
                       alt={heroPost.title}
                       loading="lazy"
@@ -523,7 +523,7 @@ export default function BlogPage() {
                     </div>
                     {post.featured_image && (
                       <div className="w-24 h-20 sm:w-32 sm:h-24 md:w-40 md:h-28 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-                        <img
+                        <img decoding="async"
                           src={post.featured_image}
                           alt={post.title}
                           loading="lazy"

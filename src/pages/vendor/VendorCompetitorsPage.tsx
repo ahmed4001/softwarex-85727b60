@@ -130,7 +130,7 @@ export default function VendorCompetitorsPage() {
           {claimedProducts.map((p: any) => (
             <div key={p.id} className="glass-card p-5 flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <Package className="h-5 w-5 text-muted-foreground" />}
+                {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <Package className="h-5 w-5 text-muted-foreground" />}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-foreground truncate">{p.name}</h3>
@@ -167,7 +167,7 @@ export default function VendorCompetitorsPage() {
               return (
                 <div key={comp.id} className="glass-card p-5 flex items-center gap-4">
                   <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {comp.logo_url ? <img src={comp.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{comp.name.charAt(0)}</span>}
+                    {comp.logo_url ? <img decoding="async" loading="lazy" src={comp.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{comp.name.charAt(0)}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

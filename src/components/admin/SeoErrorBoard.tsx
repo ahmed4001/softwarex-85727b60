@@ -532,7 +532,7 @@ export function SocialPreview({
           {/* Image */}
           <div className="aspect-[1.91/1] bg-muted flex items-center justify-center">
             {image ? (
-              <img src={image} alt="" className="w-full h-full object-cover" />
+              <img decoding="async" loading="lazy" src={image} alt="" className="w-full h-full object-cover" />
             ) : (
               <Globe className="h-8 w-8 text-muted-foreground/40" />
             )}

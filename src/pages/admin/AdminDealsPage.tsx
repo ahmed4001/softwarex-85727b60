@@ -519,7 +519,7 @@ export default function AdminDealsPage() {
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-2">
-                          {d.logo_url ? <img src={d.logo_url} alt="" className="h-8 w-8 rounded object-contain bg-muted" /> : <div className="h-8 w-8 rounded bg-muted" />}
+                          {d.logo_url ? <img decoding="async" loading="lazy" src={d.logo_url} alt="" className="h-8 w-8 rounded object-contain bg-muted" /> : <div className="h-8 w-8 rounded bg-muted" />}
                           <div>
                             <div className="font-medium">{d.product_name}</div>
                             <div className="text-xs text-muted-foreground">{d.slug}</div>
@@ -684,7 +684,7 @@ export default function AdminDealsPage() {
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
                       {selectedProduct ? (
                         <span className="flex items-center gap-2">
-                          {selectedProduct.logo_url && <img src={selectedProduct.logo_url} alt="" className="h-5 w-5 rounded object-contain" />}
+                          {selectedProduct.logo_url && <img decoding="async" loading="lazy" src={selectedProduct.logo_url} alt="" className="h-5 w-5 rounded object-contain" />}
                           {selectedProduct.name}
                         </span>
                       ) : (
@@ -702,7 +702,7 @@ export default function AdminDealsPage() {
                           {products.slice(0, 200).map((p) => (
                             <CommandItem key={p.id} value={`${p.name} ${p.slug}`} onSelect={() => selectProduct(p)}>
                               <Check className={`mr-2 h-4 w-4 ${editing.product_id === p.id ? "opacity-100" : "opacity-0"}`} />
-                              {p.logo_url && <img src={p.logo_url} alt="" className="h-5 w-5 rounded object-contain mr-2" />}
+                              {p.logo_url && <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-5 w-5 rounded object-contain mr-2" />}
                               <div className="flex flex-col">
                                 <span>{p.name}</span>
                                 <span className="text-xs text-muted-foreground">{p.slug}</span>

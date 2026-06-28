@@ -56,7 +56,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="h-full w-full rounded-full object-cover" /> : <span className="text-xs font-bold text-primary">{(u.name || "?").charAt(0)}</span>}
+                        {u.avatar_url ? <img decoding="async" loading="lazy" src={u.avatar_url} alt="" className="h-full w-full rounded-full object-cover" /> : <span className="text-xs font-bold text-primary">{(u.name || "?").charAt(0)}</span>}
                       </div>
                       <span className="text-sm font-medium text-foreground">{u.name || "—"}</span>
                     </div>

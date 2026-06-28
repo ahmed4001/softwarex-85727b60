@@ -144,7 +144,7 @@ export function TCOCalculator({ products }: TCOCalculatorProps) {
             )}
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
-                {r.logo_url ? <img src={r.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{r.name.charAt(0)}</span>}
+                {r.logo_url ? <img decoding="async" loading="lazy" src={r.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{r.name.charAt(0)}</span>}
               </div>
               <div>
                 <h3 className="font-display font-bold text-foreground">{r.name}</h3>

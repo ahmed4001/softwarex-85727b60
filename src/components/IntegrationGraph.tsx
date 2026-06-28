@@ -59,7 +59,7 @@ export function IntegrationGraph({ productId }: { productId: string }) {
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                 {item.product.logo_url ? (
-                  <img src={item.product.logo_url} alt="" className="h-full w-full object-cover" />
+                  <img decoding="async" loading="lazy" src={item.product.logo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-sm font-bold text-primary">{item.product.name?.charAt(0)}</span>
                 )}

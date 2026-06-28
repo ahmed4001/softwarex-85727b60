@@ -84,7 +84,7 @@ export function PublicHeader() {
         }}
       >
         <Link to="/" className="flex items-center flex-shrink-0 py-1.5 pl-1" aria-label="ReviewHunts">
-          <img
+          <img decoding="async" loading="lazy"
             src={logoAsset.url}
             alt="ReviewHunts — Software Reviews & Comparisons"
             className="w-auto object-contain h-[var(--logo-h-mobile)] md:h-[var(--logo-h-desktop)] max-w-[var(--logo-mw-mobile)] md:max-w-[var(--logo-mw-desktop)]"

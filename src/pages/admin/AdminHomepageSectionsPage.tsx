@@ -229,7 +229,7 @@ export default function AdminHomepageSectionsPage() {
                       onCheckedChange={() => toggleSelection(item.id)}
                     />
                     {item.product?.logo_url ? (
-                      <img src={item.product.logo_url} alt="" className="h-8 w-8 rounded object-contain bg-muted" />
+                      <img decoding="async" loading="lazy" src={item.product.logo_url} alt="" className="h-8 w-8 rounded object-contain bg-muted" />
                     ) : (
                       <div className="h-8 w-8 rounded bg-muted" />
                     )}
@@ -430,7 +430,7 @@ function ProductPicker({ existingIds, onPickMultiple }: { existingIds: string[];
                 checked={selectedProductIds.has(p.id)}
                 onCheckedChange={() => toggleProduct(p)}
               />
-              {p.logo_url ? <img src={p.logo_url} alt="" className="h-6 w-6 rounded object-contain bg-muted" /> : <div className="h-6 w-6 rounded bg-muted" />}
+              {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-6 w-6 rounded object-contain bg-muted" /> : <div className="h-6 w-6 rounded bg-muted" />}
               <span className="flex-1 truncate">{p.name}</span>
             </div>
           ))}

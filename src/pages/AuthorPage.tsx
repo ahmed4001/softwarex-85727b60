@@ -80,7 +80,7 @@ export default function AuthorPage() {
 
         <header className="text-center mt-10 mb-14">
           {avatar ? (
-            <img src={avatar} alt={name} className="h-24 w-24 rounded-full object-cover mx-auto mb-5" />
+            <img decoding="async" loading="lazy" src={avatar} alt={name} className="h-24 w-24 rounded-full object-cover mx-auto mb-5" />
           ) : (
             <div className="h-24 w-24 rounded-full bg-primary/10 text-primary text-3xl font-semibold flex items-center justify-center mx-auto mb-5">
               {name[0]?.toUpperCase()}
@@ -143,7 +143,7 @@ export default function AuthorPage() {
                 </div>
                 {post.featured_image && (
                   <div className="w-32 h-24 md:w-40 md:h-28 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-                    <img src={post.featured_image} alt={post.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img decoding="async" loading="lazy" src={post.featured_image} alt={post.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                 )}
               </Link>

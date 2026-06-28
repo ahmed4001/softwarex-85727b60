@@ -173,7 +173,7 @@ export function PublicFooter() {
 
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/30">
           <Link to="/" aria-label="ReviewHunts" className="flex items-center">
-            <img
+            <img decoding="async" loading="lazy"
               src={logoAsset.url}
               alt="ReviewHunts"
               className="h-7 w-auto object-contain brightness-0 invert opacity-80 hover:opacity-100 transition-opacity"

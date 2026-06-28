@@ -304,7 +304,7 @@ export default function AdminPagesPage() {
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Social Share Preview</p>
                   <div className="rounded-xl border border-border overflow-hidden max-w-sm bg-muted/30">
                     <div className="aspect-[1.91/1] bg-muted overflow-hidden">
-                      <img src={editingPage.og_image} alt="OG Preview" className="w-full h-full object-cover" />
+                      <img decoding="async" loading="lazy" src={editingPage.og_image} alt="OG Preview" className="w-full h-full object-cover" />
                     </div>
                     <div className="p-3 space-y-0.5">
                       <p className="text-[11px] text-muted-foreground uppercase">yoursite.com</p>

@@ -55,7 +55,7 @@ export function BlogPreviewSection() {
               <Link to={`/blog/${post.slug}`} className="glass-card group block overflow-hidden">
                 {post.featured_image && (
                   <div className="aspect-[16/9] overflow-hidden">
-                    <img
+                    <img decoding="async" loading="lazy"
                       src={post.featured_image}
                       alt={post.title}
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"

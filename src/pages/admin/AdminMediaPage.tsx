@@ -162,7 +162,7 @@ export default function AdminMediaPage() {
                 onClick={() => setPreviewItem(item)}
               >
                 {item.mime_type?.startsWith("image") ? (
-                  <img src={item.url} alt={item.alt_text || ""} className="h-full w-full object-cover" loading="lazy" />
+                  <img decoding="async" src={item.url} alt={item.alt_text || ""} className="h-full w-full object-cover" loading="lazy" />
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <FileImage className="h-8 w-8 text-muted-foreground/40" />
@@ -189,7 +189,7 @@ export default function AdminMediaPage() {
             <div className="space-y-4">
               {previewItem.mime_type?.startsWith("image") && (
                 <div className="rounded-xl overflow-hidden bg-muted max-h-64 flex items-center justify-center">
-                  <img src={previewItem.url} alt="" className="max-h-64 object-contain" />
+                  <img decoding="async" loading="lazy" src={previewItem.url} alt="" className="max-h-64 object-contain" />
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2 text-sm">

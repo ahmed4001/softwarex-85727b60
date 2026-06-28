@@ -134,7 +134,7 @@ export function MostPopularCategoriesSection() {
                         {/* Screenshot area */}
                         <div className="aspect-[16/10] bg-muted relative overflow-hidden">
                           {screenshotUrl ? (
-                            <img
+                            <img decoding="async"
                               src={screenshotUrl}
                               alt={`${p.name} screenshot`}
                               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"

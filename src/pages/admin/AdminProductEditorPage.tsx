@@ -294,7 +294,7 @@ export default function AdminProductEditorPage() {
                   <Input id="logo_url" value={form.logo_url} onChange={(e) => update("logo_url", e.target.value)} placeholder="https://..." maxLength={2048} />
                   {form.logo_url && (
                     <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden mt-1">
-                      <img src={form.logo_url} alt="Logo preview" className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
+                      <img decoding="async" loading="lazy" src={form.logo_url} alt="Logo preview" className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
                     </div>
                   )}
                 </div>

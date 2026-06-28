@@ -75,7 +75,7 @@ export function ProductShowcaseSection() {
                   {/* Screenshot */}
                   <div className="relative aspect-video bg-muted overflow-hidden flex items-center justify-center">
                     {screenshot ? (
-                      <img
+                      <img decoding="async"
                         src={screenshot}
                         alt={`${p.name} screenshot`}
                         className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"

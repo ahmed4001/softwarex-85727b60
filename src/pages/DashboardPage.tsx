@@ -400,7 +400,7 @@ function MyReviewsTab({ userId }: { userId: string }) {
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {r.products?.logo_url ? (
-                    <img src={r.products.logo_url} alt="" className="h-full w-full object-cover" />
+                    <img decoding="async" loading="lazy" src={r.products.logo_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-sm font-bold text-primary">{r.products?.name?.charAt(0)}</span>
                   )}
@@ -650,7 +650,7 @@ function WatchlistTab({ userId }: { userId: string }) {
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                   {w.products?.logo_url ? (
-                    <img src={w.products.logo_url} alt="" className="h-full w-full object-cover" />
+                    <img decoding="async" loading="lazy" src={w.products.logo_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-sm font-bold text-primary">{w.products?.name?.charAt(0)}</span>
                   )}

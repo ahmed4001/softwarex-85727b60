@@ -98,7 +98,7 @@ export function KeywordPagePreview({
           {/* Featured image */}
           {featured_image && (
             <div className="my-8 rounded-xl overflow-hidden border border-border">
-              <img src={featured_image} alt={h1} className="w-full h-auto" />
+              <img decoding="async" loading="lazy" src={featured_image} alt={h1} className="w-full h-auto" />
             </div>
           )}
 

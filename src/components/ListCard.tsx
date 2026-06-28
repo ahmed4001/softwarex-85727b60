@@ -33,7 +33,7 @@ export function ListCard({
             {productLogos.length > 0 && (
               <div className="flex -space-x-2">
                 {productLogos.slice(0, 4).map((logo, i) => (
-                  <img key={i} src={logo} alt="" className="h-6 w-6 rounded-md border border-border bg-card object-cover" />
+                  <img decoding="async" loading="lazy" key={i} src={logo} alt="" className="h-6 w-6 rounded-md border border-border bg-card object-cover" />
                 ))}
               </div>
             )}

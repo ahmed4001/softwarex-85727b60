@@ -109,7 +109,7 @@ export default function UserProfilePage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.name || ""} className="h-full w-full rounded-2xl object-cover" />
+                <img decoding="async" loading="lazy" src={profile.avatar_url} alt={profile.name || ""} className="h-full w-full rounded-2xl object-cover" />
               ) : (
                 <User className="h-8 w-8 text-primary" />
               )}
@@ -182,7 +182,7 @@ export default function UserProfilePage() {
                 <div className="flex items-start gap-4">
                   <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                     {review.products?.logo_url ? (
-                      <img src={review.products.logo_url} alt="" className="h-full w-full object-cover" />
+                      <img decoding="async" loading="lazy" src={review.products.logo_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <span className="text-xs font-bold text-primary">{review.products?.name?.charAt(0) || "?"}</span>
                     )}

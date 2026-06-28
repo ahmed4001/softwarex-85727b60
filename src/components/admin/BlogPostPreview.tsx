@@ -80,7 +80,7 @@ export function BlogPostPreview({
 
           {featured_image && (
             <figure className="mb-10 rounded-xl overflow-hidden">
-              <img src={featured_image} alt={title} className="w-full h-auto" />
+              <img decoding="async" loading="lazy" src={featured_image} alt={title} className="w-full h-auto" />
             </figure>
           )}
 

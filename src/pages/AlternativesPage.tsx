@@ -151,7 +151,7 @@ export default function AlternativesPage() {
           <div className="flex items-center gap-3 mb-3">
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
               {product?.logo_url ? (
-                <img src={product.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                <img decoding="async" loading="lazy" src={product.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
               ) : (
                 <ArrowLeftRight className="h-6 w-6 text-primary" />
               )}

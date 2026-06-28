@@ -136,7 +136,7 @@ export default function AwardsPage() {
                               <span className="text-sm font-bold text-muted-foreground w-5 text-center">{idx + 1}</span>
                               <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {nom.products?.logo_url ? (
-                                  <img src={nom.products.logo_url} alt="" className="h-full w-full object-cover" />
+                                  <img decoding="async" loading="lazy" src={nom.products.logo_url} alt="" className="h-full w-full object-cover" />
                                 ) : (
                                   <span className="text-xs font-bold text-primary">{nom.products?.name?.charAt(0)}</span>
                                 )}
@@ -246,7 +246,7 @@ function NominateButton({ categoryId, existingProductIds }: { categoryId: string
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
               >
                 <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
+                  {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
                 </div>
                 <span className="text-sm font-medium text-foreground">{p.name}</span>
               </button>
