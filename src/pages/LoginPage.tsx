@@ -75,7 +75,7 @@ export default function LoginPage() {
       <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
         {/* Left — editorial image + overlay */}
         <div className="hidden lg:block relative overflow-hidden">
-          <img
+          <img decoding="async" loading="lazy"
             src={softwareCollage}
             alt="Software tools workspace"
             className="absolute inset-0 w-full h-full object-cover"

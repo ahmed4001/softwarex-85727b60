@@ -56,7 +56,7 @@ export default function VendorProductsPage() {
                 <div key={c.id} className="glass-card p-6">
                   <div className="flex items-start gap-4 mb-4">
                     <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <Package className="h-6 w-6 text-muted-foreground" />}
+                      {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <Package className="h-6 w-6 text-muted-foreground" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

@@ -46,7 +46,7 @@ export default function LeaderboardPage() {
                   <div className="mb-2 flex justify-center">{rankIcons[idx]}</div>
                   <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                     {l.avatar_url ? (
-                      <img src={l.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                      <img decoding="async" loading="lazy" src={l.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                     ) : (
                       <span className="text-base sm:text-lg font-bold text-primary">{(l.name || "?").charAt(0)}</span>
                     )}
@@ -90,7 +90,7 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                         {l.avatar_url ? (
-                          <img src={l.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                          <img decoding="async" loading="lazy" src={l.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                         ) : (
                           <span className="text-xs font-bold text-muted-foreground">{(l.name || "?").charAt(0)}</span>
                         )}

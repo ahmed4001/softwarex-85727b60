@@ -235,7 +235,7 @@ export default function ComparePage() {
             {products?.map((p) => (
               <motion.div key={p.id} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2 pr-2">
                 <div className="h-8 w-8 rounded-lg bg-card flex items-center justify-center overflow-hidden">
-                  {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
+                  {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
                 </div>
                 <span className="text-sm font-semibold text-foreground">{p.name}</span>
                 <button onClick={() => removeProduct(p.id)} aria-label={`Remove ${p.name} from comparison`} className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
@@ -260,7 +260,7 @@ export default function ComparePage() {
                         {filteredSearch.slice(0, 20).map((p) => (
                           <button key={p.id} onClick={() => addProduct(p.id)} className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors">
                             <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                              {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
+                              {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{p.name.charAt(0)}</span>}
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
@@ -294,7 +294,7 @@ export default function ComparePage() {
                       </div>
                     )}
                     <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center overflow-hidden mx-auto mb-3">
-                      {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xl font-bold text-primary">{p.name.charAt(0)}</span>}
+                      {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xl font-bold text-primary">{p.name.charAt(0)}</span>}
                     </div>
                     <h3 className="font-bold text-foreground mb-1">{p.name}</h3>
                     <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{p.tagline}</p>

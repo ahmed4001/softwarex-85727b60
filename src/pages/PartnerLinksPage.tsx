@@ -99,7 +99,7 @@ export default function PartnerLinksPage() {
                 className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all group"
               >
                 {partner.logo_url ? (
-                  <img
+                  <img decoding="async" loading="lazy"
                     src={partner.logo_url}
                     alt={partner.name}
                     className="w-12 h-12 rounded-lg object-contain bg-muted p-1 flex-shrink-0"

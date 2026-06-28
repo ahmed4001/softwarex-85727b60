@@ -131,7 +131,7 @@ function DealCard({ deal, featured, tick }: { deal: Deal; featured?: boolean; ti
           <Link to={`/deals/${deal.slug}`} className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
               {deal.logo_url ? (
-                <img src={deal.logo_url} alt={deal.product_name} className="h-12 w-12 rounded-lg object-contain bg-muted p-1" />
+                <img decoding="async" loading="lazy" src={deal.logo_url} alt={deal.product_name} className="h-12 w-12 rounded-lg object-contain bg-muted p-1" />
               ) : (
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold">
                   {deal.product_name[0]}

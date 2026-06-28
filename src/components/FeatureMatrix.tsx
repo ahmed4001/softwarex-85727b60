@@ -49,7 +49,7 @@ export function FeatureMatrix({ products }: FeatureMatrixProps) {
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-6 w-6 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                       {p.logo_url ? (
-                        <img src={p.logo_url} alt="" className="h-full w-full object-cover" />
+                        <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-[10px] font-bold text-primary">{p.name.charAt(0)}</span>
                       )}

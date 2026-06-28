@@ -149,7 +149,7 @@ export function RecentlyAddedSection() {
                     </div>
                     <div className="flex items-center gap-3 mb-2">
                       {deal.logo_url ? (
-                        <img src={deal.logo_url} alt={deal.product_name} className="h-10 w-10 rounded-lg object-contain bg-muted p-1" />
+                        <img decoding="async" loading="lazy" src={deal.logo_url} alt={deal.product_name} className="h-10 w-10 rounded-lg object-contain bg-muted p-1" />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                           {deal.product_name?.[0]}

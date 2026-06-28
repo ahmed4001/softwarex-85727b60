@@ -141,7 +141,7 @@ export default function AdminSubmissionsPage() {
                   >
                     <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                       {pd?.logo_url ? (
-                        <img src={pd.logo_url} alt="" className="h-full w-full object-cover rounded-lg" />
+                        <img decoding="async" loading="lazy" src={pd.logo_url} alt="" className="h-full w-full object-cover rounded-lg" />
                       ) : (
                         <span className="text-sm font-bold text-primary">{(pd?.name || "?").charAt(0)}</span>
                       )}

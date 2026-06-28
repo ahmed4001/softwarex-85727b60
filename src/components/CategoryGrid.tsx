@@ -173,7 +173,7 @@ export function CategoryGrid({ products, categoryName }: CategoryGridProps) {
                       )}
                     >
                       {item.logo_url ? (
-                        <img
+                        <img decoding="async" loading="lazy"
                           src={item.logo_url}
                           alt={item.name}
                           className="h-full w-full object-cover"

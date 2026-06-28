@@ -168,7 +168,7 @@ export function ReviewCard({ id, title, body, pros, cons, overall_rating, ease_o
         <div className="flex flex-wrap gap-2 mb-4">
           {media.map((m, i) => (
             <a key={i} href={m.url} target="_blank" rel="noopener noreferrer" className="h-16 w-16 rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary/40 transition-all">
-              <img src={m.url} alt={`Review attachment ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
+              <img decoding="async" src={m.url} alt={`Review attachment ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
             </a>
           ))}
         </div>

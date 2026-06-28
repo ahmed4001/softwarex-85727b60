@@ -361,7 +361,7 @@ function GenerateProductsTab() {
                         />
                         <div className="h-12 w-12 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {p.logo_url ? (
-                            <img src={p.logo_url} alt="" className="h-10 w-10 object-contain" />
+                            <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-10 w-10 object-contain" />
                           ) : (
                             <Package className="h-5 w-5 text-muted-foreground" />
                           )}
@@ -1196,7 +1196,7 @@ function EnrichProductsTab() {
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {p.logo_url ? (
-                      <img src={p.logo_url} alt="" className="h-8 w-8 object-contain" />
+                      <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-8 w-8 object-contain" />
                     ) : (
                       <span className="text-sm font-bold text-muted-foreground">{p.name?.[0]}</span>
                     )}
@@ -1494,7 +1494,7 @@ function UploadImagesTab() {
                       <SelectItem key={p.id} value={p.id}>
                         <div className="flex items-center gap-2">
                           {p.logo_url ? (
-                            <img src={p.logo_url} alt="" className="h-4 w-4 rounded object-contain" />
+                            <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-4 w-4 rounded object-contain" />
                           ) : (
                             <div className="h-4 w-4 rounded bg-muted flex items-center justify-center">
                               <Image className="h-2.5 w-2.5 text-muted-foreground" />

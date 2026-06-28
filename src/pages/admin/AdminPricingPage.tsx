@@ -400,7 +400,7 @@ export default function AdminPricingPage() {
                 )}
               >
                 <div className="h-7 w-7 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                  {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[10px] font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
+                  {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[10px] font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
                 </div>
                 <span className="truncate">{p.name}</span>
               </button>

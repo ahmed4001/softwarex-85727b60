@@ -106,7 +106,7 @@ export default function VendorClaimPage() {
                     }`}
                   >
                     <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-muted-foreground">{p.name.charAt(0)}</span>}
+                      {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-muted-foreground">{p.name.charAt(0)}</span>}
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-foreground">{p.name}</p>
@@ -153,7 +153,7 @@ export default function VendorClaimPage() {
               <div key={c.id} className="glass-card p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                    {c.products?.logo_url ? <img src={c.products.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold">{c.products?.name?.charAt(0)}</span>}
+                    {c.products?.logo_url ? <img decoding="async" loading="lazy" src={c.products.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold">{c.products?.name?.charAt(0)}</span>}
                   </div>
                   <span className="text-sm font-medium text-foreground">{c.products?.name}</span>
                 </div>

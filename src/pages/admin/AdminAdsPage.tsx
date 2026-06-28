@@ -229,7 +229,7 @@ export default function AdminAdsPage() {
                       <div className="flex items-center gap-3">
                         {ad.image_url ? (
                           <div className="h-9 w-16 rounded bg-muted overflow-hidden flex-shrink-0">
-                            <img src={ad.image_url} alt="" className="h-full w-full object-cover" />
+                            <img decoding="async" loading="lazy" src={ad.image_url} alt="" className="h-full w-full object-cover" />
                           </div>
                         ) : (
                           <div className="h-9 w-16 rounded bg-muted flex items-center justify-center flex-shrink-0">

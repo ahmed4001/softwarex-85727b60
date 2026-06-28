@@ -645,7 +645,7 @@ export default function AdminBlogEditorPage() {
                     </label>
                     {form.featured_image && (
                       <div className="rounded-lg border border-border overflow-hidden mt-2">
-                        <img src={form.featured_image} alt="Preview" className="w-full h-auto" />
+                        <img decoding="async" loading="lazy" src={form.featured_image} alt="Preview" className="w-full h-auto" />
                       </div>
                     )}
                   </div>
@@ -878,7 +878,7 @@ export default function AdminBlogEditorPage() {
           {/* Featured image (Ghost-style click to add) */}
           {form.featured_image ? (
             <div id="blog-featured-block" className="relative rounded-xl overflow-hidden mb-8 group">
-              <img src={form.featured_image} alt="Feature" className="w-full h-auto" />
+              <img decoding="async" loading="lazy" src={form.featured_image} alt="Feature" className="w-full h-auto" />
               <button
                 onClick={() => updateField("featured_image", "")}
                 className="absolute top-3 right-3 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

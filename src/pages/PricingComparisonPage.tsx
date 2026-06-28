@@ -223,7 +223,7 @@ export default function PricingComparisonPage() {
             {selectedProducts.map((p) => (
               <Badge key={p.id} variant="secondary" className="gap-2 py-2 px-4 rounded-xl text-sm font-medium">
                 <div className="h-5 w-5 rounded-md bg-muted overflow-hidden flex-shrink-0">
-                  {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[10px] font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
+                  {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[10px] font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
                 </div>
                 {p.name}
                 {normalizedTiersByProduct.has(p.id) && (
@@ -254,7 +254,7 @@ export default function PricingComparisonPage() {
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-muted/50 transition-colors"
                         >
                           <div className="h-7 w-7 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                            {r.logo_url ? <img src={r.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary flex items-center justify-center h-full">{r.name.charAt(0)}</span>}
+                            {r.logo_url ? <img decoding="async" loading="lazy" src={r.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary flex items-center justify-center h-full">{r.name.charAt(0)}</span>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="font-medium text-foreground">{r.name}</span>
@@ -311,7 +311,7 @@ export default function PricingComparisonPage() {
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
                               <div className="h-9 w-9 rounded-xl bg-muted overflow-hidden flex-shrink-0">
-                                {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
+                                {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
                               </div>
                               <div>
                                 <span className="font-semibold text-foreground">{p.name}</span>
@@ -361,7 +361,7 @@ export default function PricingComparisonPage() {
                           <th key={p.id} className="text-center text-xs font-semibold text-muted-foreground px-5 py-3.5 min-w-[120px]">
                             <div className="flex flex-col items-center gap-1.5">
                               <div className="h-7 w-7 rounded-lg bg-muted overflow-hidden">
-                                {p.logo_url ? <img src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[10px] font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
+                                {p.logo_url ? <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[10px] font-bold text-primary flex items-center justify-center h-full">{p.name.charAt(0)}</span>}
                               </div>
                               <span className="truncate max-w-[100px]">{p.name}</span>
                             </div>

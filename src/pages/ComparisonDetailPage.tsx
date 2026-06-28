@@ -218,7 +218,7 @@ export default function ComparisonDetailPage() {
           <div className="grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
             <div className="text-center">
               <div className={cn("h-20 w-20 rounded-2xl bg-muted flex items-center justify-center overflow-hidden mx-auto mb-3 ring-2", isWinnerA ? "ring-primary" : "ring-border/30")}>
-                {productA.logo_url ? <img src={productA.logo_url} alt={productA.name} className="h-full w-full object-cover" /> : <span className="text-2xl font-bold text-primary">{productA.name.charAt(0)}</span>}
+                {productA.logo_url ? <img decoding="async" loading="lazy" src={productA.logo_url} alt={productA.name} className="h-full w-full object-cover" /> : <span className="text-2xl font-bold text-primary">{productA.name.charAt(0)}</span>}
               </div>
               {isWinnerA && <Badge className="mb-2 bg-primary/10 text-primary border-0 gap-1"><Crown className="h-3 w-3" />{t("comparison.winner")}</Badge>}
               <h2 className="font-bold text-lg text-foreground">{productA.name}</h2>
@@ -239,7 +239,7 @@ export default function ComparisonDetailPage() {
 
             <div className="text-center">
               <div className={cn("h-20 w-20 rounded-2xl bg-muted flex items-center justify-center overflow-hidden mx-auto mb-3 ring-2", !isWinnerA ? "ring-primary" : "ring-border/30")}>
-                {productB.logo_url ? <img src={productB.logo_url} alt={productB.name} className="h-full w-full object-cover" /> : <span className="text-2xl font-bold text-primary">{productB.name.charAt(0)}</span>}
+                {productB.logo_url ? <img decoding="async" loading="lazy" src={productB.logo_url} alt={productB.name} className="h-full w-full object-cover" /> : <span className="text-2xl font-bold text-primary">{productB.name.charAt(0)}</span>}
               </div>
               {!isWinnerA && comparison.winner_product_id && <Badge className="mb-2 bg-primary/10 text-primary border-0 gap-1"><Crown className="h-3 w-3" />{t("comparison.winner")}</Badge>}
               <h2 className="font-bold text-lg text-foreground">{productB.name}</h2>
@@ -518,7 +518,7 @@ export default function ComparisonDetailPage() {
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {side.logo ? <img src={side.logo} alt={side.name} className="h-full w-full object-cover" /> : <span className="text-base font-bold text-primary">{side.name.charAt(0)}</span>}
+                      {side.logo ? <img decoding="async" loading="lazy" src={side.logo} alt={side.name} className="h-full w-full object-cover" /> : <span className="text-base font-bold text-primary">{side.name.charAt(0)}</span>}
                     </div>
                     <h3 className="font-bold text-foreground">
                       Choose <span className="text-primary">{side.name}</span> if…

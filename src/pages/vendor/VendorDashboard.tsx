@@ -250,7 +250,7 @@ export default function VendorDashboard() {
                   <div key={c.id} className="glass-card p-4 md:p-5 flex items-center gap-4 hover:border-primary/40 transition-colors">
                     <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {c.products?.logo_url ? (
-                        <img src={c.products.logo_url} alt="" className="h-full w-full object-cover" />
+                        <img decoding="async" loading="lazy" src={c.products.logo_url} alt="" className="h-full w-full object-cover" />
                       ) : (
                         <Package className="h-5 w-5 text-muted-foreground" />
                       )}

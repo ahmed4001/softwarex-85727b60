@@ -70,7 +70,7 @@ export function AIRecommendationsWidget({ userId }: { userId: string }) {
                 <CardContent className="p-3 flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                     {rec.products?.logo_url ? (
-                      <img src={rec.products.logo_url} alt="" className="h-full w-full object-cover" />
+                      <img decoding="async" loading="lazy" src={rec.products.logo_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <span className="text-sm font-bold text-primary">{rec.products?.name?.charAt(0)}</span>
                     )}

@@ -1,3 +1,4 @@
+import { enhanceHtmlImages } from "@/lib/html-enhance";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -161,7 +162,7 @@ export default function BlogPostPage() {
                 {author && (
                   <Link to={`/author/${(author as any).username || (author as any).user_id}`} className="flex items-center gap-2 hover:text-foreground">
                     {(author as any).avatar_url ? (
-                      <img src={(author as any).avatar_url} alt={(author as any).name || ""} className="h-7 w-7 rounded-full object-cover" />
+                      <img decoding="async" loading="lazy" src={(author as any).avatar_url} alt={(author as any).name || ""} className="h-7 w-7 rounded-full object-cover" />
                     ) : (
                       <div className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
                         {((author as any).name || "A")[0].toUpperCase()}
@@ -188,7 +189,7 @@ export default function BlogPostPage() {
 
             {post.featured_image && (
               <figure className="mb-10 -mx-4 md:mx-0">
-                <img src={post.featured_image} alt={post.title} className="w-full rounded-xl" />
+                <img decoding="async" loading="eager" fetchPriority="high" src={post.featured_image} alt={post.title} className="w-full rounded-xl" />
               </figure>
             )}
 
@@ -196,7 +197,7 @@ export default function BlogPostPage() {
               data-post-body
               className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-foreground prose-headings:scroll-mt-24 prose-p:text-foreground/85 prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground"
               style={{ fontFamily: "'Lora', 'EB Garamond', Georgia, serif" }}
-              dangerouslySetInnerHTML={{ __html: post.body || "" }}
+              dangerouslySetInnerHTML={{ __html: enhanceHtmlImages(post.body || "", post.title) }}
             />
 
             {/* Share */}
@@ -219,7 +220,7 @@ export default function BlogPostPage() {
             {author && (author as any).bio && (
               <div className="mt-10 p-6 rounded-xl border border-border bg-muted/30 flex gap-4 items-start">
                 {(author as any).avatar_url ? (
-                  <img src={(author as any).avatar_url} alt={(author as any).name || ""} className="h-14 w-14 rounded-full object-cover flex-shrink-0" />
+                  <img decoding="async" loading="lazy" src={(author as any).avatar_url} alt={(author as any).name || ""} className="h-14 w-14 rounded-full object-cover flex-shrink-0" />
                 ) : (
                   <div className="h-14 w-14 rounded-full bg-primary/10 text-primary text-lg font-semibold flex items-center justify-center flex-shrink-0">
                     {((author as any).name || "A")[0].toUpperCase()}

@@ -1,3 +1,4 @@
+import { enhanceHtmlImages } from "@/lib/html-enhance";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,7 +85,7 @@ export default function StaticPage() {
         {page.body && (
           <div
             className="static-page-content"
-            dangerouslySetInnerHTML={{ __html: page.body }}
+            dangerouslySetInnerHTML={{ __html: enhanceHtmlImages(page.body, page.title || "") }}
           />
         )}
       </motion.div>

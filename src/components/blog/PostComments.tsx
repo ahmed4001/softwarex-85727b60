@@ -154,7 +154,7 @@ function CommentRow({
     <div className="flex gap-3">
       <Link to={`/author/${c.profile?.username || c.user_id}`} className="flex-shrink-0">
         {c.profile?.avatar_url ? (
-          <img src={c.profile.avatar_url} alt={name} className="h-9 w-9 rounded-full object-cover" />
+          <img decoding="async" loading="lazy" src={c.profile.avatar_url} alt={name} className="h-9 w-9 rounded-full object-cover" />
         ) : (
           <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
             {initial}

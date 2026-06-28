@@ -219,7 +219,7 @@ export default function AdminAlternativesPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {a.product?.logo_url ? <img src={a.product.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{a.product?.name?.charAt(0)}</span>}
+                        {a.product?.logo_url ? <img decoding="async" loading="lazy" src={a.product.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{a.product?.name?.charAt(0)}</span>}
                       </div>
                       <span className="text-sm font-medium text-foreground">{a.product?.name}</span>
                     </div>
@@ -228,7 +228,7 @@ export default function AdminAlternativesPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {a.alternative?.logo_url ? <img src={a.alternative.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>}
+                        {a.alternative?.logo_url ? <img decoding="async" loading="lazy" src={a.alternative.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>}
                       </div>
                       <span className="text-sm font-medium text-foreground">{a.alternative?.name}</span>
                     </div>

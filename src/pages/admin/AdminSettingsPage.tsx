@@ -374,7 +374,7 @@ export default function AdminSettingsPage() {
                         <div className="rounded-xl border border-border bg-card p-4 space-y-2">
                           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Mobile</p>
                           <div className="flex items-center justify-center bg-muted/40 rounded-lg p-4 min-h-[140px]">
-                            <img
+                            <img decoding="async" loading="lazy"
                               src={logoAsset.url}
                               alt="Logo preview mobile"
                               className="w-auto object-contain"
@@ -388,7 +388,7 @@ export default function AdminSettingsPage() {
                         <div className="rounded-xl border border-border bg-card p-4 space-y-2">
                           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Desktop</p>
                           <div className="flex items-center justify-center bg-muted/40 rounded-lg p-4 min-h-[200px]">
-                            <img
+                            <img decoding="async" loading="lazy"
                               src={logoAsset.url}
                               alt="Logo preview desktop"
                               className="w-auto object-contain"

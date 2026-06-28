@@ -65,7 +65,7 @@ function blockToHtml(block: EmailBlock): string {
     case "button":
       return `<div style="text-align:${p.align};margin:16px 0;"><a href="${p.url}" style="display:inline-block;background:${p.bgColor};color:${p.textColor};padding:12px 24px;border-radius:${p.radius}px;text-decoration:none;font-weight:600;font-size:14px;font-family:Arial,sans-serif;">${p.text}</a></div>`;
     case "image":
-      return `<div style="text-align:center;margin:16px 0;"><img src="${p.src}" alt="${p.alt}" style="max-width:${p.width}%;height:auto;border-radius:4px;" /></div>`;
+      return `<div style="text-align:center;margin:16px 0;"><img decoding="async" loading="lazy" src="${p.src}" alt="${p.alt}" style="max-width:${p.width}%;height:auto;border-radius:4px;" /></div>`;
     case "divider":
       return `<hr style="border:none;border-top:${p.thickness}px solid ${p.color};margin:16px 0;" />`;
     case "spacer":
@@ -236,7 +236,7 @@ function BlockPreview({ block }: { block: EmailBlock }) {
         </div>
       );
     case "image":
-      return <div className="text-center"><img src={p.src} alt={p.alt} className="max-w-full rounded" style={{ maxWidth: `${p.width}%` }} /></div>;
+      return <div className="text-center"><img decoding="async" loading="lazy" src={p.src} alt={p.alt} className="max-w-full rounded" style={{ maxWidth: `${p.width}%` }} /></div>;
     case "divider":
       return <hr className="my-2" style={{ borderColor: p.color, borderWidth: `${p.thickness}px` }} />;
     case "spacer":
@@ -698,7 +698,7 @@ export function EmailBuilder({ value, onChange }: EmailBuilderProps) {
                       onClick={() => selectMediaItem(item.url)}
                       className="group relative rounded-lg border border-border overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all aspect-square bg-muted"
                     >
-                      <img
+                      <img decoding="async"
                         src={item.url}
                         alt={item.name}
                         className="w-full h-full object-cover"

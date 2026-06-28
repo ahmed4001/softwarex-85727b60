@@ -155,7 +155,7 @@ export default function AdminPartnerLinksPage() {
                     <TableRow key={link.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {link.logo_url && <img src={link.logo_url} alt="" className="w-6 h-6 rounded object-contain" />}
+                          {link.logo_url && <img decoding="async" loading="lazy" src={link.logo_url} alt="" className="w-6 h-6 rounded object-contain" />}
                           <span className="font-medium">{link.name}</span>
                         </div>
                       </TableCell>

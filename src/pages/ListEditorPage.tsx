@@ -264,7 +264,7 @@ export default function ListEditorPage() {
                     className="flex items-center gap-3 w-full p-2.5 hover:bg-muted/50 text-left text-sm"
                   >
                     {p.logo_url ? (
-                      <img src={p.logo_url} alt="" className="h-6 w-6 rounded object-cover" />
+                      <img decoding="async" loading="lazy" src={p.logo_url} alt="" className="h-6 w-6 rounded object-cover" />
                     ) : (
                       <div className="h-6 w-6 rounded bg-muted flex items-center justify-center text-xs font-bold">{p.name[0]}</div>
                     )}
@@ -288,7 +288,7 @@ export default function ListEditorPage() {
                   </div>
                   <span className="text-sm font-bold text-muted-foreground/40 mt-1 w-5">{idx + 1}</span>
                   {item.logo_url ? (
-                    <img src={item.logo_url} alt="" className="h-8 w-8 rounded-md object-cover mt-0.5" />
+                    <img decoding="async" loading="lazy" src={item.logo_url} alt="" className="h-8 w-8 rounded-md object-cover mt-0.5" />
                   ) : (
                     <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center text-xs font-bold mt-0.5">{item.name[0]}</div>
                   )}
