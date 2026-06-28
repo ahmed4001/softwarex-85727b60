@@ -3746,6 +3746,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sitemap_resubmission_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          results: Json | null
+          sitemap_type: string
+          source: string
+          status_code: number | null
+          success: boolean
+          target_url: string | null
+          trigger_slug: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          results?: Json | null
+          sitemap_type: string
+          source?: string
+          status_code?: number | null
+          success?: boolean
+          target_url?: string | null
+          trigger_slug?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          results?: Json | null
+          sitemap_type?: string
+          source?: string
+          status_code?: number | null
+          success?: boolean
+          target_url?: string | null
+          trigger_slug?: string | null
+        }
+        Relationships: []
+      }
       sponsored_bids: {
         Row: {
           bid_amount: number
