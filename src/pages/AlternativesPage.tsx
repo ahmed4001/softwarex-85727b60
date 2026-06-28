@@ -164,7 +164,7 @@ export default function AlternativesPage() {
             </div>
           </div>
           {page.intro_text && (
-            <div className="prose prose-sm max-w-none text-muted-foreground mt-4" dangerouslySetInnerHTML={{ __html: page.intro_text }} />
+            <div className="prose prose-sm max-w-none text-muted-foreground mt-4" dangerouslySetInnerHTML={{ __html: enhanceHtmlImages(page.intro_text, page.title || "") }} />
           )}
         </motion.div>
 

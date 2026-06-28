@@ -162,7 +162,7 @@ export default function GlossaryTermPage() {
           />
 
           {term.extended_description && (
-            <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: term.extended_description }} />
+            <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: enhanceHtmlImages(term.extended_description, term.term || "") }} />
           )}
 
 

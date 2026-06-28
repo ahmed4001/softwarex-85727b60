@@ -196,7 +196,7 @@ export default function BlogPostPage() {
               data-post-body
               className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-foreground prose-headings:scroll-mt-24 prose-p:text-foreground/85 prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground"
               style={{ fontFamily: "'Lora', 'EB Garamond', Georgia, serif" }}
-              dangerouslySetInnerHTML={{ __html: post.body || "" }}
+              dangerouslySetInnerHTML={{ __html: enhanceHtmlImages(post.body || "", post.title) }}
             />
 
             {/* Share */}

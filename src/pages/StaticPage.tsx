@@ -84,7 +84,7 @@ export default function StaticPage() {
         {page.body && (
           <div
             className="static-page-content"
-            dangerouslySetInnerHTML={{ __html: page.body }}
+            dangerouslySetInnerHTML={{ __html: enhanceHtmlImages(page.body, page.title || "") }}
           />
         )}
       </motion.div>
