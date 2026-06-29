@@ -5,20 +5,17 @@
  *   string so screen readers treat it as decorative rather than reading the URL).
  * - Adds `loading="lazy"` and `decoding="async"` to <img> tags missing them so
  *   long-form pages don't block the LCP on offscreen images.
+ * - For Supabase Storage URLs, emits <picture> with AVIF + WebP sources and
+ *   responsive srcset/sizes via `enhanceResponsiveImages`.
  *
  * Pure string transform — runs on already-trusted HTML stored in the database.
  * Does NOT sanitize XSS; the rich-text editor is responsible for that on save.
  */
+import { enhanceResponsiveImages } from "./responsive-image";
+
 export function enhanceHtmlImages(html: string, altFallback = ""): string {
   if (!html) return html;
-  return html.replace(/<img\b([^>]*?)\/?>/gi, (full, attrs: string) => {
-    let next = attrs;
-    if (!/\balt\s*=/.test(next)) {
-      const safe = altFallback.replace(/"/g, "&quot;");
-      next = ` alt="${safe}"` + next;
-    }
-    if (!/\bloading\s*=/.test(next)) next += ' loading="lazy"';
-    if (!/\bdecoding\s*=/.test(next)) next += ' decoding="async"';
-    return `<img${next}>`;
-  });
+  // Single pass — enhanceResponsiveImages handles both responsive sources
+  // and the lazy/decoding/alt fallbacks for non-storage URLs.
+  return enhanceResponsiveImages(html, altFallback);
 }

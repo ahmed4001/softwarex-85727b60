@@ -4384,6 +4384,45 @@ export type Database = {
         }
         Relationships: []
       }
+      web_vitals: {
+        Row: {
+          connection: string | null
+          created_at: string
+          id: number
+          metric: string
+          navigation_type: string | null
+          path: string
+          rating: string | null
+          session_id: string | null
+          user_agent: string | null
+          value: number
+        }
+        Insert: {
+          connection?: string | null
+          created_at?: string
+          id?: number
+          metric: string
+          navigation_type?: string | null
+          path: string
+          rating?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          value: number
+        }
+        Update: {
+          connection?: string | null
+          created_at?: string
+          id?: number
+          metric?: string
+          navigation_type?: string | null
+          path?: string
+          rating?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       website_url_review_queue: {
         Row: {
           candidate_domain: string | null
