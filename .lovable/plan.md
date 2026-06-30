@@ -1,64 +1,54 @@
-# Auto-regenerate & resubmit blog/guides/glossary sitemaps
+# Full-site audit — fix plan
 
-## Goal
-Whenever a blog post, buyer guide, or glossary term is created/updated/published, the corresponding sitemap is regenerated and resubmitted to Google Search Console — no redeploy required.
+Scope: SEO findings, security scan, accessibility, performance. Mode: review first, then I implement.
 
-## Approach
-Move the three sitemaps from static `public/sitemap-*.xml` files to **dynamic edge functions** that read live from the database, then auto-ping GSC on content changes and on a daily cron.
+## Findings summary
 
-## Steps
+**Security scan — 25 findings**
+- 1 **error (P0)**: `profiles.email` (and `last_login_at`, `is_banned`, `ban_reason`) are readable by `anon`/`authenticated` via the public SELECT policy — real emails confirmed in sample data.
+- 7 warn: RLS policies using `USING (true)` / `WITH CHECK (true)` on non-SELECT operations.
+- 15 warn: `SECURITY DEFINER` functions executable by `anon` and/or `authenticated` without an explicit grant gate.
+- 1 warn: Auth leaked-password (HIBP) protection disabled.
 
-### 1. Dynamic sitemap edge function
-Create `supabase/functions/sitemap-dynamic/index.ts`:
-- Reads `type` from path/query (`blog`, `guides`, `glossary`).
-- Queries the matching table with the same filters our build-time generator uses (`status=published`, etc.).
-- Returns `application/xml` with proper `lastmod` from `updated_at`.
-- Public (`verify_jwt = false`), cached `Cache-Control: public, max-age=300`.
+**SEO scan — 2 low findings**
+- `/robots.txt` and `/sitemap.xml` reported missing. Both files exist in `public/` and ship in prod (`reviewhunts.com/robots.txt` is live). The scanner is hitting the preview URL where Vercel rewrites aren't applied. Verify and mark resolved.
 
-### 2. Vercel rewrites
-In `vercel.json`, rewrite:
-- `/sitemap-blog.xml` → edge function `?type=blog`
-- `/sitemap-guides.xml` → `?type=guides`
-- `/sitemap-glossary.xml` → `?type=glossary`
+**Accessibility — codebase audit (no scanner)**
+- Lint gate already enforces `alt`/`loading`/`decoding` on `<img>` (passing).
+- Need to sweep for: icon-only buttons missing `aria-label`, low-contrast `text-gray-*` overrides, missing `<main>` on a few routes, focus-visible rings on custom interactive divs, tap targets <44px on mobile drawers/filter chips.
 
-Static files in `public/` for those three are deleted so the rewrite wins. Other sitemaps (main/products/categories/comparisons) stay static.
+**Performance / Web Vitals**
+- Real-user metrics already streaming to `web_vitals`. Pull the last 7 days of p75 LCP/CLS/INP per route, fix the slowest 3 pages (likely candidate: image-heavy product/category routes, comparison tables).
+- Re-verify `preload` of hero logo + font, `modulepreload` of `main.tsx`, and that GA/Paddle stay deferred.
 
-### 3. Resubmit edge function
-Create `supabase/functions/resubmit-sitemaps/index.ts`:
-- Iterates the 3 sitemap URLs.
-- For each, calls `PUT https://connector-gateway.lovable.dev/google_search_console/webmasters/v3/sites/sc-domain%3Areviewhunts.com/sitemaps/<urlencoded>` with headers `Authorization: Bearer ${LOVABLE_API_KEY}` and `X-Connection-Api-Key: ${GOOGLE_SEARCH_CONSOLE_API_KEY}`.
-- Also pings IndexNow for the changed entity URL when provided in the body.
-- Logs each submission outcome.
+## What I will change
 
-### 4. Link GSC connector to project
-Use `standard_connectors--connect` for `google_search_console` so `GOOGLE_SEARCH_CONSOLE_API_KEY` is injected as an edge-function env var. `LOVABLE_API_KEY` is already provisioned.
+### 1. Security (highest priority)
+1. **Migration**: revoke column-level SELECT on `profiles.email`, `last_login_at`, `is_banned`, `ban_reason` from `anon` and `authenticated`. Replace any client code reading those columns with `admin_*` RPCs already in place.
+2. **Migration**: tighten the 7 `USING (true)` non-SELECT policies — scope each to `auth.uid()` ownership or `has_role(...,'admin')` based on the table's intent. I'll list each policy in the migration comment.
+3. **Migration**: for the 15 `SECURITY DEFINER` functions, `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated` and `GRANT EXECUTE` only to the role that needs it (most are trigger-only or admin-only; the public-facing `has_role`, `increment_*_view/click` stay granted to the right roles).
+4. **Auth**: enable HIBP leaked-password protection via `configure_auth`.
 
-### 5. DB triggers → call edge function
-Migration adds AFTER INSERT/UPDATE triggers on:
-- `blog_posts` (when `status='published'`)
-- `buyer_guides`
-- `glossary_terms`
+### 2. SEO
+5. Verify `/robots.txt` and `/sitemap.xml` are reachable on the canonical production host, then mark the two SEO findings fixed with that verification.
+6. No code change expected — preview-host false positives.
 
-Each trigger calls a SQL function `notify_sitemap_change(type text, slug text)` that uses `pg_net.http_post` to invoke `resubmit-sitemaps` with `{ type, slug }`. `pg_net` and `pg_cron` extensions are enabled if not already.
+### 3. Accessibility
+7. Sweep components for icon-only `<Button size="icon">` without `aria-label`; add labels.
+8. Replace stray `text-gray-300/400/500` on body text with `text-muted-foreground`.
+9. Ensure each route layout has a single `<main>` landmark (audit `src/components/PublicLayout*` and admin/vendor layouts).
+10. Add `min-h-11 min-w-11` to mobile filter chips and other primary icon buttons.
 
-Trigger is debounced via a 60-second `pg_advisory_xact_lock` keyed by type so bulk updates don't fan out.
+### 4. Performance
+11. Read the `web_vitals` table for p75 LCP/CLS/INP per `path`, last 7 days. Pick the 3 worst routes and apply targeted fixes (image dimensions to prevent CLS, splitting heavy JSON-LD, deferring below-the-fold queries).
+12. Re-confirm preloads in `index.html` are correct after recent changes, no stale references.
 
-### 6. Daily cron fallback
-`pg_cron` job at 03:00 UTC calls `resubmit-sitemaps` with `{ type: 'all' }` so Google sees a fresh `lastSubmitted` even on quiet days.
+## Out of scope
+- No new features, no design changes, no copy rewrites.
+- I will not modify `auth`, `storage`, or auto-generated Supabase client files.
+- I will not touch the published sitemap mechanism beyond verifying it.
 
-### 7. Admin trigger
-Add a "Resubmit sitemaps now" button on `AdminFaqCachePage`'s sibling SEO admin (or a small new page) that invokes the same function for manual re-pings.
+## Order of execution
+P0 security migration → SEO verification + mark fixed → a11y sweep → performance fixes from real Web Vitals data.
 
-## Technical notes
-- Sitemap edge function uses `SUPABASE_URL` + `SUPABASE_ANON_KEY` to query (RLS-safe; only published rows are readable to anon).
-- Build-time `scripts/generate-sitemap.ts` keeps writing static files as a safety net; rewrites override them only for the three dynamic types.
-- All XML escaped via `xmlEscape` helper to match existing generator.
-- No schema changes beyond extension enablement + trigger functions.
-
-## Files touched
-- `supabase/functions/sitemap-dynamic/index.ts` (new)
-- `supabase/functions/resubmit-sitemaps/index.ts` (new)
-- `vercel.json` (rewrites)
-- `public/sitemap-blog.xml`, `sitemap-guides.xml`, `sitemap-glossary.xml` (delete)
-- `scripts/generate-sitemap.ts` (skip writing the three dynamic ones)
-- New migration: extensions, `notify_sitemap_change`, triggers, cron job
+Approve and I will start with the security migration.
