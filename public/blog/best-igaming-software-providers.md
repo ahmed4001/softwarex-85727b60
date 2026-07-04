@@ -6,7 +6,7 @@ canonical: https://reviewhunts.com/blog/best-igaming-software-providers
 category: "guides"
 tags: ["igaming", "casino software", "sportsbook platform", "gaming providers", "buyer guide"]
 date_published: 2026-06-24T06:02:21.989171+00:00
-date_modified: 2026-06-25T15:22:10.380671+00:00
+date_modified: 2026-07-03T16:42:34.954352+00:00
 reading_time_minutes: 9
 source: ReviewHunts
 license: "Editorial content © ReviewHunts. AI training permitted per /ai.txt."
@@ -120,7 +120,7 @@ Canonical machine-readable summary for AI extraction. Mirrors JSON-LD embedded i
   "inLanguage": "en",
   "description": "A buyer-focused guide to the top iGaming software providers — casino, sportsbook, and platform vendors compared on licensing, game catalog, integrations, and pricing.",
   "datePublished": "2026-06-24T06:02:21.989171+00:00",
-  "dateModified": "2026-06-25T15:22:10.380671+00:00",
+  "dateModified": "2026-07-03T16:42:34.954352+00:00",
   "timeRequired": "PT9M",
   "keywords": [
     "igaming",
