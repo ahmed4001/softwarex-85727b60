@@ -143,6 +143,8 @@ export default function DiscussionDetailPage() {
                     className="h-8 w-8 rounded-lg"
                     onClick={() => user && voteMutation.mutate({ discussionId: discussion.id })}
                     disabled={!user}
+                    aria-label={`Upvote discussion (${discussion.upvote_count})`}
+                    aria-pressed={hasVotedDiscussion}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </Button>
@@ -182,6 +184,8 @@ export default function DiscussionDetailPage() {
                         className="h-7 w-7"
                         onClick={() => user && voteMutation.mutate({ replyId: r.id })}
                         disabled={!user}
+                        aria-label={`Upvote reply (${r.upvote_count})`}
+                        aria-pressed={hasVoted}
                       >
                         <ArrowUp className="h-3.5 w-3.5" />
                       </Button>
