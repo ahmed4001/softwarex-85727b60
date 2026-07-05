@@ -85,9 +85,12 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-5xl p-0 bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden">
           <div className="relative">
-            <img decoding="async" loading="lazy"
+            <ResponsiveImage
               src={screenshots[activeIndex] as string}
               alt={`${productName} screenshot ${activeIndex + 1}`}
+              width={1600}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 1024px"
               className="w-full h-auto max-h-[80vh] object-contain"
             />
             {screenshots.length > 1 && (
