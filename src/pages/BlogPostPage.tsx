@@ -17,6 +17,7 @@ import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
 import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
 import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 
 export default function BlogPostPage() {
