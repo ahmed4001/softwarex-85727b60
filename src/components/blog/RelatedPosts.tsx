@@ -49,7 +49,7 @@ export function RelatedPosts({ currentId, category, tags }: Props) {
           <Link key={p.id} to={`/blog/${p.slug}`} className="group block">
             {p.featured_image && (
               <div className="aspect-[16/10] rounded-lg overflow-hidden mb-3 bg-muted">
-                <img decoding="async" loading="lazy" src={p.featured_image} alt={p.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <ResponsiveImage src={p.featured_image} alt={p.title} width={800} height={500} sizes="(max-width: 768px) 100vw, 33vw" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </div>
             )}
             {p.category && (
