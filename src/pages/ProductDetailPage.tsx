@@ -69,11 +69,13 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
             onClick={() => { setActiveIndex(i); setLightboxOpen(true); }}
             className="group relative aspect-video rounded-xl overflow-hidden border border-border/50 bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all"
           >
-            <img decoding="async"
+            <ResponsiveImage
               src={url as string}
               alt={`${productName} screenshot ${i + 1}`}
+              width={1280}
+              height={720}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className="h-full w-full object-cover transition-transform group-hover:scale-105"
-              loading="lazy"
             />
             <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors" />
           </button>
