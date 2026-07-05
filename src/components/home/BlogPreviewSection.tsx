@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 export function BlogPreviewSection() {
   const { data: posts } = useQuery({
