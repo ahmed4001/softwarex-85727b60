@@ -13,6 +13,7 @@ import React, { useState, useMemo } from "react";
 import { useAffiliateClick } from "@/hooks/useAffiliateClick";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star } from "lucide-react";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
