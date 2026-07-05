@@ -13,6 +13,7 @@ import React, { useState, useMemo } from "react";
 import { useAffiliateClick } from "@/hooks/useAffiliateClick";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star } from "lucide-react";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -68,11 +69,13 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
             onClick={() => { setActiveIndex(i); setLightboxOpen(true); }}
             className="group relative aspect-video rounded-xl overflow-hidden border border-border/50 bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all"
           >
-            <img decoding="async"
+            <ResponsiveImage
               src={url as string}
               alt={`${productName} screenshot ${i + 1}`}
+              width={1280}
+              height={720}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className="h-full w-full object-cover transition-transform group-hover:scale-105"
-              loading="lazy"
             />
             <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors" />
           </button>
@@ -82,9 +85,12 @@ function ScreenshotGallery({ screenshots, productName }: { screenshots: string[]
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-5xl p-0 bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden">
           <div className="relative">
-            <img decoding="async" loading="lazy"
+            <ResponsiveImage
               src={screenshots[activeIndex] as string}
               alt={`${productName} screenshot ${activeIndex + 1}`}
+              width={1600}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 1024px"
               className="w-full h-auto max-h-[80vh] object-contain"
             />
             {screenshots.length > 1 && (
@@ -566,11 +572,13 @@ export default function ProductDetailPage() {
                 const heroScreenshots = Array.isArray(product.screenshots) ? product.screenshots.filter((s): s is string => typeof s === "string" && s.length > 0) : [];
                 return heroScreenshots.length > 0 ? (
                   <div className="w-56 rounded-xl overflow-hidden border border-border shadow-md bg-background">
-                    <img decoding="async"
+                    <ResponsiveImage
                       src={heroScreenshots[0]}
                       alt={`${product.name} preview`}
+                      width={640}
+                      height={400}
+                      sizes="224px"
                       className="w-full h-auto object-cover"
-                      loading="lazy"
                     />
                   </div>
                 ) : null;

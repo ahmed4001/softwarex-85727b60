@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 export function BlogPreviewSection() {
   const { data: posts } = useQuery({
@@ -55,9 +56,12 @@ export function BlogPreviewSection() {
               <Link to={`/blog/${post.slug}`} className="glass-card group block overflow-hidden">
                 {post.featured_image && (
                   <div className="aspect-[16/9] overflow-hidden">
-                    <img decoding="async" loading="lazy"
+                    <ResponsiveImage
                       src={post.featured_image}
                       alt={post.title}
+                      width={800}
+                      height={450}
+                      sizes="(max-width: 768px) 100vw, 33vw"
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>

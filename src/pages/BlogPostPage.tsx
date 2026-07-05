@@ -17,6 +17,7 @@ import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
 import { FreshnessBadge } from "@/components/seo/FreshnessBadge";
 import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 
 export default function BlogPostPage() {
@@ -189,7 +190,7 @@ export default function BlogPostPage() {
 
             {post.featured_image && (
               <figure className="mb-10 -mx-4 md:mx-0">
-                <img decoding="async" loading="eager" fetchPriority="high" src={post.featured_image} alt={post.title} className="w-full rounded-xl" />
+                <ResponsiveImage src={post.featured_image} alt={post.title} width={1600} height={900} sizes="(max-width: 1024px) 100vw, 800px" loading="eager" fetchPriority="high" className="w-full rounded-xl h-auto" />
               </figure>
             )}
 
