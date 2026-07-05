@@ -572,11 +572,13 @@ export default function ProductDetailPage() {
                 const heroScreenshots = Array.isArray(product.screenshots) ? product.screenshots.filter((s): s is string => typeof s === "string" && s.length > 0) : [];
                 return heroScreenshots.length > 0 ? (
                   <div className="w-56 rounded-xl overflow-hidden border border-border shadow-md bg-background">
-                    <img decoding="async"
+                    <ResponsiveImage
                       src={heroScreenshots[0]}
                       alt={`${product.name} preview`}
+                      width={640}
+                      height={400}
+                      sizes="224px"
                       className="w-full h-auto object-cover"
-                      loading="lazy"
                     />
                   </div>
                 ) : null;
