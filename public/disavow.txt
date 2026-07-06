@@ -1,0 +1,18 @@
+# Google Search Console disavow file for reviewhunts.com
+# Generated from Semrush backlink audit (2026-07-06)
+# Upload via: https://search.google.com/search-console/disavow-links
+#
+# Rationale: spam-TLD networks and PBN-style referring domains with
+# manipulative branded/injected anchor text. Authority Score 2/100.
+# Domain-level disavows chosen over URL-level to catch full networks.
+
+domain:stackscope.dev
+domain:wants.cfd
+domain:knows.sbs
+domain:tpahoulikeas.blogspot.com
+domain:allwebsitesdirectory.com
+domain:australianwebdirectory.shop
+domain:bestwebstats.com
+domain:blinks.monster
+domain:domain.com.lc
+domain:domainanalysis.org
