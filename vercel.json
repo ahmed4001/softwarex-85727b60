@@ -1,6 +1,7 @@
 {
   "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run build:prerender; else npm run build; fi",
   "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "www.reviewhunts.com" }], "destination": "https://reviewhunts.com/:path*", "permanent": true },
     { "source": "/the-lord-of-the-rings-the-rings-of-power", "destination": "/", "permanent": true },
     { "source": "/the-lord-of-the-rings-the-rings-of-power/", "destination": "/", "permanent": true },
     { "source": "/jack-ryan-season-3-trailer-release-date-cast", "destination": "/", "permanent": true },

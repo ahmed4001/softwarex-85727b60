@@ -90,7 +90,40 @@ const RULES: Record<string, Rule[]> = {
   Article: [isHttpsSchemaContext, required(["headline", "author", "datePublished"]), checkDateModified],
   Organization: [isHttpsSchemaContext, required(["name"])],
   WebSite: [isHttpsSchemaContext, required(["name"])],
+  Review: [
+    isHttpsSchemaContext,
+    required(["author", "itemReviewed"]),
+    (node, errs) => {
+      const rating = node?.reviewRating;
+      if (!rating) errs.push("Review.reviewRating is required");
+      else {
+        if (rating["@type"] !== "Rating") errs.push('reviewRating["@type"] must be "Rating"');
+        if (rating.ratingValue === undefined || rating.ratingValue === null || rating.ratingValue === "")
+          errs.push("reviewRating.ratingValue is required");
+        if (rating.bestRating !== undefined && Number(rating.bestRating) < Number(rating.ratingValue))
+          errs.push("reviewRating.ratingValue exceeds bestRating");
+      }
+      const item = node?.itemReviewed;
+      if (item && typeof item === "object" && !item["@type"])
+        errs.push("itemReviewed must have @type");
+    },
+  ],
+  Dataset: [
+    isHttpsSchemaContext,
+    required(["name", "description"]),
+    (node, errs) => {
+      if (typeof node?.description === "string" && node.description.length < 50)
+        errs.push("Dataset.description should be ≥50 chars for rich-results eligibility");
+      // creator OR publisher is effectively required by Google.
+      if (!node?.creator && !node?.publisher)
+        errs.push("Dataset requires creator or publisher");
+      // license or distribution helps eligibility; warn via error surface.
+      if (!node?.license && !node?.distribution && !node?.url)
+        errs.push("Dataset should specify license, distribution, or url");
+    },
+  ],
 };
+
 
 /** Soft-validates dateModified: must be parseable when present. We don't make
  *  it required at the validator level so types like WebPage stay flexible —

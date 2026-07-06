@@ -28,6 +28,7 @@
     "report:seo-host-gates": "tsx scripts/aggregate-seo-host-report.ts",
     "debug:seo-host-gate": "tsx scripts/aggregate-seo-host-report.ts --gate",
     "validate:seo-host-allowlist": "tsx scripts/validate-seo-host-allowlist.ts",
+    "validate:structured-data": "tsx scripts/validate-structured-data-build.ts",
     "test:perf": "tsx scripts/db-perf-smoke.ts",
     "lint:perf-thresholds": "tsx scripts/lint-perf-thresholds.ts",
     "suggest:perf-thresholds": "tsx scripts/suggest-perf-thresholds.ts",

@@ -1050,6 +1050,60 @@ export type Database = {
           },
         ]
       }
+      content_recommendations: {
+        Row: {
+          avg_position: number | null
+          clicks: number | null
+          created_at: string
+          ctr: number | null
+          gap_keywords: Json
+          generated_by: string | null
+          id: string
+          impressions: number | null
+          page_type: string | null
+          page_url: string
+          recommendations: Json
+          status: string
+          suggested_meta_description: string | null
+          suggested_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          avg_position?: number | null
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          gap_keywords?: Json
+          generated_by?: string | null
+          id?: string
+          impressions?: number | null
+          page_type?: string | null
+          page_url: string
+          recommendations?: Json
+          status?: string
+          suggested_meta_description?: string | null
+          suggested_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avg_position?: number | null
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          gap_keywords?: Json
+          generated_by?: string | null
+          id?: string
+          impressions?: number | null
+          page_type?: string | null
+          page_url?: string
+          recommendations?: Json
+          status?: string
+          suggested_meta_description?: string | null
+          suggested_title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deal_alert_subscribers: {
         Row: {
           created_at: string

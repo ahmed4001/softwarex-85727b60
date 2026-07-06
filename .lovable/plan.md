@@ -1,54 +1,58 @@
-# Full-site audit — fix plan
+This is four large workstreams. Approve or trim before I start — building all of it end-to-end is a multi-turn effort.
 
-Scope: SEO findings, security scan, accessibility, performance. Mode: review first, then I implement.
+## 1. Automatic internal-link recommendations (products + blog)
 
-## Findings summary
+Extend the existing `InternalLinksSuggestionPanel` pattern into a first-class, page-level system:
 
-**Security scan — 25 findings**
-- 1 **error (P0)**: `profiles.email` (and `last_login_at`, `is_banned`, `ban_reason`) are readable by `anon`/`authenticated` via the public SELECT policy — real emails confirmed in sample data.
-- 7 warn: RLS policies using `USING (true)` / `WITH CHECK (true)` on non-SELECT operations.
-- 15 warn: `SECURITY DEFINER` functions executable by `anon` and/or `authenticated` without an explicit grant gate.
-- 1 warn: Auth leaked-password (HIBP) protection disabled.
+- New edge function `suggest-internal-links` that, given `{ entity_type: 'product' | 'blog', id }`, returns ranked related entities using:
+  - Same category / shared tags / title-token overlap (already in the panel)
+  - Co-view / co-visit signals if `web_vitals` or an events table has them (skip if absent)
+  - Comparison graph (`comparisons` table) for products
+- New table `internal_link_suggestions (entity_type, entity_id, target_type, target_id, score, reason, updated_at)` with GRANTs + RLS (public read, service_role write).
+- Nightly cron edge function `refresh-internal-link-suggestions` recomputes top 8 per entity.
+- Public rendering: new `<RelatedLinks entityType entityId />` component shown on `ProductDetailPage` (below screenshots) and `BlogPostPage` (below body, above `RelatedPosts`) — improves crawl depth to long-tail pages.
+- Admin surface: reuse `InternalLinksSuggestionPanel` — add a Products tab.
 
-**SEO scan — 2 low findings**
-- `/robots.txt` and `/sitemap.xml` reported missing. Both files exist in `public/` and ship in prod (`reviewhunts.com/robots.txt` is live). The scanner is hitting the preview URL where Vercel rewrites aren't applied. Verify and mark resolved.
+## 2. Build-time JSON-LD + OG validation gate
 
-**Accessibility — codebase audit (no scanner)**
-- Lint gate already enforces `alt`/`loading`/`decoding` on `<img>` (passing).
-- Need to sweep for: icon-only buttons missing `aria-label`, low-contrast `text-gray-*` overrides, missing `<main>` on a few routes, focus-visible rings on custom interactive divs, tap targets <44px on mobile drawers/filter chips.
+- Extend `src/lib/jsonLdValidator.ts` with rules for `Review`, `Dataset`, and a companion `validateOgTags()` (og:title/description/image/url/type + twitter:card).
+- New Playwright spec `tests/e2e/structured-data-gate.spec.ts` that crawls a representative URL set (home, one product, one blog, one comparison, one category, one glossary term) via the running preview, extracts every `<script type="application/ld+json">` + `<meta property="og:*">`, runs both validators, and **fails the run** on any invalid block.
+- CI: add a `structured-data-gate` job to `.github/workflows/` that runs the spec and is a required check — merges + deploys blocked on failure.
+- Unit tests in `src/test/seo/` for the new Review + Dataset + OG rules.
 
-**Performance / Web Vitals**
-- Real-user metrics already streaming to `web_vitals`. Pull the last 7 days of p75 LCP/CLS/INP per route, fix the slowest 3 pages (likely candidate: image-heavy product/category routes, comparison tables).
-- Re-verify `preload` of hero logo + font, `modulepreload` of `main.tsx`, and that GA/Paddle stay deferred.
+## 3. Keyword-gap analysis for top-impression pages
 
-## What I will change
+Data source is **GSC** (Semrush shows almost no organic footprint — 20 keywords total; GSC has 1,481 impressions with real query data). For each of the top ~15 impression pages:
 
-### 1. Security (highest priority)
-1. **Migration**: revoke column-level SELECT on `profiles.email`, `last_login_at`, `is_banned`, `ban_reason` from `anon` and `authenticated`. Replace any client code reading those columns with `admin_*` RPCs already in place.
-2. **Migration**: tighten the 7 `USING (true)` non-SELECT policies — scope each to `auth.uid()` ownership or `has_role(...,'admin')` based on the table's intent. I'll list each policy in the migration comment.
-3. **Migration**: for the 15 `SECURITY DEFINER` functions, `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated` and `GRANT EXECUTE` only to the role that needs it (most are trigger-only or admin-only; the public-facing `has_role`, `increment_*_view/click` stay granted to the right roles).
-4. **Auth**: enable HIBP leaked-password protection via `configure_auth`.
+- Pull `dimensions=[page, query]` from Search Console API (last 28 days).
+- For each page, use Semrush `keyword_research` on the page's top query to fetch related terms + questions, then diff against terms the page **already** ranks for (positions ≤ 20 from GSC).
+- Feed page HTML + gap keywords to Lovable AI (`google/gemini-3-flash-preview`) with a structured-output tool call to produce: recommended H2/H3 additions, FAQ candidates, internal-link targets, title/meta rewrites.
+- Persist to a new `content_recommendations` table; render in a new admin page `AdminContentRecommendationsPage` with a "Copy to editor" button.
+- Backing edge function: `analyze-page-gaps`.
 
-### 2. SEO
-5. Verify `/robots.txt` and `/sitemap.xml` are reachable on the canonical production host, then mark the two SEO findings fixed with that verification.
-6. No code change expected — preview-host false positives.
+## 4. Semrush audit — fix all issues
 
-### 3. Accessibility
-7. Sweep components for icon-only `<Button size="icon">` without `aria-label`; add labels.
-8. Replace stray `text-gray-300/400/500` on body text with `text-muted-foreground`.
-9. Ensure each route layout has a single `<main>` landmark (audit `src/components/PublicLayout*` and admin/vendor layouts).
-10. Add `min-h-11 min-w-11` to mobile filter chips and other primary icon buttons.
+The audit shows **no technical Semrush issues to fix in code**. The findings are strategic:
 
-### 4. Performance
-11. Read the `web_vitals` table for p75 LCP/CLS/INP per `path`, last 7 days. Pick the 3 worst routes and apply targeted fixes (image dimensions to prevent CLS, splitting heavy JSON-LD, deferring below-the-fold queries).
-12. Re-confirm preloads in `index.html` are correct after recent changes, no stale references.
+| Finding | Recommended action |
+|---|---|
+| Authority Score 2/100, 107 referring domains but most from spam TLDs (`.sbs`, `.cfd`, `.monster`) | Disavow file — I'll generate `public/disavow.txt` listing the toxic domains from the backlink report; user uploads it via GSC Disavow tool (Google-side, not code) |
+| 20 US keywords ranking, 0 estimated traffic (all positions 23-81) | Handled by workstream 3 — content recs will target the near-page-1 keywords (`accutrax` #8, `trustweaver` #23, `photomator pricing` #24, `is softwarehubs legit` #26) |
+| `www.reviewhunts.com` vs `reviewhunts.com` split (both appear in rankings) | Verify a permanent 301 from `www.` → apex in `vercel.json` and set canonical to apex host consistently |
+| Anchor text 89% branded, 4 spam-injected anchors | Disavow (same file) |
 
-## Out of scope
-- No new features, no design changes, no copy rewrites.
-- I will not modify `auth`, `storage`, or auto-generated Supabase client files.
-- I will not touch the published sitemap mechanism beyond verifying it.
+Concrete code changes for #4:
+- `public/disavow.txt` with the 10+ spam TLDs from the report.
+- `vercel.json` redirect: `www.reviewhunts.com/*` → `https://reviewhunts.com/$1` (301).
+- Sanity-check `SeoHead` canonical always uses apex `reviewhunts.com` — add a test.
 
-## Order of execution
-P0 security migration → SEO verification + mark fixed → a11y sweep → performance fixes from real Web Vitals data.
+---
 
-Approve and I will start with the security migration.
+## Suggested order (I'd do it this way)
+
+1. **Semrush fixes (#4)** — small, ~1 turn.
+2. **JSON-LD/OG build gate (#2)** — self-contained, ~1 turn.
+3. **Internal-link system (#1)** — migration + edge fn + UI, ~2 turns.
+4. **Keyword-gap recommendations (#3)** — depends on GSC connector + AI + admin UI, ~2 turns.
+
+**Reply "go" to run all four in that order**, or name the subset you want (e.g. "1, 2, 4 only" or "just #4 for now"). I won't touch business logic outside what's listed.
