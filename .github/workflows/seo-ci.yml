@@ -125,6 +125,11 @@ jobs:
           PRERENDER_CHECK_SAMPLE: "25"
           PRERENDER_CHECK_DIRS: "product,category"
         run: bun run check:prerender-canonicals
+      - name: Structured-data build gate (JSON-LD + OG, blocks deploy on failure)
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          SDATA_SAMPLE_PER_DIR: "50"
+        run: bun run validate:structured-data
       - name: Verify prerendered JSON-LD @id / url hosts (${{ matrix.label }})
         if: always()
         env:
