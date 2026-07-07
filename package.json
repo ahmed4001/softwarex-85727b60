@@ -10,7 +10,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "prerender": "tsx scripts/prerender.ts",
-    "build:prerender": "vite build && npx playwright install chromium && tsx scripts/prerender.ts",
+    "build:prerender": "npx playwright install --with-deps chromium && vite build && tsx scripts/prerender.ts",
     "lint": "eslint .",
     "lint:images": "tsx scripts/lint-image-attrs.ts",
     "preview": "vite preview",
