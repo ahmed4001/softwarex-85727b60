@@ -10,7 +10,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "prerender": "tsx scripts/prerender.ts",
-    "build:prerender": "if [ \"$VERCEL\" = \"1\" ]; then npx playwright install --with-deps chromium; else npx playwright install chromium; fi && vite build && tsx scripts/prerender.ts",
+    "build:prerender": "vite build && tsx scripts/prerender.ts",
     "lint": "eslint .",
     "lint:images": "tsx scripts/lint-image-attrs.ts",
     "preview": "vite preview",
