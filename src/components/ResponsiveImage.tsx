@@ -2,8 +2,8 @@
  * ResponsiveImage — renders a <picture> with AVIF + WebP sources and a
  * responsive srcset for Supabase Storage URLs (leveraging the on-the-fly
  * image transformer at /storage/v1/render/image/public/...). For non-storage
- * URLs, it renders a plain <img> but still enforces width/height + lazy /
- * decoding hints so we don't introduce CLS or block LCP.
+ * URLs, it renders a plain image element but still enforces width/height +
+ * lazy / decoding hints so we don't introduce CLS or block LCP.
  *
  * Width / height are REQUIRED to reserve layout space (CLS defense). If the
  * true intrinsic size is unknown, pass the display aspect ratio (e.g. 16:9 as
