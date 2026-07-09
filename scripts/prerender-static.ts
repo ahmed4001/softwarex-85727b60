@@ -128,13 +128,13 @@ async function main() {
 
   const [products, categories, posts, comparisons, guides, glossary, landing, bestLanding] = await Promise.all([
     fetchAll("products", "slug,name,description,tagline,logo_url,avg_rating,total_reviews", "&is_active=eq.true", ""),
-    fetchAll("categories", "slug,name,description,icon_url", "&is_active=eq.true", ""),
-    fetchAll("blog_posts", "slug,title,excerpt,cover_image_url,published_at,updated_at,author_name", "&status=eq.published", ""),
-    fetchAll("comparisons", "slug,title,description,updated_at", "&is_published=eq.true&slug=not.is.null", ""),
+    fetchAll("categories", "slug,name,description,icon", "&is_active=eq.true", ""),
+    fetchAll("blog_posts", "slug,title,excerpt,featured_image,published_at,updated_at,seo_title,seo_description", "&status=eq.published", ""),
+    fetchAll("comparisons", "slug,title,summary,seo_title,seo_description", "&is_published=eq.true&slug=not.is.null", ""),
     fetchAll("buyer_guides", "slug,title,description,updated_at", "&is_published=eq.true", ""),
     fetchAll("glossary_terms", "slug,term,definition", "", ""),
-    fetchAll("keyword_landing_pages", "slug,page_type,title,meta_description", "&is_published=eq.true&status=eq.published", ""),
-    fetchAll("seo_landing_pages", "slug,title,description", "&is_published=eq.true", ""),
+    fetchAll("keyword_landing_pages", "slug,page_type,h1,meta_title,meta_description,excerpt", "&is_published=eq.true&status=eq.published", ""),
+    Promise.resolve([]),
   ]);
 
   console.log(
