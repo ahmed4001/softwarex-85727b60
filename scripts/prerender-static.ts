@@ -198,18 +198,18 @@ async function main() {
 
   for (const b of posts) {
     if (!b?.slug) continue;
-    const title = `${b.title} | ${brand} Blog`;
-    const description = b.excerpt || b.title;
+    const bt = b.seo_title || b.title;
+    const title = `${bt} | ${brand} Blog`;
+    const description = b.seo_description || b.excerpt || bt;
     await writeRoute(distDir, {
-      title, description, path: `/blog/${b.slug}`, image: b.cover_image_url || undefined, ogType: "article",
+      title, description, path: `/blog/${b.slug}`, image: b.featured_image || undefined, ogType: "article",
       jsonLd: {
         "@context": "https://schema.org", "@type": "Article",
         headline: b.title, description: truncate(description, 300),
         url: `${SITE_URL}/blog/${b.slug}`,
-        ...(b.cover_image_url ? { image: b.cover_image_url } : {}),
+        ...(b.featured_image ? { image: b.featured_image } : {}),
         ...(b.published_at ? { datePublished: b.published_at } : {}),
         ...(b.updated_at ? { dateModified: b.updated_at } : {}),
-        ...(b.author_name ? { author: { "@type": "Person", name: b.author_name } } : {}),
         publisher: { "@type": "Organization", name: brand, logo: { "@type": "ImageObject", url: `${SITE_URL}/reviewhunts-logo.png` } },
       },
     }, template);
@@ -219,8 +219,8 @@ async function main() {
   for (const c of comparisons) {
     if (!c?.slug) continue;
     await writeRoute(distDir, {
-      title: `${c.title || c.slug} — Side-by-Side Comparison | ${brand}`,
-      description: c.description || `Compare ${c.title || c.slug} — features, pricing, pros/cons, and user reviews side-by-side.`,
+      title: `${c.seo_title || c.title || c.slug} — Side-by-Side Comparison | ${brand}`,
+      description: c.seo_description || c.summary || `Compare ${c.title || c.slug} — features, pricing, pros/cons, and user reviews side-by-side.`,
       path: `/compare/${c.slug}`,
     }, template);
     count++;
