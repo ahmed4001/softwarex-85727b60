@@ -262,9 +262,10 @@ async function main() {
       : l.page_type === "template" ? "/templates"
       : "";
     const path_ = prefix ? `${prefix}/${l.slug}` : `/${l.slug}`;
+    const lt = l.meta_title || l.h1 || l.slug;
     await writeRoute(distDir, {
-      title: `${l.title || l.slug} | ${brand}`,
-      description: l.meta_description || l.title || `${l.title} on ${brand}.`,
+      title: `${lt} | ${brand}`,
+      description: l.meta_description || l.excerpt || lt,
       path: path_,
     }, template);
     count++;
