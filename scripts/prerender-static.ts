@@ -187,7 +187,7 @@ async function main() {
     const title = `Best ${name} Software in 2026 — Reviews & Pricing | ${brand}`;
     const description = c.description || `Compare the best ${name} software. Verified reviews, pricing, features, and alternatives — updated for 2026.`;
     await writeRoute(distDir, {
-      title, description, path: `/category/${c.slug}`, image: c.icon_url || undefined,
+      title, description, path: `/category/${c.slug}`, image: c.icon || undefined,
       jsonLd: {
         "@context": "https://schema.org", "@type": "CollectionPage",
         name: title, description: truncate(description, 300), url: `${SITE_URL}/category/${c.slug}`,
