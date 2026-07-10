@@ -72,6 +72,7 @@ const AdminPaddleEventsPage = lazy(() => import("./pages/admin/AdminPaddleEvents
 const AdminPricingPage = lazy(() => import("./pages/admin/AdminPricingPage"));
 const AdminHomepageSectionsPage = lazy(() => import("./pages/admin/AdminHomepageSectionsPage"));
 const StaticPage = lazy(() => import("./pages/StaticPage"));
+const MethodologyPage = lazy(() => import("./pages/MethodologyPage"));
 const ActivityFeedPage = lazy(() => import("./pages/ActivityFeedPage"));
 const PricingComparisonPage = lazy(() => import("./pages/PricingComparisonPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
@@ -165,6 +166,7 @@ function AppContent() {
           <Route path="/leaderboard" element={<ErrorBoundary><LeaderboardPage /></ErrorBoundary>} />
           <Route path="/user/:id" element={<ErrorBoundary><UserProfilePage /></ErrorBoundary>} />
           <Route path="/page/:slug" element={<ErrorBoundary><StaticPage /></ErrorBoundary>} />
+          <Route path="/methodology" element={<ErrorBoundary><MethodologyPage /></ErrorBoundary>} />
           <Route path="/activity" element={<ErrorBoundary><ActivityFeedPage /></ErrorBoundary>} />
           <Route path="/compare-pricing" element={<ErrorBoundary><PricingComparisonPage /></ErrorBoundary>} />
           <Route path="/pricing" element={<ErrorBoundary><PricingPage /></ErrorBoundary>} />
