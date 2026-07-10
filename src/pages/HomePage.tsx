@@ -416,12 +416,11 @@ function ResourcesHubSection() {
   return (
     <section className="py-16 md:py-20" aria-labelledby="resources-hub-heading">
       <div className="container">
-        <SectionHeader
-          id="resources-hub-heading"
-          label="Resources"
-          title="Learn, compare, decide"
-          subtitle="Editorial content, frameworks, and reference material to back every software decision."
-        />
+        <div className="mb-10">
+          <p className="t-eyebrow mb-1">Resources</p>
+          <h3 id="resources-hub-heading" className="t-h2">Learn, compare, decide</h3>
+          <p className="t-body mt-2">Editorial content, frameworks, and reference material to back every software decision.</p>
+        </div>
         <div className="grid md:grid-cols-3 gap-4">
           {cards.map(({ to, icon: Icon, eyebrow, title, desc, cta }) => (
             <Link
