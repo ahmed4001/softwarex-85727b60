@@ -14,6 +14,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { TrustedBySection } from "@/components/home/TrustedBySection";
 import { StatsSection } from "@/components/home/StatsSection";
 import { MostPopularCategoriesSection } from "@/components/home/MostPopularCategoriesSection";
+import { MethodologySection } from "@/components/home/MethodologySection";
 import { ReadingProgress } from "@/components/home/ReadingProgress";
 import { StickyMobileCTA } from "@/components/home/StickyMobileCTA";
 import { useHomepageSection } from "@/hooks/useHomepageSection";
@@ -341,7 +342,8 @@ export default function HomePage() {
           <ResourcesHubSection />
           <VendorCTASection />
 
-          {/* 12. FAQ + Newsletter */}
+          {/* 12. Methodology (E-E-A-T) + FAQ + Newsletter */}
+          <MethodologySection />
           <FAQSection />
           <NewsletterSection />
         </Suspense>
