@@ -34,7 +34,7 @@ export function BlogPreviewSection() {
         >
           <div>
             <p className="t-eyebrow mb-1">From the blog</p>
-            <h2 className="t-h2">Latest articles</h2>
+            <h3 className="t-h2">Latest articles</h3>
             <p className="text-muted-foreground mt-1">Guides, comparisons, and industry insights</p>
           </div>
           <Link to="/blog">

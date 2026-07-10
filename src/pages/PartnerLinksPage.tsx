@@ -95,7 +95,7 @@ export default function PartnerLinksPage() {
                 key={partner.id}
                 href={partner.url}
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all group"
               >
                 {partner.logo_url ? (

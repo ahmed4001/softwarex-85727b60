@@ -101,7 +101,7 @@ export function RecentlyAddedSection() {
         >
           <div>
             <p className="t-eyebrow mb-1">New Arrivals</p>
-            <h2 className="t-h2">Recently added</h2>
+            <h3 className="t-h2">Recently added</h3>
             <p className="text-muted-foreground mt-1">The latest software added to our directory</p>
           </div>
           <Link to="/categories">

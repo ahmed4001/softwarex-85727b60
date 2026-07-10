@@ -42,9 +42,9 @@ export function VendorCTASection() {
         >
           <div className="flex-1">
             <p className="t-eyebrow mb-2">For Software Vendors</p>
-            <h2 id="vendor-cta-heading" className="t-h2 mb-3">
+            <h3 id="vendor-cta-heading" className="t-h2 mb-3">
               List Your Software on ReviewHunts
-            </h2>
+            </h3>
             <p className="text-muted-foreground leading-relaxed mb-6 max-w-lg">
               Showcase your SaaS product to thousands of teams actively researching business software solutions.
               Get discovered by qualified B2B buyers. Free to get started — no credit card required.
