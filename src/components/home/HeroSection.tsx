@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import { Award, TrendingUp, CheckCircle } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 import softwareCollage from "@/assets/bestsoftware.webp";
@@ -15,6 +16,19 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden" style={{ background: "hsl(15 60% 96%)" }} aria-label={t("hero.searchPlaceholder")}>
+      {/* Preload the LCP hero image with responsive srcset so the browser starts fetching immediately */}
+      <Helmet>
+        <link
+          rel="preload"
+          as="image"
+          href={softwareCollage480}
+          // @ts-expect-error - imagesrcset / imagesizes are valid HTML but not yet in React's types
+          imagesrcset={`${softwareCollage480} 480w, ${softwareCollage800} 800w, ${softwareCollage} 1024w`}
+          imagesizes="(max-width: 640px) 100vw, (max-width: 1024px) 800px, 1024px"
+          fetchpriority="high"
+          type="image/webp"
+        />
+      </Helmet>
       {/* Geometric shapes - desktop only, not mounted on mobile for performance */}
       {!isMobile && (
         <>
