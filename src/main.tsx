@@ -5,6 +5,34 @@ import "./index.css";
 import "./i18n";
 import { startWebVitals } from "./lib/web-vitals";
 
+// On prerendered routes, the static <head> already carries route-specific
+// title/description/canonical/og:*/twitter:* tags baked in by
+// scripts/prerender-static.ts. react-helmet-async only manages tags it
+// created (data-rh) and would otherwise append duplicates on hydration.
+// Strip the static SEO tags before render so Helmet becomes the single
+// source of truth in JS-executing clients. Non-JS crawlers still see the
+// baked-in static tags in the served HTML.
+if (typeof document !== "undefined" && document.documentElement.hasAttribute("data-prerendered")) {
+  const head = document.head;
+  const removeMatching = (selector: string) => {
+    head.querySelectorAll(selector).forEach((el) => {
+      if (!el.hasAttribute("data-rh")) el.remove();
+    });
+  };
+  // Keep only one <title> — remove any static one so Helmet owns it.
+  head.querySelectorAll("title").forEach((el) => {
+    if (!el.hasAttribute("data-rh")) el.remove();
+  });
+  removeMatching('meta[name="description"]');
+  removeMatching('link[rel="canonical"]');
+  removeMatching('meta[property^="og:"]');
+  removeMatching('meta[name^="twitter:"]');
+  // Note: sitewide Organization/WebSite JSON-LD stays; only per-page
+  // JSON-LD from the prerender is left in place (Helmet appends its own,
+  // but multiple JSON-LD blocks are valid and not the reported issue).
+
+}
+
 const container = document.getElementById("root")!;
 const tree = (
   <React.StrictMode>
