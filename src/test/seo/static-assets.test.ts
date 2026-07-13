@@ -30,7 +30,18 @@ describe("SEO: index.html", () => {
     expect(html).not.toMatch(/<meta\s+name=["']twitter:/i);
   });
 
+  it("ships sitewide Organization or WebSite JSON-LD", () => {
+    const scripts = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+    expect(scripts.length, "at least one JSON-LD block").toBeGreaterThan(0);
+    const parsed = scripts.map((m) => {
+      try { return JSON.parse(m[1].trim()); } catch { return null; }
+    });
+    expect(parsed.every(Boolean), "all JSON-LD blocks parse").toBe(true);
+    const types = parsed.map((p: any) => p?.["@type"]);
+    expect(types.some((t) => t === "Organization" || t === "WebSite")).toBe(true);
+  });
 });
+
 
 describe("SEO: robots.txt", () => {
   const txt = read("public/robots.txt");
