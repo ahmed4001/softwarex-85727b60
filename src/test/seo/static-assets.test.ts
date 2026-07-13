@@ -10,23 +10,14 @@ const read = (p: string) => readFileSync(resolve(root, p), "utf8");
 describe("SEO: index.html", () => {
   const html = read("index.html");
 
-  it("has a non-default <title>", () => {
-    const m = html.match(/<title>([^<]+)<\/title>/);
-    expect(m, "title tag present").toBeTruthy();
-    const title = m![1].trim();
-    expect(title.length).toBeGreaterThan(10);
-    expect(title.length).toBeLessThan(70);
-    expect(title.toLowerCase()).not.toBe("lovable app");
-    expect(title.toLowerCase()).not.toContain("lovable generated");
+  it("does NOT carry a static <title> (per-route Helmet owns it)", () => {
+    // A static <title> would duplicate the per-route Helmet title after
+    // hydration ("Multiple title" finding on every page).
+    expect(html).not.toMatch(/<title>/i);
   });
 
-  it("has a meta description of reasonable length", () => {
-    const m = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
-    expect(m, "meta description present").toBeTruthy();
-    const desc = m![1];
-    expect(desc.length).toBeGreaterThan(30);
-    expect(desc.length).toBeLessThan(170);
-    expect(desc.toLowerCase()).not.toContain("lovable generated");
+  it("does NOT carry a static meta description (per-route Helmet owns it)", () => {
+    expect(html).not.toMatch(/<meta\s+name=["']description["']/i);
   });
 
   it("does NOT carry a static <link rel=canonical> (per-route Helmet owns it)", () => {
@@ -34,11 +25,9 @@ describe("SEO: index.html", () => {
     expect(html).not.toMatch(/<link\s+rel=["']canonical["']/i);
   });
 
-  it("has og:title, og:description, og:type, og:url", () => {
-    for (const prop of ["og:title", "og:description", "og:type", "og:url"]) {
-      const re = new RegExp(`<meta\\s+property=["']${prop}["']`, "i");
-      expect(html, `${prop} present`).toMatch(re);
-    }
+  it("does NOT carry static og:* or twitter:* tags (per-route Helmet owns them)", () => {
+    expect(html).not.toMatch(/<meta\s+property=["']og:/i);
+    expect(html).not.toMatch(/<meta\s+name=["']twitter:/i);
   });
 
   it("ships sitewide Organization or WebSite JSON-LD", () => {
@@ -52,6 +41,7 @@ describe("SEO: index.html", () => {
     expect(types.some((t) => t === "Organization" || t === "WebSite")).toBe(true);
   });
 });
+
 
 describe("SEO: robots.txt", () => {
   const txt = read("public/robots.txt");

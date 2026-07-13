@@ -38,16 +38,17 @@
     
     
     <!--
-      Per-route head tags (title, description, canonical, og:title/description/image,
-      twitter:title/description/image) are owned by SeoHead (react-helmet-async).
-      They are intentionally NOT duplicated here — react-helmet-async does not
-      remove pre-existing static head tags, so leaving them in caused 1,000+
-      "Multiple meta description" and "Open Graph tags incomplete" findings.
-      The minimal site-wide fallbacks below are safe because they don't collide
-      with per-route tags (no name/property duplication after hydration).
+      Per-route head tags (title, description, canonical, og:*, twitter:*)
+      are owned exclusively by SeoHead (react-helmet-async). They are
+      intentionally NOT present here — react-helmet-async does not remove
+      pre-existing static head tags, so any static title/description/og:*/
+      twitter:* would duplicate the per-route tags after hydration and
+      trigger "Multiple meta description" / "Open Graph tags incomplete"
+      findings on every page.
+
+      Keep in this file: charset, viewport, favicon, theme-color, robots,
+      and the sitewide Organization / WebSite JSON-LD only.
     -->
-    <title>ReviewHunts — Discover, Compare & Review the Best Software</title>
-    <meta name="description" content="Discover, compare, and review top software tools. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories." />
     <meta name="author" content="ReviewHunts" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:160" />
     <meta name="theme-color" content="#4f46e5" />
@@ -59,15 +60,6 @@
     <link rel="alternate" type="application/rss+xml" title="ReviewHunts — Latest Articles" href="https://reviewhunts.com/feed.xml" />
     <link rel="search" type="application/opensearchdescription+xml" title="ReviewHunts" href="https://reviewhunts.com/opensearch.xml" />
 
-    <!-- Sitewide og:* / twitter:* defaults (kept minimal; per-route values come from SeoHead). -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="ReviewHunts" />
-    <meta property="og:title" content="ReviewHunts — Discover, Compare & Review the Best Software" />
-    <meta property="og:description" content="Discover, compare, and review top software tools. Real user reviews, AI-powered insights, and curated buyer guides across 100+ categories." />
-    <meta property="og:url" content="https://reviewhunts.com/" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@ReviewHunts" />
-    <meta property="og:image" content="https://reviewhunts.com/og-image.png" />
 
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"Organization","name":"ReviewHunts","alternateName":["Review Hunts","ReviewHunts.com"],"url":"https://reviewhunts.com/","logo":"https://reviewhunts.com/reviewhunts-logo.png","description":"ReviewHunts is an independent software discovery and review platform covering SaaS, business software, and AI tools. Verified user reviews, side-by-side comparisons, expert buyer guides, and a curated SaaS glossary across 100+ categories.","about":[{"@type":"Thing","name":"Software reviews"},{"@type":"Thing","name":"SaaS comparisons"},{"@type":"Thing","name":"Business software discovery"},{"@type":"Thing","name":"AI tools directory"}],"sameAs":["https://twitter.com/ReviewHunts","https://www.linkedin.com/company/reviewhunts","https://www.producthunt.com/@reviewhunts","https://www.crunchbase.com/organization/reviewhunts","https://github.com/reviewhunts","https://www.facebook.com/reviewhunts"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","email":"hello@reviewhunts.com","availableLanguage":["English"]}}
