@@ -27,7 +27,10 @@ if (typeof document !== "undefined" && document.documentElement.hasAttribute("da
   removeMatching('link[rel="canonical"]');
   removeMatching('meta[property^="og:"]');
   removeMatching('meta[name^="twitter:"]');
-  removeMatching('script[type="application/ld+json"]');
+  // Note: sitewide Organization/WebSite JSON-LD stays; only per-page
+  // JSON-LD from the prerender is left in place (Helmet appends its own,
+  // but multiple JSON-LD blocks are valid and not the reported issue).
+
 }
 
 const container = document.getElementById("root")!;
