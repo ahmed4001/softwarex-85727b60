@@ -66,7 +66,7 @@ export function SearchBar({ variant = "compact", className }: SearchBarProps) {
             )}
           />
           {query && (
-            <button type="button" onClick={() => { setQuery(""); setResults([]); }} className="absolute right-3 top-1/2 -translate-y-1/2">
+            <button type="button" aria-label="Clear search" onClick={() => { setQuery(""); setResults([]); }} className="absolute right-3 top-1/2 -translate-y-1/2">
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
