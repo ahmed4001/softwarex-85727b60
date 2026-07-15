@@ -16,7 +16,7 @@ import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
 import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { FactsTable } from "@/components/seo/FactsTable";
-import { Helmet } from "react-helmet-async";
+
 
 
 export default function BuyerGuidePage() {
@@ -79,12 +79,33 @@ export default function BuyerGuidePage() {
     return <div className="container py-12 text-center"><h2 className="text-xl font-bold">Guide not found</h2></div>;
   }
 
+  // ---- Per-route SEO (title, meta description, OG, JSON-LD) ----
+  const canonicalPath = `/guides/${slug}`;
+  const canonicalUrl = `https://reviewhunts.com${canonicalPath}`;
+  const categoryName = (guide as any)?.categories?.name;
+
+  // Optimized <title>: keep under 60 chars (SeoHead trims + appends " | ReviewHunts")
+  const seoTitle = (guide as any).seo_title || guide.title;
+
+  // Meta description: 140–160 chars, falls back to a derived summary
+  const rawDesc =
+    (guide as any).seo_description ||
+    guide.description ||
+    `Interactive buyer guide: ${guide.title}. Compare top-rated ${categoryName || "software"} options based on verified user reviews, pricing, and features.`;
+  const seoDescription =
+    rawDesc.length > 160 ? rawDesc.slice(0, 157).trimEnd() + "…" : rawDesc;
+
+  const ogImage =
+    (guide as any).og_image_url ||
+    (guide as any).cover_image_url ||
+    "/og-image.png";
+
   // HowTo JSON-LD — buyer guides are stepwise decision flows, exactly what AI Overviews quote.
   const howToJsonLd = steps.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "HowTo",
     name: guide.title,
-    description: guide.description || `Interactive buyer guide: ${guide.title}`,
+    description: seoDescription,
     ...(((guide as any).updated_at) && { dateModified: (guide as any).updated_at }),
     step: steps.map((s: any, i: number) => ({
       "@type": "HowToStep",
@@ -97,14 +118,51 @@ export default function BuyerGuidePage() {
     })),
   } : null;
 
+  // Article JSON-LD — signals editorial content for Google's Article rich results.
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: guide.title,
+    description: seoDescription,
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+    author: { "@type": "Organization", name: "ReviewHunts" },
+    publisher: {
+      "@type": "Organization",
+      name: "ReviewHunts",
+      logo: { "@type": "ImageObject", url: "https://reviewhunts.com/reviewhunts-logo.png" },
+    },
+    ...(((guide as any).created_at) && { datePublished: (guide as any).created_at }),
+    ...(((guide as any).updated_at) && { dateModified: (guide as any).updated_at }),
+    ...(ogImage && { image: ogImage.startsWith("http") ? ogImage : `https://reviewhunts.com${ogImage}` }),
+  };
+
+  // BreadcrumbList JSON-LD — matches the visible Breadcrumbs component.
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Buyer Guides", item: "https://reviewhunts.com/guides" },
+      ...(categoryName
+        ? [{ "@type": "ListItem", position: 2, name: categoryName, item: `https://reviewhunts.com/category/${(guide as any).categories.slug}` }]
+        : []),
+      { "@type": "ListItem", position: categoryName ? 3 : 2, name: guide.title, item: canonicalUrl },
+    ],
+  };
+
+  const jsonLd = [articleJsonLd, breadcrumbJsonLd, ...(howToJsonLd ? [howToJsonLd] : [])];
+
   return (
     <>
-      <SeoHead title={guide.title} description={guide.description || "Interactive buyer guide"} markdownUrl={`/guides/${slug}.md`} />
-      {howToJsonLd && (
-        <Helmet>
-          <script type="application/ld+json">{JSON.stringify(howToJsonLd)}</script>
-        </Helmet>
-      )}
+      <SeoHead
+        title={seoTitle}
+        description={seoDescription}
+        canonicalUrl={canonicalPath}
+        ogImage={ogImage}
+        type="article"
+        jsonLd={jsonLd}
+        markdownUrl={`/guides/${slug}.md`}
+      />
+
       <main className="container py-8 md:py-12 max-w-2xl">
         <Breadcrumbs
           items={[
