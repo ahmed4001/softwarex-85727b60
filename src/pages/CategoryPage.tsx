@@ -135,6 +135,26 @@ export default function CategoryPage() {
     enabled: !!category && !isAll,
   });
 
+  // Related buyer guides for this category — internal link surface that
+  // boosts topical authority and satisfies the Semrush suggestion to link
+  // /guides from /category/<slug>.
+  const { data: relatedGuides } = useQuery({
+    queryKey: ["category-guides", (category as any)?.id],
+    staleTime: STALE_5_MIN,
+    queryFn: async () => {
+      const catId = (category as any)?.id;
+      if (!catId) return [];
+      const { data } = await supabase
+        .from("buyer_guides")
+        .select("slug,title,description")
+        .eq("is_published", true)
+        .eq("category_id", catId)
+        .limit(4);
+      return data || [];
+    },
+    enabled: !!category && !isAll && !!(category as any)?.id,
+  });
+
   const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
 
   // Reset page when sort/filter/slug changes + track analytics
