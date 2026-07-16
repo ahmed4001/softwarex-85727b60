@@ -446,6 +446,32 @@ export default function CategoryPage() {
 
             <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} className="mt-8 sm:mt-10" />
 
+            {relatedGuides && relatedGuides.length > 0 && (
+              <section aria-labelledby="related-guides-heading" className="mt-10 sm:mt-12 glass-card p-5 sm:p-6">
+                <h2 id="related-guides-heading" className="font-display font-bold text-foreground text-lg sm:text-xl mb-3">
+                  {category?.name} buyer guides
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Interactive guides to help you pick the best {category?.name} software by verified user reviews.
+                </p>
+                <ul className="space-y-2">
+                  {relatedGuides.map((g: any) => (
+                    <li key={g.slug}>
+                      <Link to={`/guides/${g.slug}`} className="text-primary hover:underline font-medium">
+                        {g.title}
+                      </Link>
+                      {g.description && (
+                        <span className="text-sm text-muted-foreground"> — {g.description}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/guides" className="inline-block mt-4 text-sm text-primary hover:underline">
+                  Browse all buyer guides →
+                </Link>
+              </section>
+            )}
+
             <RelatedInternalLinks
               categoryId={(category as any)?.id}
               categorySlug={slug}
