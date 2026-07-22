@@ -131,7 +131,20 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 
 import { KEYWORD_ROOT_SLUGS } from "@/lib/seo-canonical";
 
-const queryClient = new QueryClient();
+// Perf: sane defaults so route changes reuse cached data and don't
+// re-fetch on every window focus. Slashes TTFB-perceived latency and
+// duplicate Supabase requests across pages.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 min
+      gcTime: 30 * 60 * 1000, // 30 min
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
 
 import { RouteSkeleton } from "./components/RouteSkeleton";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
