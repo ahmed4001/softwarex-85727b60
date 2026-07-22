@@ -793,7 +793,18 @@ export default function ProductDetailPage() {
                   <Link key={a.id} to={`/product/${a.alternative?.slug}`} className="glass-card p-5 hover:border-primary/30 transition-all group">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {a.alternative?.logo_url ? <img decoding="async" loading="lazy" src={a.alternative.logo_url} alt={`${a.alternative?.name ?? "Alternative"} logo`} className="h-full w-full object-cover" /> : <span className="text-sm font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>}
+                        {a.alternative?.logo_url ? (
+                          <ResponsiveImage
+                            src={a.alternative.logo_url}
+                            alt={`${a.alternative?.name ?? "Alternative"} logo`}
+                            width={80}
+                            height={80}
+                            sizes="40px"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-primary">{a.alternative?.name?.charAt(0)}</span>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">{a.alternative?.name}</h3>
