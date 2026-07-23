@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ResponsiveImage } from "@/components/ResponsiveImage";
-import { isSupabaseStorageUrl } from "@/lib/responsive-image";
 
 interface ProductLogoProps {
   name: string;
@@ -27,28 +26,22 @@ export function ProductLogo({ name, logoUrl, size = "md", className, priority = 
   const s = sizeMap[size];
   const [failed, setFailed] = useState(false);
   const src = !failed && logoUrl ? logoUrl : avatarUrl(name, s.px);
-  const commonProps = {
-    alt: `${name} logo`,
-    width: s.px,
-    height: s.px,
-    sizes: s.sizes,
-    loading: priority ? ("eager" as const) : ("lazy" as const),
-    fetchPriority: priority ? ("high" as const) : ("auto" as const),
-    className: "h-full w-full object-cover",
-  };
 
   return (
     <div className={cn("rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0", s.container, className)}>
-      {isSupabaseStorageUrl(src) ? (
-        <ResponsiveImage src={src} {...commonProps} />
-      ) : (
-        <img
-          src={src}
-          {...commonProps}
-          decoding="async"
-          onError={() => setFailed(true)}
-        />
-      )}
+      <ResponsiveImage
+        src={src}
+        alt={`${name} logo`}
+        width={s.px}
+        height={s.px}
+        sizes={s.sizes}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        placeholderSeed={name}
+        className="h-full w-full object-cover"
+        onError={() => setFailed(true)}
+      />
     </div>
   );
 }
+
