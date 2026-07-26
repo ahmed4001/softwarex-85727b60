@@ -559,7 +559,16 @@ export default function ComparisonDetailPage() {
           pageUrl={`https://reviewhunts.com/compare/${slug}`}
         />
         <HelpfulVote pagePath={`/compare/${slug}`} />
+
+        <RelatedInternalLinks
+          categoryId={(productA as any)?.category_id ?? (comparison as any)?.category_id ?? null}
+          categorySlug={(productA as any)?.categories?.slug ?? null}
+          categoryName={(productA as any)?.categories?.name ?? null}
+          excludeComparisonSlug={slug}
+          title={`More ${(productA as any)?.categories?.name || "software"} comparisons`}
+        />
       </div>
+
 
     </>
   );
