@@ -17,6 +17,7 @@ import { HelpfulVote } from "@/components/seo/HelpfulVote";
 import { AIFaqBlock } from "@/components/seo/AIFaqBlock";
 import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { FactsTable } from "@/components/seo/FactsTable";
+import { RelatedInternalLinks } from "@/components/RelatedInternalLinks";
 import { Helmet } from "react-helmet-async";
 import { CheckCircle2 } from "lucide-react";
 
@@ -558,7 +559,16 @@ export default function ComparisonDetailPage() {
           pageUrl={`https://reviewhunts.com/compare/${slug}`}
         />
         <HelpfulVote pagePath={`/compare/${slug}`} />
+
+        <RelatedInternalLinks
+          categoryId={(productA as any)?.category_id ?? (comparison as any)?.category_id ?? null}
+          categorySlug={(productA as any)?.categories?.slug ?? null}
+          categoryName={(productA as any)?.categories?.name ?? null}
+          excludeComparisonSlug={slug}
+          title={`More ${(productA as any)?.categories?.name || "software"} comparisons`}
+        />
       </div>
+
 
     </>
   );
