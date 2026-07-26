@@ -189,8 +189,14 @@ export default function GlossaryTermPage() {
             pageUrl={`https://reviewhunts.com/glossary/${slug}`}
           />
           <HelpfulVote pagePath={`/glossary/${slug}`} />
+
+          <RelatedInternalLinks
+            categoryName={term.category || null}
+            title="Related software & guides"
+          />
         </motion.div>
       </main>
+
 
     </>
   );
