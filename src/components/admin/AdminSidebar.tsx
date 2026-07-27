@@ -51,6 +51,7 @@ const sidebarItems = [
       { label: "Buyer Guides", to: "/admin/buyer-guides" },
       { label: "Glossary", to: "/admin/glossary" },
       { label: "FAQ Cache", to: "/admin/faq-cache" },
+      { label: "Keyword Opportunities", to: "/admin/keyword-opportunities" },
 
     ]
   },

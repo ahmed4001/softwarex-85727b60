@@ -111,6 +111,7 @@ const AdminFaqCachePage = lazy(() => import("./pages/admin/AdminFaqCachePage"));
 const AdminSitemapStatusPage = lazy(() => import("./pages/admin/AdminSitemapStatusPage"));
 const AdminWebVitalsPage = lazy(() => import("./pages/admin/AdminWebVitalsPage"));
 const AdminContentRecommendationsPage = lazy(() => import("./pages/admin/AdminContentRecommendationsPage"));
+const AdminKeywordOpportunitiesPage = lazy(() => import("./pages/admin/AdminKeywordOpportunitiesPage"));
 
 const AdminTrendReportsPage = lazy(() => import("./pages/admin/AdminTrendReportsPage"));
 const AdminCohortPage = lazy(() => import("./pages/admin/AdminCohortPage"));
@@ -271,6 +272,7 @@ function AppContent() {
           <Route path="sitemap-status" element={<ErrorBoundary><AdminSitemapStatusPage /></ErrorBoundary>} />
           <Route path="web-vitals" element={<ErrorBoundary><AdminWebVitalsPage /></ErrorBoundary>} />
           <Route path="content-recommendations" element={<ErrorBoundary><AdminContentRecommendationsPage /></ErrorBoundary>} />
+          <Route path="keyword-opportunities" element={<ErrorBoundary><AdminKeywordOpportunitiesPage /></ErrorBoundary>} />
 
           <Route path="trend-reports" element={<ErrorBoundary><AdminTrendReportsPage /></ErrorBoundary>} />
           <Route path="cohort" element={<ErrorBoundary><AdminCohortPage /></ErrorBoundary>} />
