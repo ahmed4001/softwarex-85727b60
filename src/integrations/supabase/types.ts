@@ -1721,6 +1721,74 @@ export type Database = {
         }
         Relationships: []
       }
+      keyword_opportunities: {
+        Row: {
+          category_id: string | null
+          category_name: string | null
+          competition: number
+          cpc: number
+          created_at: string
+          database_code: string
+          difficulty: number
+          id: string
+          imported_at: string
+          keyword: string
+          notes: string | null
+          opportunity_score: number
+          search_volume: number
+          seed_keyword: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          category_name?: string | null
+          competition?: number
+          cpc?: number
+          created_at?: string
+          database_code?: string
+          difficulty?: number
+          id?: string
+          imported_at?: string
+          keyword: string
+          notes?: string | null
+          opportunity_score?: number
+          search_volume?: number
+          seed_keyword: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          category_name?: string | null
+          competition?: number
+          cpc?: number
+          created_at?: string
+          database_code?: string
+          difficulty?: number
+          id?: string
+          imported_at?: string
+          keyword?: string
+          notes?: string | null
+          opportunity_score?: number
+          search_volume?: number
+          seed_keyword?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_opportunities_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       list_items: {
         Row: {
           created_at: string
