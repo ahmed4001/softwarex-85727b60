@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build",
   "redirects": [
-    { "source": "/:path*", "has": [{ "type": "host", "value": "www.reviewhunts.com" }], "destination": "https://reviewhunts.com/:path*", "permanent": true },
+    
     { "source": "/the-lord-of-the-rings-the-rings-of-power", "destination": "/", "permanent": true },
     { "source": "/the-lord-of-the-rings-the-rings-of-power/", "destination": "/", "permanent": true },
     { "source": "/jack-ryan-season-3-trailer-release-date-cast", "destination": "/", "permanent": true },
