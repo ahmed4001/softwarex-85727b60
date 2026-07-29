@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const logoAsset = { url: "/reviewhunts-logo.png" };
 
 const sidebarItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/admin" },
+  { label: "Dashboard", icon: LayoutDashboard, to: "/admin/dashboard" },
   {
     label: "Products", icon: Box, children: [
       { label: "All Products", to: "/admin/products" },
