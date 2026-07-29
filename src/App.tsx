@@ -35,6 +35,7 @@ const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const PublicAdminDashboard = lazy(() => import("./pages/admin/PublicAdminDashboard"));
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
 const AdminProductCleanupPage = lazy(() => import("./pages/admin/AdminProductCleanupPage"));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategoriesPage"));
@@ -223,9 +224,11 @@ function AppContent() {
         </Route>
 
 
+        <Route path="/admin" element={<ErrorBoundary><PublicAdminDashboard /></ErrorBoundary>} />
+
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>} />
+          <Route path="dashboard" element={<ErrorBoundary><AdminDashboard /></ErrorBoundary>} />
           <Route path="products" element={<ErrorBoundary><AdminProductsPage /></ErrorBoundary>} />
           <Route path="products/new" element={<ErrorBoundary><AdminProductEditorPage /></ErrorBoundary>} />
           <Route path="products/sponsored" element={<ErrorBoundary><AdminProductsPage /></ErrorBoundary>} />
