@@ -4,6 +4,8 @@ import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
 import { startWebVitals } from "./lib/web-vitals";
+import { initNativeApp } from "./lib/native-app";
+
 
 // On prerendered routes, the static <head> already carries route-specific
 // title/description/canonical/og:*/twitter:* tags baked in by
@@ -50,6 +52,9 @@ if (container.hasChildNodes()) {
   createRoot(container).render(tree);
 }
 
+// Native (Capacitor) bootstrap: splash, status bar, deep-link auth. No-op on web.
+void initNativeApp();
+
 // Stream Core Web Vitals beacons to Supabase for the admin dashboard.
 // Defer until idle so it never competes with hydration / LCP.
 if (typeof window !== "undefined") {
@@ -60,3 +65,4 @@ if (typeof window !== "undefined") {
     setTimeout(kick, 1500);
   }
 }
+
