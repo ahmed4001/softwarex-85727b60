@@ -13,11 +13,16 @@
           var h = location.hostname;
           var isLocal = h === "localhost" || h === "127.0.0.1" || h.endsWith(".local");
           var isCanonical = h === "reviewhunts.com" || h === "www.reviewhunts.com";
-          if (!isLocal && !isCanonical) {
+          // Never redirect inside the Capacitor Android/iOS WebView — it would
+          // navigate the native app away from its bundled assets.
+          var isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
+            || location.protocol === "capacitor:";
+          if (!isLocal && !isCanonical && !isNative) {
             location.replace("https://reviewhunts.com" + location.pathname + location.search + location.hash);
           }
         } catch (e) {}
       })();
+
     </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
