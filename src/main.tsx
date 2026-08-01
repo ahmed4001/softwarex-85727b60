@@ -4,6 +4,8 @@ import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
 import { startWebVitals } from "./lib/web-vitals";
+import { initNativeApp } from "./lib/native-app";
+
 
 // On prerendered routes, the static <head> already carries route-specific
 // title/description/canonical/og:*/twitter:* tags baked in by
