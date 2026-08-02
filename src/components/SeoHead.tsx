@@ -2,6 +2,8 @@ import { Helmet } from "react-helmet-async";
 import { useSeoSettings } from "@/hooks/useSeoSettings";
 import { validateJsonLd } from "@/lib/jsonLdValidator";
 import { hasMarkdownAlternate } from "@/generated/md-manifest";
+import { validateParamCanonical } from "@/lib/canonical-params";
+
 
 
 interface SeoHeadProps {
