@@ -12,6 +12,7 @@ import { X, Plus, Check, Minus, ArrowRight, Calculator, BarChart3, Layers, Crown
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link, useSearchParams } from "react-router-dom";
+import { canonicalPolicyFor } from "@/lib/canonical-params";
 import { useTranslation } from "react-i18next";
 import { PaginationControls } from "@/components/PaginationControls";
 import {
@@ -40,6 +41,9 @@ interface DirectoryComparison {
 
 export default function ComparePage() {
   const [searchParams] = useSearchParams();
+  // Parameterised /compare views are near-duplicates: canonical stays
+  // /compare and the page goes noindex when products are preselected.
+  const comparePolicy = canonicalPolicyFor("/compare", searchParams.toString());
   const initialIds = searchParams.get("products")?.split(",").filter(Boolean) || [];
   const [productIds, setProductIds] = useState<string[]>(initialIds);
   const [searchQuery, setSearchQuery] = useState("");
@@ -210,7 +214,7 @@ export default function ComparePage() {
 
   return (
     <>
-      <SeoHead title="Software Comparisons — Side-by-Side Reviews" description="Browse 1000+ head-to-head software comparisons. Find out which tool is best for your team with detailed feature matrices and pricing calculators." canonicalUrl="/compare" />
+      <SeoHead title="Software Comparisons — Side-by-Side Reviews" description="Browse 1000+ head-to-head software comparisons. Find out which tool is best for your team with detailed feature matrices and pricing calculators." canonicalUrl="/compare" robots={comparePolicy.robots} />
 
       <div className="container py-8 max-w-6xl">
         {/* Hero */}
