@@ -2,6 +2,8 @@ import { Helmet } from "react-helmet-async";
 import { useSeoSettings } from "@/hooks/useSeoSettings";
 import { validateJsonLd } from "@/lib/jsonLdValidator";
 import { hasMarkdownAlternate } from "@/generated/md-manifest";
+import { validateParamCanonical } from "@/lib/canonical-params";
+
 
 
 interface SeoHeadProps {
@@ -130,6 +132,26 @@ export function SeoHead({
     effectiveOgImage && !effectiveOgImage.startsWith("http")
       ? `${SITE_URL}${effectiveOgImage.startsWith("/") ? "" : "/"}${effectiveOgImage}`
       : effectiveOgImage;
+
+  // Runtime validator: parameterised listing URLs (/compare?products=…,
+  // /search?q=…) must canonicalise to the bare path and go noindex.
+  // Logs loudly in dev/staging so regressions surface before crawlers do.
+  if (typeof window !== "undefined") {
+    const violations = validateParamCanonical({
+      url: `${window.location.pathname}${window.location.search}`,
+      canonical: resolvedCanonical,
+      ogUrl: resolvedCanonical,
+      robots,
+      siteUrl: SITE_URL,
+    });
+    if (violations.length > 0) {
+      const env = getRuntimeEnv();
+      const payload = { url: window.location.pathname + window.location.search, violations };
+      if (env === "production") console.warn("[SeoHead] Param canonical policy violation:", payload);
+      else console.error("[SeoHead] Param canonical policy violation:", payload);
+    }
+  }
+
 
   return (
     <Helmet>

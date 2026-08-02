@@ -162,6 +162,13 @@ jobs:
           HREFLANG_CHECK_SAMPLE: "25"
           HREFLANG_CHECK_DIRS: "product,category,compare,blog,guides"
         run: bun run check:hreflang-hosts
+      - name: Verify compare/search param canonicals (${{ matrix.label }})
+        if: always()
+        env:
+          SITE_URL: ${{ matrix.site_url }}
+          SEO_REPORT_DIR: seo-host-report
+        run: bun run check:param-canonicals
+
       - name: Consolidated host-gate report (reuse mode, ${{ matrix.label }})
         if: always()
         env:
