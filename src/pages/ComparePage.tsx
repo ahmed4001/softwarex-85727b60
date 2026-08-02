@@ -210,7 +210,7 @@ export default function ComparePage() {
 
   return (
     <>
-      <SeoHead title="Software Comparisons — Side-by-Side Reviews" description="Browse 1000+ head-to-head software comparisons. Find out which tool is best for your team with detailed feature matrices and pricing calculators." />
+      <SeoHead title="Software Comparisons — Side-by-Side Reviews" description="Browse 1000+ head-to-head software comparisons. Find out which tool is best for your team with detailed feature matrices and pricing calculators." canonicalUrl="/compare" />
 
       <div className="container py-8 max-w-6xl">
         {/* Hero */}
