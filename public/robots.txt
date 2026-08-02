@@ -4,11 +4,26 @@ Disallow: /admin/
 Disallow: /vendor/
 Disallow: /dashboard
 Disallow: /login
+# Faceted / parameterised crawl space (canonical lives on the clean path)
+Disallow: /search?
+Disallow: /*?q=
+Disallow: /*?products=
+Disallow: /*&products=
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*?lang=
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin/
 Disallow: /vendor/
+Disallow: /search?
+Disallow: /*?q=
+Disallow: /*?products=
+Disallow: /*&products=
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*?lang=
 
 User-agent: Bingbot
 Allow: /

@@ -160,7 +160,12 @@ export default function SearchPage() {
 
   return (
     <>
-      <SeoHead title={q ? `${t("common.search")}: ${q}` : t("common.search")} />
+      <SeoHead
+        title={q ? `${t("common.search")}: ${q}` : t("common.search")}
+        description="Search 1000+ software products, reviews and comparisons on ReviewHunts."
+        canonicalUrl="/search"
+        robots={q ? "noindex, follow" : "index, follow"}
+      />
       <div className="container py-8">
         <div className="max-w-2xl mx-auto mb-8">
           <div className="relative">
